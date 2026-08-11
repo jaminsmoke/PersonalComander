@@ -7,7 +7,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,11 +19,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.key
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -71,11 +69,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import kotlinx.coroutines.delay
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
@@ -127,7 +122,11 @@ fun MesasScreen(
     var dragBaseY by remember { mutableStateOf(0f) }
     var dragPxX by remember { mutableStateOf(0f) }
     var dragPxY by remember { mutableStateOf(0f) }
-    var viewportSize by remember { mutableStateOf(IntSize.Zero) }
+
+    // Zoom/pan state
+    var scale by remember { mutableStateOf(1f) }
+    var panX by remember { mutableStateOf(0f) }
+    var panY by remember { mutableStateOf(0f) }
 
     LaunchedEffect(mensaje) {
         mensaje?.let {
@@ -194,21 +193,26 @@ fun MesasScreen(
                 }
 
                 // Board
-                val scrollH = rememberScrollState()
-                val scrollV = rememberScrollState()
                 val maxX = ((mesasFiltradas.maxOfOrNull { it.posX } ?: 0f) + CARD_WIDTH.value + CELL_F * 2).coerceAtLeast(400f)
                 val maxY = ((mesasFiltradas.maxOfOrNull { it.posY } ?: 0f) + CARD_WIDTH.value + CELL_F * 2).coerceAtLeast(600f)
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .onSizeChanged { viewportSize = it }
-                        .horizontalScroll(scrollH)
-                        .verticalScroll(scrollV)
-                ) {
+                Box(modifier = Modifier.fillMaxSize()) {
                     Box(
                         modifier = Modifier
                             .size(width = maxX.dp, height = maxY.dp)
+                            .graphicsLayer {
+                                scaleX = scale
+                                scaleY = scale
+                                translationX = panX
+                                translationY = panY
+                            }
+                            .pointerInput(Unit) {
+                                detectTransformGestures { _, pan, zoom, _ ->
+                                    scale = (scale * zoom).coerceIn(0.5f, 2f)
+                                    panX += pan.x
+                                    panY += pan.y
+                                }
+                            }
                             .drawBehind {
                                 // Subtle dot grid for spatial reference
                                 val spacing = CELL.toPx()
@@ -324,29 +328,28 @@ fun MesasScreen(
                                 DragOverlayCard(mesa)
                             }
                         }
+                    }
 
-                        // Auto-scroll al arrastrar cerca de los bordes
-                        if (draggedMesa != null && viewportSize != IntSize.Zero) {
-                            val edgePx = with(density) { 60.dp.toPx() }
-                            val stepPx = with(density) { CELL.toPx() }
-                            LaunchedEffect(draggedMesa) {
-                                while (draggedMesa != null) {
-                                    val ox = dragBaseX + with(density) { dragPxX.toDp().value }
-                                    val oy = dragBaseY + with(density) { dragPxY.toDp().value }
-                                    val cx = with(density) { ox.dp.toPx() }
-                                    val cy = with(density) { oy.dp.toPx() }
-                                    val cp = with(density) { CARD_WIDTH.toPx() }
-                                    if (cx + cp > scrollH.value + viewportSize.width - edgePx)
-                                        scrollH.animateScrollTo((scrollH.value + stepPx).toInt())
-                                    if (cx < scrollH.value + edgePx)
-                                        scrollH.animateScrollTo((scrollH.value - stepPx).toInt().coerceAtLeast(0))
-                                    if (cy + cp > scrollV.value + viewportSize.height - edgePx)
-                                        scrollV.animateScrollTo((scrollV.value + stepPx).toInt())
-                                    if (cy < scrollV.value + edgePx)
-                                        scrollV.animateScrollTo((scrollV.value - stepPx).toInt().coerceAtLeast(0))
-                                    delay(50)
-                                }
-                            }
+                    // Zoom indicator badge (bottom-left) — tap to reset
+                    if (scale != 1f || panX != 0f || panY != 0f) {
+                        val pct = (scale * 100).toInt()
+                        Card(
+                            onClick = { scale = 1f; panX = 0f; panY = 0f },
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(12.dp)
+                                .zIndex(5f),
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Text(
+                                "$pct%",
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         }
                     }
                 }
