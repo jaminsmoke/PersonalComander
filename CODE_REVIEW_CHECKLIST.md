@@ -26,7 +26,7 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
   **Fix:** al añadir líneas con pedido `ENVIADA`, volver a `ABIERTA` (o permitir reenvío con líneas nuevas).  
   **Archivos:** `ui/ComandaViewModel.kt`, `ui/ComandaScreen.kt`
 
-- [ ] **C3 — `cerrarMesa` marca `cerrada = true` antes del mutex**  
+- [x] **C3 — `cerrarMesa` marca `cerrada = true` antes del mutex**  
   Si el update falla, `cerrada` se queda en `true` y no se puede añadir nada hasta salir.  
   **Fix:** poner `cerrada = true` solo tras éxito (o resetear en el `catch`).  
   **Archivos:** `ui/ComandaViewModel.kt`
@@ -208,11 +208,11 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 
 | Bloque | Total | Hechos |
 |--------|------:|-------:|
-| Críticos | 6 | 1 |
+| Críticos | 6 | 2 |
 | Medios | 10 | 0 |
 | Seguridad | 4 | 0 |
 | Optimizaciones | 7 | 0 |
 | Arquitectura | 6 | 0 |
-| **Total** | **33** | **1** |
+| **Total** | **33** | **2** |
 
 Cuando Total hechos = 33 → desechar este documento.
