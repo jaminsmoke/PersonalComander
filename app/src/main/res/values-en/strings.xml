@@ -1,0 +1,115 @@
+<resources>
+    <string name="app_name">Personal Comander</string>
+
+    <!-- Home Screen -->
+    <string name="home_title">Personal Comander</string>
+    <string name="home_summary_title">Today\'s Summary</string>
+    <string name="home_tables_label">Tables occupied</string>
+    <string name="home_orders_label">Open orders</string>
+    <string name="home_revenue_label">Revenue today</string>
+    <string name="home_tables_card">Tables</string>
+    <string name="home_tables_desc">Manage orders by table</string>
+    <string name="home_menu_card">Menu Management</string>
+    <string name="home_menu_desc">Products, prices and categories</string>
+    <string name="home_settings_card">Settings</string>
+    <string name="home_settings_desc">Import, export and sync POS</string>
+
+    <!-- Mesas Screen -->
+    <string name="mesas_title">Personal Comander</string>
+    <string name="mesas_manage_menu">Manage menu</string>
+    <string name="mesas_free">Free</string>
+    <string name="mesas_occupied">Occupied</string>
+    <string name="mesas_in_kitchen">In kitchen</string>
+
+    <!-- Menu Screen -->
+    <string name="menu_title">Menu Management</string>
+    <string name="menu_new_product">New product</string>
+    <string name="menu_edit_product">Edit product</string>
+    <string name="menu_delete_product">Delete product</string>
+    <string name="menu_delete_confirm">Delete \"%s\" permanently?</string>
+    <string name="menu_hidden_label">Hidden · %s</string>
+    <string name="menu_field_name">Name</string>
+    <string name="menu_field_category">Category</string>
+    <string name="menu_field_price">Price (€)</string>
+    <string name="menu_save">Save</string>
+    <string name="menu_cancel">Cancel</string>
+    <string name="menu_validation_name_required">Name is required</string>
+    <string name="menu_validation_category_required">Category is required</string>
+    <string name="menu_validation_invalid_price">Invalid price</string>
+    <string name="menu_validation_negative_price">Price cannot be negative</string>
+
+    <!-- Comanda Screen -->
+    <string name="comanda_table_prefix">Table %d</string>
+    <string name="comanda_search_placeholder">Search product…</string>
+    <string name="comanda_voice_talk">Voice order</string>
+    <string name="comanda_listening">Listening…</string>
+    <string name="comanda_voice_hint">Say the order, e.g. \"two lattes and a cheesecake\"</string>
+    <string name="comanda_cancel">Cancel</string>
+    <string name="comanda_panel_title">Order</string>
+    <string name="comanda_empty">No items. Tap a product to add it.</string>
+    <string name="comanda_total_label">Total</string>
+    <string name="comanda_send_to_kitchen">Send to kitchen</string>
+    <string name="comanda_in_kitchen">In kitchen ✓</string>
+    <string name="comanda_close_table">Close table</string>
+    <string name="comanda_all_categories">📋 All</string>
+    <string name="comanda_voice_added">«%1$s» → Added: %2$s</string>
+    <string name="comanda_voice_partial">«%1$s» → Added: %2$s · Unrecognized: %3$s</string>
+    <string name="comanda_voice_unrecognized">«%1$s» → Could not recognize: %2$s</string>
+    <string name="comanda_voice_not_understood">«%s» → Could not understand the order</string>
+
+    <!-- Settings Screen -->
+    <string name="ajustes_title">Settings</string>
+    <string name="ajustes_import_preview_title">Import Preview</string>
+    <string name="ajustes_import_preview_desc">The following changes will be imported:</string>
+    <string name="ajustes_import_confirm">Import</string>
+    <string name="ajustes_sync_title">Sync with POS</string>
+    <string name="ajustes_sync_desc">Import your products from the restaurant management software over the local network.</string>
+    <string name="ajustes_backup_title">Backup</string>
+    <string name="ajustes_backup_desc">Export or import all products as a JSON file.</string>
+    <string name="ajustes_program_label">Management software</string>
+    <string name="ajustes_search_network">Search network</string>
+    <string name="ajustes_servers_found">Servers found</string>
+
+    <!-- Voice Error Messages -->
+    <string name="voice_error_audio">No audio captured, please try again</string>
+    <string name="voice_error_network">Network error with voice recognition</string>
+    <string name="voice_error_network_timeout">Network timeout</string>
+    <string name="voice_error_no_match">I couldn\'t hear you clearly, please try again</string>
+    <string name="voice_error_permissions">Microphone permission missing</string>
+    <string name="voice_error_unavailable">Voice recognition is not available on this device</string>
+    <string name="voice_error_generic">Voice error (%d), please try again</string>
+
+    <!-- Import/Export Messages -->
+    <string name="export_success">Exported %d products</string>
+    <string name="import_invalid_json">The file is not a valid Personal Comander JSON</string>
+    <string name="import_invalid_json_generic">The file is not a valid JSON</string>
+    <string name="import_success">Imported: %1$d new, %2$d updated, %3$d ignored</string>
+    <string name="sync_no_servers">No servers found on the local network</string>
+    <string name="sync_servers_found">Found %d servers</string>
+    <string name="sync_need_ip">Enter the POS server IP address</string>
+    <string name="sync_cannot_read_json">Could not read JSON from %s</string>
+    <string name="sync_no_mapping">The selected program has no mapping</string>
+    <string name="sync_cannot_download_db">Could not download database from %s</string>
+    <string name="sync_table_not_found">Table \'%s\' does not exist. Available: %s</string>
+    <string name="sync_error">Sync error: %s</string>
+    <string name="import_error_read">Error reading file: %s</string>
+    <string name="import_error_apply">Error importing: %s</string>
+    <string name="export_error">Error exporting: %s</string>
+
+    <!-- Error Messages (ViewModel operations) -->
+    <string name="error_add_product">Error adding product: %s</string>
+    <string name="error_update_product">Error updating product: %s</string>
+    <string name="error_toggle_availability">Error changing availability: %s</string>
+    <string name="error_delete_product">Error deleting product: %s</string>
+    <string name="error_increase_quantity">Error increasing quantity: %s</string>
+    <string name="error_decrease_quantity">Error decreasing quantity: %s</string>
+    <string name="error_send_to_kitchen">Error sending to kitchen: %s</string>
+    <string name="error_close_table">Error closing table: %s</string>
+
+    <!-- General -->
+    <string name="btn_back">Back</string>
+    <string name="btn_edit">Edit</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_add">Add</string>
+    <string name="btn_remove">Remove</string>
+</resources>
