@@ -123,7 +123,7 @@ fun ComandaScreen(
                 title = {
                     Column {
                         Text(stringResource(R.string.comanda_table_prefix, state.mesa?.numero ?: mesaId))
-                        Text(estadoLabel(state.mesa?.estado, context), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(estadoLabel(state.mesa?.estado), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.btn_back)) } }
@@ -358,9 +358,10 @@ private fun CategorySidebarItem(label: String, selected: Boolean, onClick: () ->
     }
 }
 
-private fun estadoLabel(estado: MesaEstado?, context: android.content.Context): String = when (estado) {
-    MesaEstado.LIBRE -> context.getString(R.string.mesas_free)
-    MesaEstado.OCUPADA -> context.getString(R.string.mesas_occupied)
-    MesaEstado.EN_COCINA -> context.getString(R.string.mesas_in_kitchen)
+@Composable
+private fun estadoLabel(estado: MesaEstado?): String = when (estado) {
+    MesaEstado.LIBRE -> stringResource(R.string.mesas_free)
+    MesaEstado.OCUPADA -> stringResource(R.string.mesas_occupied)
+    MesaEstado.EN_COCINA -> stringResource(R.string.mesas_in_kitchen)
     null -> ""
 }

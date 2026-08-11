@@ -92,7 +92,7 @@ fun AjustesScreen(
                     Text("🔄 ${preview.actualizados} productos actualizados", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
                     Text("⏭️ ${preview.ignorados} productos ignorados (nombres vacíos)", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (preview.categoriasMapeadas.isNotEmpty()) {
-                        androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(8.dp))
                         Text("🗂️ Categorías detectadas:", fontWeight = FontWeight.Bold, fontSize = MaterialTheme.typography.bodySmall.fontSize)
                         preview.categoriasMapeadas.take(10).forEach { (origen, destino) ->
                             Text("  $origen → $destino", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
