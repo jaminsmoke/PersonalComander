@@ -14,6 +14,8 @@ import com.jaminsmoke.personalcomander.data.PedidoEstado
 import com.jaminsmoke.personalcomander.data.Producto
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -42,6 +44,7 @@ class ComandaViewModel(
     private val mesaId: Long
 ) : ViewModel() {
 
+    private val mutex = Mutex()
     private var cerrada = false
 
     private val pedido: StateFlow<Pedido?> = db.pedidoDao().observeActivo(mesaId)
@@ -120,52 +123,62 @@ class ComandaViewModel(
     fun addProducto(producto: Producto, cantidad: Int = 1) {
         if (cerrada) return
         viewModelScope.launch {
-            val p = db.pedidoDao().getActivo(mesaId)
-            val pedidoActivo = if (p == null) {
-                if (cerrada) return@launch
-                val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
-                db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, nuevoId)
-                Pedido(id = nuevoId, mesaId = mesaId)
-            } else p
+            mutex.withLock {
+                val p = db.pedidoDao().getActivo(mesaId)
+                val pedidoActivo = if (p == null) {
+                    if (cerrada) return@launch
+                    val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
+                    db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, nuevoId)
+                    Pedido(id = nuevoId, mesaId = mesaId)
+                } else p
 
-            val lineas = db.lineaPedidoDao().getForPedido(pedidoActivo.id)
-            val existente = lineas.firstOrNull { it.productoId == producto.id }
-            if (existente != null) {
-                db.lineaPedidoDao().update(existente.copy(cantidad = existente.cantidad + cantidad))
-            } else {
-                db.lineaPedidoDao().insert(LineaPedido(
-                    pedidoId = pedidoActivo.id, productoId = producto.id,
-                    nombreProducto = producto.nombre, precioUnitario = producto.precio, cantidad = cantidad
-                ))
+                val lineas = db.lineaPedidoDao().getForPedido(pedidoActivo.id)
+                val existente = lineas.firstOrNull { it.productoId == producto.id }
+                if (existente != null) {
+                    db.lineaPedidoDao().update(existente.copy(cantidad = existente.cantidad + cantidad))
+                } else {
+                    db.lineaPedidoDao().insert(LineaPedido(
+                        pedidoId = pedidoActivo.id, productoId = producto.id,
+                        nombreProducto = producto.nombre, precioUnitario = producto.precio, cantidad = cantidad
+                    ))
+                }
             }
         }
     }
 
     fun aumentarLinea(linea: LineaPedido) {
-        viewModelScope.launch { db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad + 1)) }
+        viewModelScope.launch {
+            mutex.withLock { db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad + 1)) }
+        }
     }
 
     fun disminuirLinea(linea: LineaPedido) {
         viewModelScope.launch {
-            if (linea.cantidad > 1) db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad - 1))
-            else db.lineaPedidoDao().delete(linea)
+            mutex.withLock {
+                if (linea.cantidad > 1) db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad - 1))
+                else db.lineaPedidoDao().delete(linea)
+            }
         }
     }
 
     fun enviarACocina() {
         viewModelScope.launch {
-            val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
-            db.pedidoDao().update(p.copy(estado = PedidoEstado.ENVIADA))
-            db.mesaDao().updateEstado(mesaId, MesaEstado.EN_COCINA, p.id)
+            mutex.withLock {
+                val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
+                db.pedidoDao().update(p.copy(estado = PedidoEstado.ENVIADA))
+                db.mesaDao().updateEstado(mesaId, MesaEstado.EN_COCINA, p.id)
+            }
         }
     }
 
     fun cerrarMesa() {
         cerrada = true
         viewModelScope.launch {
-            val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
-            db.pedidoDao().update(p.copy(estado = PedidoEstado.CERRADA, cerradoEn = System.currentTimeMillis()))
-            db.mesaDao().updateEstado(mesaId, MesaEstado.LIBRE, null)
+            mutex.withLock {
+                val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
+                db.pedidoDao().update(p.copy(estado = PedidoEstado.CERRADA, cerradoEn = System.currentTimeMillis()))
+                db.mesaDao().updateEstado(mesaId, MesaEstado.LIBRE, null)
+            }
         }
     }
 
