@@ -53,6 +53,9 @@ interface MesaDao {
 
     @Query("UPDATE mesas SET posX = :posX, posY = :posY WHERE id = :id")
     suspend fun updatePosicion(id: Long, posX: Float, posY: Float)
+
+    @Query("UPDATE mesas SET girada = :girada WHERE id = :id")
+    suspend fun updateGiro(id: Long, girada: Boolean)
 }
 
 @Dao

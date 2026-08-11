@@ -69,6 +69,16 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun toggleGiro(mesa: Mesa) {
+        viewModelScope.launch {
+            try {
+                db.mesaDao().updateGiro(mesa.id, !mesa.girada)
+            } catch (e: Exception) {
+                _mensaje.value = "Error al girar mesa: ${e.message}"
+            }
+        }
+    }
+
     fun createMesa(zona: String, forma: MesaForma, capacidad: Int, alias: String?) {
         viewModelScope.launch {
             try {

@@ -33,6 +33,7 @@
     <string name="mesas_delete_confirm">Delete %s permanently? Subsequent tables will be renumbered.</string>
     <string name="mesas_menu_edit">Edit</string>
     <string name="mesas_menu_delete">Delete</string>
+    <string name="mesas_menu_rotate">Rotate 90°</string>
     <string name="mesas_isolated_title">Keep %s far away?</string>
     <string name="mesas_isolated_body">It is very far from the other tables. It may be hard to find.</string>
     <string name="mesas_isolated_keep">Keep</string>

@@ -34,6 +34,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -99,6 +100,14 @@ private fun mesaAltura(forma: MesaForma): Float = when (forma) {
     MesaForma.CUADRADA -> CARD_W
     MesaForma.RECTANGULAR -> CARD_W * 0.55f
     MesaForma.RECTANGULAR_XL -> CARD_W * 0.4f
+}
+
+private fun esRectangular(forma: MesaForma) = forma == MesaForma.RECTANGULAR || forma == MesaForma.RECTANGULAR_XL
+
+/** Dimensiones reales (w,h) de una mesa considerando si está girada */
+private fun mesaDims(forma: MesaForma, girada: Boolean): Pair<Float, Float> {
+    if (girada && esRectangular(forma)) return mesaAltura(forma) to CARD_W
+    return CARD_W to mesaAltura(forma)
 }
 
 /** Detecta si dos rectángulos (x,y,w,h) se solapan (AABB collision) */
@@ -291,17 +300,19 @@ fun MesasScreen(
                                     label = "posY"
                                 )
 
+                                val (mw, _) = mesaDims(mesa.forma, mesa.girada)
                                 MesaCard(
                                     mesa = mesa,
                                     isDragging = isDragging,
                                     modifier = Modifier
                                         .offset(x = animX.dp, y = animY.dp)
-                                        .width(CARD_WIDTH),
+                                        .width(mw.dp),
                                     onClick = {
                                         if (draggedMesa == null) onOpenMesa(mesa.id)
                                     },
                                     onEditClick = { mesaEditando = mesa },
                                     onDeleteClick = { mesaBorrando = mesa },
+                                    onRotateClick = { viewModel.toggleGiro(mesa) },
                                     onDragStart = { },
                                     onDragStarted = {
                                         draggedMesa = mesa
@@ -322,12 +333,13 @@ fun MesasScreen(
                                             val rawY = dragBaseY + deltaDpY
                                             val snappedX = (rawX / CELL_F).roundToInt() * CELL_F
                                             val snappedY = (rawY / CELL_F).roundToInt() * CELL_F
-                                            val draggedH = mesaAltura(dragged.forma)
-                                            val occupied = mesas
-                                                .filter { it.id != dragged.id }
-                                                .map { Triple(it.posX, it.posY, mesaAltura(it.forma)) }
+                                            val (draggedW, draggedH) = mesaDims(dragged.forma, dragged.girada)
+                                            val occupied = mesas.filter { it.id != dragged.id }.map {
+                                                val (ow, oh) = mesaDims(it.forma, it.girada)
+                                                listOf(it.posX, it.posY, ow, oh)
+                                            }
                                             val (finalX, finalY) = findNearestFreeCell(
-                                                snappedX, snappedY, CARD_W, draggedH, occupied
+                                                snappedX, snappedY, draggedW, draggedH, occupied
                                             )
                                             // Warning: mesa muy alejada del cluster
                                             if (isIsolated(finalX, finalY, dragged.id, mesas)) {
@@ -350,6 +362,7 @@ fun MesasScreen(
                         draggedMesa?.let { mesa ->
                             val overlayX = dragBaseX + with(density) { dragPxX.toDp().value }
                             val overlayY = dragBaseY + with(density) { dragPxY.toDp().value }
+                            val (ow, _) = mesaDims(mesa.forma, mesa.girada)
                             Box(
                                 modifier = Modifier
                                     .offset(x = overlayX.dp, y = overlayY.dp)
@@ -359,7 +372,7 @@ fun MesasScreen(
                                         shadowElevation = 16f
                                         alpha = 0.92f
                                     }
-                                    .width(CARD_WIDTH)
+                                    .width(ow.dp)
                                     .zIndex(10f)
                             ) {
                                 DragOverlayCard(mesa)
@@ -552,7 +565,8 @@ private fun MesaCard(
     onDragStart: () -> Unit,
     onDragStarted: () -> Unit,
     onDrag: (Offset) -> Unit,
-    onDragEnd: () -> Unit
+    onDragEnd: () -> Unit,
+    onRotateClick: () -> Unit
 ) {
     val color = when (mesa.estado) {
         MesaEstado.LIBRE -> Color(0xFFC8E6C9)
@@ -572,12 +586,8 @@ private fun MesaCard(
         MesaForma.RECTANGULAR -> 14.dp
         MesaForma.RECTANGULAR_XL -> 12.dp
     }
-    val cardHeight = when (mesa.forma) {
-        MesaForma.REDONDA -> CARD_WIDTH
-        MesaForma.CUADRADA -> CARD_WIDTH
-        MesaForma.RECTANGULAR -> CARD_WIDTH * 0.55f
-        MesaForma.RECTANGULAR_XL -> CARD_WIDTH * 0.4f
-    }
+    val (cardWf, cardHf) = mesaDims(mesa.forma, mesa.girada)
+    val cardHeight = cardHf.dp
 
     var menuExpanded by remember { mutableStateOf(false) }
     var dragArrancado by remember { mutableStateOf(false) }
@@ -683,6 +693,13 @@ private fun MesaCard(
                         onClick = { menuExpanded = false; onDeleteClick() },
                         leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }
                     )
+                    if (esRectangular(mesa.forma)) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.mesas_menu_rotate)) },
+                            onClick = { menuExpanded = false; onRotateClick() },
+                            leadingIcon = { Icon(Icons.Default.Refresh, null) }
+                        )
+                    }
                 }
             }
         }
@@ -697,12 +714,8 @@ private fun DragOverlayCard(mesa: Mesa) {
         MesaForma.RECTANGULAR -> 14.dp
         MesaForma.RECTANGULAR_XL -> 12.dp
     }
-    val cardHeight = when (mesa.forma) {
-        MesaForma.REDONDA -> CARD_WIDTH
-        MesaForma.CUADRADA -> CARD_WIDTH
-        MesaForma.RECTANGULAR -> CARD_WIDTH * 0.55f
-        MesaForma.RECTANGULAR_XL -> CARD_WIDTH * 0.4f
-    }
+    val (cardWf, cardHf) = mesaDims(mesa.forma, mesa.girada)
+    val cardHeight = cardHf.dp
     val color = when (mesa.estado) {
         MesaEstado.LIBRE -> Color(0xFFC8E6C9)
         MesaEstado.OCUPADA -> Color(0xFFFFE0B2)
@@ -710,7 +723,7 @@ private fun DragOverlayCard(mesa: Mesa) {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth().height(cardHeight),
+        modifier = Modifier.width(cardWf.dp).height(cardHeight),
         shape = RoundedCornerShape(shapeRadius),
         colors = CardDefaults.cardColors(containerColor = color),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
@@ -735,10 +748,10 @@ private fun findNearestFreeCell(
     targetY: Float,
     draggedW: Float,
     draggedH: Float,
-    occupied: List<Triple<Float, Float, Float>>
+    occupied: List<List<Float>>
 ): Pair<Float, Float> {
-    fun hayColision(x: Float, y: Float): Boolean = occupied.any { (ox, oy, oh) ->
-        colisionan(x, y, draggedW, draggedH, ox, oy, CARD_W, oh)
+    fun hayColision(x: Float, y: Float): Boolean = occupied.any { o ->
+        colisionan(x, y, draggedW, draggedH, o[0], o[1], o[2], o[3])
     }
 
     if (!hayColision(targetX, targetY)) return targetX to targetY
