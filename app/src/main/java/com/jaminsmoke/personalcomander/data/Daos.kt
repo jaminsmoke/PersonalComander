@@ -30,8 +30,8 @@ interface MesaDao {
     @Update
     suspend fun update(mesa: Mesa)
 
-    @Query("UPDATE mesas SET estado = :estado, comandaActivaId = :comandaId, alias = :alias WHERE id = :id")
-    suspend fun updateEstado(id: Long, estado: MesaEstado, comandaId: Long?, alias: String? = null)
+    @Query("UPDATE mesas SET estado = :estado, comandaActivaId = :comandaId WHERE id = :id")
+    suspend fun updateEstado(id: Long, estado: MesaEstado, comandaId: Long?)
 
     @Query("UPDATE mesas SET alias = :alias, capacidad = :capacidad, forma = :forma WHERE id = :id")
     suspend fun updateConfig(id: Long, alias: String?, capacidad: Int, forma: MesaForma)
