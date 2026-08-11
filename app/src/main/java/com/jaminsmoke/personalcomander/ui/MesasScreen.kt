@@ -1,5 +1,7 @@
 package com.jaminsmoke.personalcomander.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -263,6 +265,7 @@ fun MesasScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun MesaCard(mesa: Mesa, onClick: () -> Unit, onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
     val color = when (mesa.estado) {
@@ -286,63 +289,58 @@ private fun MesaCard(mesa: Mesa, onClick: () -> Unit, onEditClick: () -> Unit, o
 
     var menuExpanded by remember { mutableStateOf(false) }
 
-    Box {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(aspecto)
-                .clickable(onClick = onClick),
-            shape = RoundedCornerShape(shapeRadius),
-            colors = CardDefaults.cardColors(containerColor = color)
-        ) {
-            Box(Modifier.fillMaxSize().padding(if (mesa.forma == MesaForma.REDONDA) 12.dp else 10.dp)) {
-                Column(
-                    modifier = Modifier.align(Alignment.TopStart),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Text(
-                        text = mesa.nombreVisible,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    if (mesa.alias != null) {
-                        Text("Nº ${mesa.numero}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                Row(
-                    modifier = Modifier.align(Alignment.BottomEnd),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("${mesa.capacidad}p", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (tieneComanda) Box(Modifier.size(10.dp).background(Color(0xFFFF7043), CircleShape))
-                    Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
-                }
-                // Menu button (top right)
-                IconButton(
-                    onClick = { menuExpanded = true },
-                    modifier = Modifier.align(Alignment.TopEnd).size(28.dp)
-                ) {
-                    Icon(Icons.Default.Edit, stringResource(R.string.btn_edit), Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(aspecto)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = { menuExpanded = true }
+            ),
+        shape = RoundedCornerShape(shapeRadius),
+        colors = CardDefaults.cardColors(containerColor = color)
+    ) {
+        Box(Modifier.fillMaxSize().padding(if (mesa.forma == MesaForma.REDONDA) 12.dp else 10.dp)) {
+            Column(
+                modifier = Modifier.align(Alignment.TopStart),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = mesa.nombreVisible,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (mesa.alias != null) {
+                    Text("Nº ${mesa.numero}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-        }
+            Row(
+                modifier = Modifier.align(Alignment.BottomEnd),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("${mesa.capacidad}p", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (tieneComanda) Box(Modifier.size(10.dp).background(Color(0xFFFF7043), CircleShape))
+                Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
+            }
 
-        // Dropdown menu
-        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.mesas_menu_edit)) },
-                onClick = { menuExpanded = false; onEditClick() },
-                leadingIcon = { Icon(Icons.Default.Edit, null) }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.mesas_menu_delete), color = MaterialTheme.colorScheme.error) },
-                onClick = { menuExpanded = false; onDeleteClick() },
-                leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }
-            )
+            // Dropdown menu anchored to top-right
+            Box(Modifier.align(Alignment.TopEnd).size(28.dp)) {
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.mesas_menu_edit)) },
+                        onClick = { menuExpanded = false; onEditClick() },
+                        leadingIcon = { Icon(Icons.Default.Edit, null) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.mesas_menu_delete), color = MaterialTheme.colorScheme.error) },
+                        onClick = { menuExpanded = false; onDeleteClick() },
+                        leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }
+                    )
+                }
+            }
         }
     }
 }
