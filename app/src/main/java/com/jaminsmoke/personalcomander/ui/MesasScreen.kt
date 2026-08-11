@@ -506,10 +506,28 @@ private fun MesaCard(
 
 @Composable
 private fun DragOverlayCard(mesa: Mesa) {
+    val shapeRadius = when (mesa.forma) {
+        MesaForma.REDONDA -> 999.dp
+        MesaForma.CUADRADA -> 16.dp
+        MesaForma.RECTANGULAR -> 14.dp
+        MesaForma.RECTANGULAR_XL -> 12.dp
+    }
+    val cardHeight = when (mesa.forma) {
+        MesaForma.REDONDA -> CARD_WIDTH
+        MesaForma.CUADRADA -> CARD_WIDTH
+        MesaForma.RECTANGULAR -> CARD_WIDTH * 0.55f
+        MesaForma.RECTANGULAR_XL -> CARD_WIDTH * 0.4f
+    }
+    val color = when (mesa.estado) {
+        MesaEstado.LIBRE -> Color(0xFFC8E6C9)
+        MesaEstado.OCUPADA -> Color(0xFFFFE0B2)
+        MesaEstado.EN_COCINA -> Color(0xFFB3E5FC)
+    }
+
     Card(
-        modifier = Modifier.fillMaxSize(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE0B2)),
+        modifier = Modifier.fillMaxWidth().height(cardHeight),
+        shape = RoundedCornerShape(shapeRadius),
+        colors = CardDefaults.cardColors(containerColor = color),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Box(Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {
