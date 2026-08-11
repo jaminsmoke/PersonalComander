@@ -362,6 +362,7 @@ fun MesasScreen(
     mesaEditando?.let { mesa ->
         var editAlias by remember(mesa) { mutableStateOf(mesa.alias ?: "") }
         var editCap by remember(mesa) { mutableStateOf(mesa.capacidad.toString()) }
+        var editForma by remember(mesa) { mutableStateOf(mesa.forma) }
         AlertDialog(
             onDismissRequest = { mesaEditando = null },
             title = { Text(stringResource(R.string.mesas_alias_title, mesa.nombreVisible)) },
@@ -369,11 +370,21 @@ fun MesasScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(editAlias, { editAlias = it }, label = { Text(stringResource(R.string.mesas_alias_label)) }, placeholder = { Text(mesa.numero.toString()) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(editCap, { editCap = it.filter { c -> c.isDigit() } }, label = { Text(stringResource(R.string.mesas_capacidad_label)) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
+                    Text(stringResource(R.string.mesas_shape_label), style = MaterialTheme.typography.labelMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        MesaForma.entries.forEach { forma ->
+                            FilterChip(
+                                selected = editForma == forma,
+                                onClick = { editForma = forma },
+                                label = { Text(formaLabel(forma)) }
+                            )
+                        }
+                    }
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.updateConfig(mesa, editAlias.ifBlank { null }, editCap.toIntOrNull() ?: mesa.capacidad)
+                    viewModel.updateConfig(mesa, editAlias.ifBlank { null }, editCap.toIntOrNull() ?: mesa.capacidad, editForma)
                     mesaEditando = null
                 }) { Text(stringResource(R.string.menu_save)) }
             },
@@ -482,14 +493,21 @@ private fun MesaCard(
         shape = RoundedCornerShape(shapeRadius),
         colors = CardDefaults.cardColors(containerColor = color)
     ) {
-        Box(Modifier.fillMaxSize().padding(if (mesa.forma == MesaForma.REDONDA) 10.dp else 8.dp)) {
+        val isRound = mesa.forma == MesaForma.REDONDA
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(if (isRound) 16.dp else 8.dp),
+            contentAlignment = if (isRound) Alignment.Center else Alignment.TopStart
+        ) {
             Column(
-                modifier = Modifier.align(Alignment.TopStart),
-                verticalArrangement = Arrangement.spacedBy(1.dp)
+                modifier = if (isRound) Modifier.align(Alignment.Center) else Modifier.align(Alignment.TopStart),
+                verticalArrangement = Arrangement.spacedBy(1.dp),
+                horizontalAlignment = if (isRound) Alignment.CenterHorizontally else Alignment.Start
             ) {
                 Text(
                     text = mesa.nombreVisible,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = if (isRound) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -497,15 +515,29 @@ private fun MesaCard(
                 if (mesa.alias != null) {
                     Text("Nº ${mesa.numero}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                // Bottom info inline (for round: below name)
+                if (isRound) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("${mesa.capacidad}p", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (tieneComanda) Box(Modifier.size(6.dp).background(Color(0xFFFF7043), CircleShape))
+                        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium)
+                    }
+                }
             }
-            Row(
-                modifier = Modifier.align(Alignment.BottomEnd),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("${mesa.capacidad}p", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (tieneComanda) Box(Modifier.size(8.dp).background(Color(0xFFFF7043), CircleShape))
-                Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
+            // Bottom info for non-round: at bottom-end
+            if (!isRound) {
+                Row(
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("${mesa.capacidad}p", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (tieneComanda) Box(Modifier.size(8.dp).background(Color(0xFFFF7043), CircleShape))
+                    Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
+                }
             }
 
             Box(Modifier.align(Alignment.TopEnd).size(24.dp)) {

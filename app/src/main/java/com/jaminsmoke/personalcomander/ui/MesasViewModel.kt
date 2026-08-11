@@ -25,12 +25,12 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
     fun setZona(z: String?) { _zona.value = z }
     fun limpiarMensaje() { _mensaje.value = null }
 
-    fun updateConfig(mesa: Mesa, alias: String?, capacidad: Int) {
+    fun updateConfig(mesa: Mesa, alias: String?, capacidad: Int, forma: MesaForma = mesa.forma) {
         viewModelScope.launch {
             try {
                 val a = alias?.trim()?.ifBlank { null }
                 val cap = capacidad.coerceIn(1, 99)
-                db.mesaDao().updateConfig(mesa.id, a, cap)
+                db.mesaDao().updateConfig(mesa.id, a, cap, forma)
             } catch (e: Exception) {
                 _mensaje.value = "Error al actualizar mesa: ${e.message}"
             }
