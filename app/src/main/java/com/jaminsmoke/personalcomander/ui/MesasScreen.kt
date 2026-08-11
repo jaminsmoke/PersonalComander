@@ -2,8 +2,8 @@ package com.jaminsmoke.personalcomander.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -77,7 +77,7 @@ import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MesasScreen(
     onOpenMesa: (Long) -> Unit,
@@ -352,6 +352,10 @@ private fun MesaCard(
 
     var menuExpanded by remember { mutableStateOf(false) }
 
+    // Estados internos para diferir el drag overlay hasta que haya movimiento real
+    var dragArrancado by remember { mutableStateOf(false) }
+    var offsetInicial by remember { mutableStateOf(Offset.Zero) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -359,27 +363,44 @@ private fun MesaCard(
             .graphicsLayer {
                 if (isDragging) alpha = 0.4f
             }
-            .pointerInput(mesa.id) {
+            // 1. Tap: abre la mesa
+            .pointerInput(mesa.id, "tap") {
+                detectTapGestures(onTap = { onClick() })
+            }
+            // 2. Long-press → menú (sin arrastrar) o drag (si arrastra)
+            .pointerInput(mesa.id, "drag") {
                 detectDragGesturesAfterLongPress(
                     onDragStart = { offset ->
-                        onDragStart(offset)
+                        // Solo long-press detectado. Mostramos menú contextual.
+                        // NO creamos el overlay de arrastre aún.
+                        offsetInicial = offset
+                        menuExpanded = true
+                        dragArrancado = false
                     },
                     onDrag = { change, dragAmount ->
                         change.consume()
+                        if (!dragArrancado) {
+                            // Primer movimiento tras long-press → arranca el drag real
+                            dragArrancado = true
+                            menuExpanded = false
+                            onDragStart(offsetInicial)
+                        }
                         onDrag(dragAmount)
                     },
                     onDragEnd = {
-                        onDragEnd()
+                        if (dragArrancado) {
+                            onDragEnd()
+                            dragArrancado = false
+                        }
                     },
                     onDragCancel = {
-                        onDragEnd()
+                        if (dragArrancado) {
+                            onDragEnd()
+                            dragArrancado = false
+                        }
                     }
                 )
-            }
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = { menuExpanded = true }
-            ),
+            },
         shape = RoundedCornerShape(shapeRadius),
         colors = CardDefaults.cardColors(containerColor = color)
     ) {
