@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MesaDao {
-    @Query("SELECT * FROM mesas ORDER BY numero")
+    @Query("SELECT * FROM mesas ORDER BY zona, numero")
     fun observeAll(): Flow<List<Mesa>>
 
     @Query("SELECT * FROM mesas WHERE id = :id")
@@ -30,8 +30,11 @@ interface MesaDao {
     @Update
     suspend fun update(mesa: Mesa)
 
-    @Query("UPDATE mesas SET estado = :estado, comandaActivaId = :comandaId WHERE id = :id")
-    suspend fun updateEstado(id: Long, estado: MesaEstado, comandaId: Long?)
+    @Query("UPDATE mesas SET estado = :estado, comandaActivaId = :comandaId, alias = :alias WHERE id = :id")
+    suspend fun updateEstado(id: Long, estado: MesaEstado, comandaId: Long?, alias: String? = null)
+
+    @Query("UPDATE mesas SET alias = :alias WHERE id = :id")
+    suspend fun setAlias(id: Long, alias: String?)
 }
 
 @Dao

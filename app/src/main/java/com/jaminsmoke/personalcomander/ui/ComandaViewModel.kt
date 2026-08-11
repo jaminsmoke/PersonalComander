@@ -149,7 +149,7 @@ class ComandaViewModel(
                     val pedidoActivo = if (p == null) {
                         if (cerrada) return@launch
                         val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
-                        db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, nuevoId)
+                        db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, nuevoId, null)
                         Pedido(id = nuevoId, mesaId = mesaId)
                     } else p
 
@@ -196,7 +196,7 @@ class ComandaViewModel(
                 try {
                     val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
                     db.pedidoDao().update(p.copy(estado = PedidoEstado.ENVIADA))
-                    db.mesaDao().updateEstado(mesaId, MesaEstado.EN_COCINA, p.id)
+                    db.mesaDao().updateEstado(mesaId, MesaEstado.EN_COCINA, p.id, null)
                 } catch (e: Exception) { _error.value = ctx.getString(R.string.error_send_to_kitchen, e.message ?: e.javaClass.simpleName) }
             }
         }
@@ -209,7 +209,7 @@ class ComandaViewModel(
                 try {
                     val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
                     db.pedidoDao().update(p.copy(estado = PedidoEstado.CERRADA, cerradoEn = System.currentTimeMillis()))
-                    db.mesaDao().updateEstado(mesaId, MesaEstado.LIBRE, null)
+                    db.mesaDao().updateEstado(mesaId, MesaEstado.LIBRE, null, null)
                 } catch (e: Exception) { _error.value = ctx.getString(R.string.error_close_table, e.message ?: e.javaClass.simpleName) }
             }
         }

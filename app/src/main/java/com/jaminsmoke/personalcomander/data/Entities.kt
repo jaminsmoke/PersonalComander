@@ -6,6 +6,8 @@ import androidx.room.PrimaryKey
 
 enum class MesaEstado { LIBRE, OCUPADA, EN_COCINA }
 
+enum class MesaForma(val capacidadDefecto: Int) { REDONDA(2), CUADRADA(4), RECTANGULAR(8), RECTANGULAR_XL(12) }
+
 enum class PedidoEstado { ABIERTA, ENVIADA, CERRADA }
 
 enum class LineaEstado { PENDIENTE, SERVIDA }
@@ -24,9 +26,16 @@ enum class LineaEstado { PENDIENTE, SERVIDA }
 data class Mesa(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val numero: Int,
+    val alias: String? = null,
+    val forma: MesaForma = MesaForma.CUADRADA,
+    val zona: String = "",
+    val capacidad: Int = 4,
     val estado: MesaEstado = MesaEstado.LIBRE,
     val comandaActivaId: Long? = null
-)
+) {
+    /** Nombre visible: alias si existe, sino el número */
+    val nombreVisible: String get() = alias ?: numero.toString()
+}
 
 @Entity(tableName = "productos")
 data class Producto(

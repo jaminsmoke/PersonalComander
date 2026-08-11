@@ -20,6 +20,10 @@
     <string name="mesas_free">Libre</string>
     <string name="mesas_occupied">Ocupada</string>
     <string name="mesas_in_kitchen">En cocina</string>
+    <string name="mesas_all_zones">📍 Todas</string>
+    <string name="mesas_alias_title">Alias de %s</string>
+    <string name="mesas_alias_desc">Asigna un nombre personalizado. Se borrará al cerrar la mesa.</string>
+    <string name="mesas_alias_label">Nombre (opcional)</string>
 
     <!-- Menu Screen -->
     <string name="menu_title">Gestión del menú</string>

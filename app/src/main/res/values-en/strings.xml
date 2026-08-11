@@ -20,6 +20,10 @@
     <string name="mesas_free">Free</string>
     <string name="mesas_occupied">Occupied</string>
     <string name="mesas_in_kitchen">In kitchen</string>
+    <string name="mesas_all_zones">📍 All</string>
+    <string name="mesas_alias_title">Alias for %s</string>
+    <string name="mesas_alias_desc">Set a custom name. It will be cleared when the table closes.</string>
+    <string name="mesas_alias_label">Name (optional)</string>
 
     <!-- Menu Screen -->
     <string name="menu_title">Menu Management</string>

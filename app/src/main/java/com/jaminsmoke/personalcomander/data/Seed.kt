@@ -1,7 +1,29 @@
 package com.jaminsmoke.personalcomander.data
 
 object Seed {
-    fun mesas(): List<Mesa> = (1..16).map { Mesa(numero = it) }
+    fun mesas(): List<Mesa> = listOf(
+        // Terraza — mesas redondas, 2 personas
+        Mesa(numero = 1, forma = MesaForma.REDONDA, zona = "Terraza", capacidad = 2),
+        Mesa(numero = 2, forma = MesaForma.REDONDA, zona = "Terraza", capacidad = 2),
+        Mesa(numero = 3, forma = MesaForma.REDONDA, zona = "Terraza", capacidad = 2),
+        Mesa(numero = 4, forma = MesaForma.REDONDA, zona = "Terraza", capacidad = 2),
+        // Interior — cuadradas, 4 personas
+        Mesa(numero = 5, forma = MesaForma.CUADRADA, zona = "Interior", capacidad = 4),
+        Mesa(numero = 6, forma = MesaForma.CUADRADA, zona = "Interior", capacidad = 4),
+        Mesa(numero = 7, forma = MesaForma.CUADRADA, zona = "Interior", capacidad = 4),
+        Mesa(numero = 8, forma = MesaForma.CUADRADA, zona = "Interior", capacidad = 4),
+        // Interior — rectangulares, 8 personas
+        Mesa(numero = 9, forma = MesaForma.RECTANGULAR, zona = "Interior", capacidad = 8),
+        Mesa(numero = 10, forma = MesaForma.RECTANGULAR, zona = "Interior", capacidad = 8),
+        Mesa(numero = 11, forma = MesaForma.RECTANGULAR, zona = "Interior", capacidad = 8),
+        Mesa(numero = 12, forma = MesaForma.RECTANGULAR, zona = "Interior", capacidad = 8),
+        // Interior — XL, 12 personas
+        Mesa(numero = 13, forma = MesaForma.RECTANGULAR_XL, zona = "Interior", capacidad = 12),
+        Mesa(numero = 14, forma = MesaForma.RECTANGULAR_XL, zona = "Interior", capacidad = 12),
+        // Barra — redondas altas, 3 personas
+        Mesa(numero = 15, forma = MesaForma.REDONDA, zona = "Barra", capacidad = 3),
+        Mesa(numero = 16, forma = MesaForma.REDONDA, zona = "Barra", capacidad = 3)
+    )
 
     fun productos(): List<Producto> = listOf(
         Producto(nombre = "Pan con tomate", categoria = "Entrantes", precio = 3.50),
