@@ -231,7 +231,7 @@ private fun SincronizarCard(
             OutlinedTextField(
                 value = state.host,
                 onValueChange = onHost,
-                label = { Text("IP del servidor TPV") },
+                label = { Text(stringResource(R.string.lbl_ip_server)) },
                 placeholder = { Text("192.168.1.50") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -241,7 +241,7 @@ private fun SincronizarCard(
                 OutlinedTextField(
                     value = state.puerto,
                     onValueChange = onPuerto,
-                    label = { Text("Puerto") },
+                    label = { Text(stringResource(R.string.lbl_port)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f)
@@ -249,7 +249,7 @@ private fun SincronizarCard(
                 OutlinedTextField(
                     value = state.ruta,
                     onValueChange = onRuta,
-                    label = { Text("Ruta") },
+                    label = { Text(stringResource(R.string.lbl_route)) },
                     singleLine = true,
                     modifier = Modifier.weight(1.6f)
                 )
@@ -284,7 +284,7 @@ private fun SincronizarCard(
                     } else {
                         Icon(Icons.Default.CloudDownload, contentDescription = null)
                     }
-                    Text("Sincronizar")
+                    Text(stringResource(R.string.btn_sync))
                 }
             }
             if (state.escaneando) {
@@ -331,7 +331,7 @@ private fun SincronizarCard(
                             )
                         }
                         TextButton(onClick = { onElegirServidor(servidor) }) {
-                            Text("Usar")
+                            Text(stringResource(R.string.btn_use))
                         }
                     }
                 }
@@ -366,11 +366,11 @@ private fun BackupCard(onExportar: () -> Unit, onImportar: () -> Unit) {
         ) {
             OutlinedButton(onClick = onExportar, modifier = Modifier.weight(1f)) {
                 Icon(Icons.Default.FileDownload, contentDescription = null)
-                Text("Exportar")
+                Text(stringResource(R.string.btn_export))
             }
             OutlinedButton(onClick = onImportar, modifier = Modifier.weight(1f)) {
                 Icon(Icons.Default.CloudUpload, contentDescription = null)
-                Text("Importar")
+                Text(stringResource(R.string.btn_import))
             }
         }
     }

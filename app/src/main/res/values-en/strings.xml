@@ -112,4 +112,12 @@
     <string name="btn_delete">Delete</string>
     <string name="btn_add">Add</string>
     <string name="btn_remove">Remove</string>
+    <string name="btn_use">Use</string>
+    <string name="btn_sync">Sync</string>
+    <string name="btn_export">Export</string>
+    <string name="btn_import">Import</string>
+    <string name="lbl_port">Port</string>
+    <string name="lbl_route">Path</string>
+    <string name="lbl_ip_server">POS server IP</string>
+    <string name="lbl_access">Shortcuts</string>
 </resources>

@@ -93,7 +93,7 @@ fun HomeScreen(
             item {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Accesos",
+                    text = stringResource(R.string.lbl_access),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )

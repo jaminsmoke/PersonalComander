@@ -204,7 +204,7 @@ private fun MenuProductoRow(
                 onCheckedChange = { onToggleDisponible() }
             )
             IconButton(onClick = onEditar) {
-                Icon(Icons.Default.Edit, contentDescription = "Editar")
+                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.btn_edit))
             }
             IconButton(onClick = onEliminar) {
                 Icon(

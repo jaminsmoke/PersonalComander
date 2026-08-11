@@ -112,4 +112,12 @@
     <string name="btn_delete">Eliminar</string>
     <string name="btn_add">Añadir</string>
     <string name="btn_remove">Quitar</string>
+    <string name="btn_use">Usar</string>
+    <string name="btn_sync">Sincronizar</string>
+    <string name="btn_export">Exportar</string>
+    <string name="btn_import">Importar</string>
+    <string name="lbl_port">Puerto</string>
+    <string name="lbl_route">Ruta</string>
+    <string name="lbl_ip_server">IP del servidor TPV</string>
+    <string name="lbl_access">Accesos</string>
 </resources>

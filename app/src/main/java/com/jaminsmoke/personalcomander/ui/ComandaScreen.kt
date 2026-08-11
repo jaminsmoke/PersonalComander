@@ -126,7 +126,7 @@ fun ComandaScreen(
                         Text(estadoLabel(state.mesa?.estado, context), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } }
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.btn_back)) } }
             )
         }
     ) { padding ->
@@ -280,7 +280,7 @@ private fun ProductoRow(producto: Producto, onClick: () -> Unit) {
                 Text("${CategoriaIcono.de(producto.categoria)} ${producto.categoria}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text(producto.precio.formatoEuro(), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-            Icon(Icons.Default.Add, "Añadir", Modifier.padding(start = 6.dp).size(20.dp), tint = MaterialTheme.colorScheme.primary)
+            Icon(Icons.Default.Add, stringResource(R.string.btn_add), Modifier.padding(start = 6.dp).size(20.dp), tint = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -334,8 +334,8 @@ private fun LineaRow(linea: LineaPedido, onAumentar: () -> Unit, onDisminuir: ()
         Text("${linea.cantidad}×", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         Text(linea.nombreProducto, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
         Text((linea.precioUnitario * linea.cantidad).formatoEuro(), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-        IconButton(onClick = onDisminuir, Modifier.size(32.dp)) { Icon(Icons.Default.Clear, "Quitar", Modifier.size(18.dp)) }
-        IconButton(onClick = onAumentar, Modifier.size(32.dp)) { Icon(Icons.Default.Add, "Añadir", Modifier.size(18.dp)) }
+        IconButton(onClick = onDisminuir, Modifier.size(32.dp)) { Icon(Icons.Default.Clear, stringResource(R.string.btn_remove), Modifier.size(18.dp)) }
+        IconButton(onClick = onAumentar, Modifier.size(32.dp)) { Icon(Icons.Default.Add, stringResource(R.string.btn_add), Modifier.size(18.dp)) }
     }
 }
 
