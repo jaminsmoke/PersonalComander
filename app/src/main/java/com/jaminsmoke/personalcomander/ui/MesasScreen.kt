@@ -4,24 +4,23 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -61,12 +60,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -76,6 +75,8 @@ import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
 import kotlin.math.roundToInt
+
+private val CARD_WIDTH = 120.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,10 +93,14 @@ fun MesasScreen(
     var mesaEditando by remember { mutableStateOf<Mesa?>(null) }
     var mesaBorrando by remember { mutableStateOf<Mesa?>(null) }
     var crearVisible by remember { mutableStateOf(false) }
+    val density = LocalDensity.current
 
     // Drag state
     var draggedMesa by remember { mutableStateOf<Mesa?>(null) }
-    var dragOffset by remember { mutableStateOf(Offset.Zero) }
+    var dragBaseX by remember { mutableStateOf(0f) }  // mesa's original posX in dp
+    var dragBaseY by remember { mutableStateOf(0f) }  // mesa's original posY in dp
+    var dragPxX by remember { mutableStateOf(0f) }    // cumulative drag in px X
+    var dragPxY by remember { mutableStateOf(0f) }    // cumulative drag in px Y
 
     LaunchedEffect(mensaje) {
         mensaje?.let {
@@ -161,86 +166,100 @@ fun MesasScreen(
                     }
                 }
 
-                // Table grid
-                BoxWithConstraints(Modifier.fillMaxSize()) {
-                    val cellSize: Dp = when {
-                        maxWidth > 800.dp -> 140.dp
-                        maxWidth > 500.dp -> 120.dp
-                        else -> 100.dp
-                    }
-                    if (mesas.isEmpty()) {
-                        LazyVerticalGrid(
-                            columns = GridCells.Adaptive(minSize = cellSize),
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(16) {
-                                ShimmerBox(modifier = Modifier.aspectRatio(1f), height = 0, radius = 16)
-                            }
-                        }
-                    } else {
-                        LazyVerticalGrid(
-                            columns = GridCells.Adaptive(minSize = cellSize),
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(mesasFiltradas, key = { it.id }) { mesa ->
-                                val isDragging = draggedMesa?.id == mesa.id
-                                MesaCard(
-                                    mesa = mesa,
-                                    isDragging = isDragging,
-                                    onClick = {
-                                        if (draggedMesa == null) onOpenMesa(mesa.id)
-                                    },
-                                    onEditClick = { mesaEditando = mesa },
-                                    onDeleteClick = { mesaBorrando = mesa },
-                                    onDragStart = { offset ->
-                                        draggedMesa = mesa
-                                        dragOffset = offset
-                                    },
-                                    onDrag = { change ->
-                                        dragOffset += change
-                                    },
-                                    onDragEnd = {
-                                        draggedMesa?.let { dragged ->
-                                            // Find closest mesa by position
-                                            val draggedNum = dragged.numero
-                                            val target = mesasFiltradas
-                                                .filter { it.id != dragged.id }
-                                                .minByOrNull { _ -> 0 } // swap with first other mesa found
-                                            if (target != null && target.numero != draggedNum) {
-                                                viewModel.swapMesas(dragged, target)
-                                            }
-                                        }
-                                        draggedMesa = null
-                                        dragOffset = Offset.Zero
-                                    }
+                // Free-form board with scroll
+                val scrollH = rememberScrollState()
+                val scrollV = rememberScrollState()
+                val maxX = ((mesasFiltradas.maxOfOrNull { it.posX } ?: 0f) + 200f).coerceAtLeast(400f)
+                val maxY = ((mesasFiltradas.maxOfOrNull { it.posY } ?: 0f) + 200f).coerceAtLeast(600f)
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .horizontalScroll(scrollH)
+                        .verticalScroll(scrollV)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = maxX.dp, height = maxY.dp)
+                    ) {
+                        // Shimmer loading
+                        if (mesas.isEmpty()) {
+                            for (i in 0 until 12) {
+                                ShimmerBox(
+                                    modifier = Modifier
+                                        .offset(x = ((i % 4) * 140).dp, y = ((i / 4) * 160).dp)
+                                        .width(CARD_WIDTH),
+                                    height = 0,
+                                    radius = 16
                                 )
                             }
                         }
-                    }
-                }
-            }
 
-            // Drag overlay
-            draggedMesa?.let { mesa ->
-                Box(
-                    modifier = Modifier
-                        .offset { IntOffset(dragOffset.x.roundToInt(), dragOffset.y.roundToInt()) }
-                        .zIndex(10f)
-                        .graphicsLayer {
-                            scaleX = 1.08f
-                            scaleY = 1.08f
-                            shadowElevation = 16f
-                            alpha = 0.9f
+                        // Render each mesa at its saved position
+                        mesasFiltradas.forEach { mesa ->
+                            val isDragging = draggedMesa?.id == mesa.id
+                            MesaCard(
+                                mesa = mesa,
+                                isDragging = isDragging,
+                                modifier = Modifier
+                                    .offset(x = mesa.posX.dp, y = mesa.posY.dp)
+                                    .width(CARD_WIDTH),
+                                onClick = {
+                                    if (draggedMesa == null) onOpenMesa(mesa.id)
+                                },
+                                onEditClick = { mesaEditando = mesa },
+                                onDeleteClick = { mesaBorrando = mesa },
+                                onDragStart = {
+                                    // Don't create overlay yet — MesaCard defers this
+                                },
+                                onDragStarted = {
+                                    draggedMesa = mesa
+                                    dragBaseX = mesa.posX
+                                    dragBaseY = mesa.posY
+                                    dragPxX = 0f
+                                    dragPxY = 0f
+                                },
+                                onDrag = { deltaPx ->
+                                    dragPxX += deltaPx.x
+                                    dragPxY += deltaPx.y
+                                },
+                                onDragEnd = {
+                                    draggedMesa?.let { dragged ->
+                                        val deltaDpX = with(density) { dragPxX.toDp().value }
+                                        val deltaDpY = with(density) { dragPxY.toDp().value }
+                                        viewModel.updatePosicion(
+                                            dragged,
+                                            (dragBaseX + deltaDpX).coerceAtLeast(0f),
+                                            (dragBaseY + deltaDpY).coerceAtLeast(0f)
+                                        )
+                                    }
+                                    draggedMesa = null
+                                    dragPxX = 0f
+                                    dragPxY = 0f
+                                }
+                            )
                         }
-                        .size(100.dp)
-                ) {
-                    DragOverlayCard(mesa)
+
+                        // Drag overlay — follows the finger
+                        draggedMesa?.let { mesa ->
+                            Box(
+                                modifier = Modifier
+                                    .offset(x = dragBaseX.dp, y = dragBaseY.dp)
+                                    .graphicsLayer {
+                                        translationX = dragPxX
+                                        translationY = dragPxY
+                                        scaleX = 1.08f
+                                        scaleY = 1.08f
+                                        shadowElevation = 16f
+                                        alpha = 0.9f
+                                    }
+                                    .width(CARD_WIDTH)
+                                    .zIndex(10f)
+                            ) {
+                                DragOverlayCard(mesa)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -324,10 +343,12 @@ fun MesasScreen(
 private fun MesaCard(
     mesa: Mesa,
     isDragging: Boolean,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onDragStart: (Offset) -> Unit,
+    onDragStart: () -> Unit,
+    onDragStarted: () -> Unit,
     onDrag: (Offset) -> Unit,
     onDragEnd: () -> Unit
 ) {
@@ -343,23 +364,25 @@ private fun MesaCard(
     }
     val tieneComanda = mesa.comandaActivaId != null
 
-    val (aspecto, shapeRadius) = when (mesa.forma) {
-        MesaForma.REDONDA -> 1f to 999.dp
-        MesaForma.CUADRADA -> 1f to 16.dp
-        MesaForma.RECTANGULAR -> 0.55f to 14.dp
-        MesaForma.RECTANGULAR_XL -> 0.4f to 12.dp
+    val shapeRadius = when (mesa.forma) {
+        MesaForma.REDONDA -> 999.dp
+        MesaForma.CUADRADA -> 16.dp
+        MesaForma.RECTANGULAR -> 14.dp
+        MesaForma.RECTANGULAR_XL -> 12.dp
+    }
+    val cardHeight = when (mesa.forma) {
+        MesaForma.REDONDA -> CARD_WIDTH
+        MesaForma.CUADRADA -> CARD_WIDTH
+        MesaForma.RECTANGULAR -> CARD_WIDTH * 0.55f
+        MesaForma.RECTANGULAR_XL -> CARD_WIDTH * 0.4f
     }
 
     var menuExpanded by remember { mutableStateOf(false) }
-
-    // Estados internos para diferir el drag overlay hasta que haya movimiento real
     var dragArrancado by remember { mutableStateOf(false) }
-    var offsetInicial by remember { mutableStateOf(Offset.Zero) }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(aspecto)
+        modifier = modifier
+            .height(cardHeight)
             .graphicsLayer {
                 if (isDragging) alpha = 0.4f
             }
@@ -370,20 +393,19 @@ private fun MesaCard(
             // 2. Long-press → menú (sin arrastrar) o drag (si arrastra)
             .pointerInput(mesa.id, "drag") {
                 detectDragGesturesAfterLongPress(
-                    onDragStart = { offset ->
-                        // Solo long-press detectado. Mostramos menú contextual.
-                        // NO creamos el overlay de arrastre aún.
-                        offsetInicial = offset
+                    onDragStart = { _ ->
+                        // Long-press detectado. Mostrar menú, no drag aún.
                         menuExpanded = true
                         dragArrancado = false
+                        onDragStart()
                     },
                     onDrag = { change, dragAmount ->
                         change.consume()
                         if (!dragArrancado) {
-                            // Primer movimiento tras long-press → arranca el drag real
+                            // Primer movimiento → arranca el drag
                             dragArrancado = true
                             menuExpanded = false
-                            onDragStart(offsetInicial)
+                            onDragStarted()
                         }
                         onDrag(dragAmount)
                     },
@@ -404,14 +426,14 @@ private fun MesaCard(
         shape = RoundedCornerShape(shapeRadius),
         colors = CardDefaults.cardColors(containerColor = color)
     ) {
-        Box(Modifier.fillMaxSize().padding(if (mesa.forma == MesaForma.REDONDA) 12.dp else 10.dp)) {
+        Box(Modifier.fillMaxSize().padding(if (mesa.forma == MesaForma.REDONDA) 10.dp else 8.dp)) {
             Column(
                 modifier = Modifier.align(Alignment.TopStart),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 Text(
                     text = mesa.nombreVisible,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -422,15 +444,15 @@ private fun MesaCard(
             }
             Row(
                 modifier = Modifier.align(Alignment.BottomEnd),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("${mesa.capacidad}p", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (tieneComanda) Box(Modifier.size(10.dp).background(Color(0xFFFF7043), CircleShape))
+                if (tieneComanda) Box(Modifier.size(8.dp).background(Color(0xFFFF7043), CircleShape))
                 Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
             }
 
-            Box(Modifier.align(Alignment.TopEnd).size(28.dp)) {
+            Box(Modifier.align(Alignment.TopEnd).size(24.dp)) {
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.mesas_menu_edit)) },
@@ -456,10 +478,10 @@ private fun DragOverlayCard(mesa: Mesa) {
         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE0B2)),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
-        Box(Modifier.fillMaxSize().padding(10.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {
             Text(
                 text = mesa.nombreVisible,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
         }

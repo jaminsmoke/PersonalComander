@@ -59,13 +59,31 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updatePosicion(mesa: Mesa, posX: Float, posY: Float) {
+        viewModelScope.launch {
+            try {
+                db.mesaDao().updatePosicion(mesa.id, posX, posY)
+            } catch (e: Exception) {
+                _mensaje.value = "Error al mover mesa: ${e.message}"
+            }
+        }
+    }
+
     fun createMesa(zona: String, forma: MesaForma, capacidad: Int, alias: String?) {
         viewModelScope.launch {
             try {
                 val maxNum = db.mesaDao().getMaxNumero()
                 val a = alias?.trim()?.ifBlank { null }
+                // Place new mesa at the bottom-right of existing mesas
+                val mesas = db.mesaDao().observeAll()
+                // Use a simple default position
                 db.mesaDao().insertMesa(
-                    Mesa(numero = maxNum + 1, alias = a, forma = forma, zona = zona, capacidad = capacidad)
+                    Mesa(
+                        numero = maxNum + 1, alias = a, forma = forma,
+                        zona = zona, capacidad = capacidad,
+                        posX = (maxNum % 4) * 140f,
+                        posY = (maxNum / 4) * 160f + 50f
+                    )
                 )
             } catch (e: Exception) {
                 _mensaje.value = "Error al crear mesa: ${e.message}"

@@ -31,7 +31,9 @@ data class Mesa(
     val zona: String = "",
     val capacidad: Int = 4,
     val estado: MesaEstado = MesaEstado.LIBRE,
-    val comandaActivaId: Long? = null
+    val comandaActivaId: Long? = null,
+    val posX: Float = 0f,
+    val posY: Float = 0f
 ) {
     /** Nombre visible: alias si existe, sino el número */
     val nombreVisible: String get() = alias ?: numero.toString()

@@ -16,6 +16,7 @@ class PersonalComanderApp : Application() {
 
     val db: AppDatabase by lazy {
         Room.databaseBuilder(this, AppDatabase::class.java, "personal_comander.db")
+            .addMigrations(AppDatabase.MIGRATION_4_5)
             .fallbackToDestructiveMigration()
             .build()
             .also { seedIfEmpty(it) }

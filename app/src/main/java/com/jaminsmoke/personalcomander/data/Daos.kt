@@ -50,6 +50,9 @@ interface MesaDao {
 
     @Query("UPDATE mesas SET numero = CASE WHEN numero = :n1 THEN :n2 WHEN numero = :n2 THEN :n1 ELSE numero END WHERE numero IN (:n1, :n2)")
     suspend fun swapNumeros(n1: Int, n2: Int)
+
+    @Query("UPDATE mesas SET posX = :posX, posY = :posY WHERE id = :id")
+    suspend fun updatePosicion(id: Long, posX: Float, posY: Float)
 }
 
 @Dao

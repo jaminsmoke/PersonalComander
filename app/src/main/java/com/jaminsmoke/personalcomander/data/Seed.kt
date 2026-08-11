@@ -1,29 +1,70 @@
 package com.jaminsmoke.personalcomander.data
 
 object Seed {
-    fun mesas(): List<Mesa> = listOf(
-        // Terraza — mesas redondas, 2 personas
-        Mesa(numero = 1, forma = MesaForma.REDONDA, zona = "Terraza", capacidad = 2),
-        Mesa(numero = 2, forma = MesaForma.REDONDA, zona = "Terraza", capacidad = 2),
-        Mesa(numero = 3, forma = MesaForma.REDONDA, zona = "Terraza", capacidad = 2),
-        Mesa(numero = 4, forma = MesaForma.REDONDA, zona = "Terraza", capacidad = 2),
-        // Interior — cuadradas, 4 personas
-        Mesa(numero = 5, forma = MesaForma.CUADRADA, zona = "Interior", capacidad = 4),
-        Mesa(numero = 6, forma = MesaForma.CUADRADA, zona = "Interior", capacidad = 4),
-        Mesa(numero = 7, forma = MesaForma.CUADRADA, zona = "Interior", capacidad = 4),
-        Mesa(numero = 8, forma = MesaForma.CUADRADA, zona = "Interior", capacidad = 4),
-        // Interior — rectangulares, 8 personas
-        Mesa(numero = 9, forma = MesaForma.RECTANGULAR, zona = "Interior", capacidad = 8),
-        Mesa(numero = 10, forma = MesaForma.RECTANGULAR, zona = "Interior", capacidad = 8),
-        Mesa(numero = 11, forma = MesaForma.RECTANGULAR, zona = "Interior", capacidad = 8),
-        Mesa(numero = 12, forma = MesaForma.RECTANGULAR, zona = "Interior", capacidad = 8),
-        // Interior — XL, 12 personas
-        Mesa(numero = 13, forma = MesaForma.RECTANGULAR_XL, zona = "Interior", capacidad = 12),
-        Mesa(numero = 14, forma = MesaForma.RECTANGULAR_XL, zona = "Interior", capacidad = 12),
-        // Barra — redondas altas, 3 personas
-        Mesa(numero = 15, forma = MesaForma.REDONDA, zona = "Barra", capacidad = 3),
-        Mesa(numero = 16, forma = MesaForma.REDONDA, zona = "Barra", capacidad = 3)
-    )
+
+    // Layout constants for the free-form board (in dp)
+    private const val COL_SPACING = 140f
+    private const val ROW_SPACING = 160f
+
+    fun mesas(): List<Mesa> {
+        // Arrange mesas in a grid: 4 columns per row, grouped by zone
+        // Row 0: Terraza (round, 2p) — 4 mesas
+        // Row 1: Interior cuadradas (square, 4p) — 4 mesas
+        // Row 2: Interior rectangulares (rectangular, 8p) — 4 mesas
+        // Row 3: Interior XL — 2 mesas
+        // Row 4: Barra (round, 3p) — 2 mesas
+
+        val mesas = mutableListOf<Mesa>()
+
+        // Row 0 — Terraza
+        for (i in 0..3) {
+            mesas.add(Mesa(
+                numero = 1 + i,
+                forma = MesaForma.REDONDA, zona = "Terraza", capacidad = 2,
+                posX = i * COL_SPACING, posY = 0f
+            ))
+        }
+        // Row 1 — Interior cuadradas
+        for (i in 0..3) {
+            mesas.add(Mesa(
+                numero = 5 + i,
+                forma = MesaForma.CUADRADA, zona = "Interior", capacidad = 4,
+                posX = i * COL_SPACING, posY = ROW_SPACING
+            ))
+        }
+        // Row 2 — Interior rectangulares
+        for (i in 0..3) {
+            mesas.add(Mesa(
+                numero = 9 + i,
+                forma = MesaForma.RECTANGULAR, zona = "Interior", capacidad = 8,
+                posX = i * COL_SPACING, posY = 2 * ROW_SPACING
+            ))
+        }
+        // Row 3 — Interior XL (only 2, centered)
+        mesas.add(Mesa(
+            numero = 13,
+            forma = MesaForma.RECTANGULAR_XL, zona = "Interior", capacidad = 12,
+            posX = 0f, posY = 3 * ROW_SPACING
+        ))
+        mesas.add(Mesa(
+            numero = 14,
+            forma = MesaForma.RECTANGULAR_XL, zona = "Interior", capacidad = 12,
+            posX = COL_SPACING, posY = 3 * ROW_SPACING
+        ))
+        // Row 4 — Barra (only 2)
+        mesas.add(Mesa(
+            numero = 15,
+            forma = MesaForma.REDONDA, zona = "Barra", capacidad = 3,
+            posX = 0f, posY = 4 * ROW_SPACING
+        ))
+        mesas.add(Mesa(
+            numero = 16,
+            forma = MesaForma.REDONDA, zona = "Barra", capacidad = 3,
+            posX = COL_SPACING, posY = 4 * ROW_SPACING
+        ))
+
+        return mesas
+    }
 
     fun productos(): List<Producto> = listOf(
         Producto(nombre = "Pan con tomate", categoria = "Entrantes", precio = 3.50),
