@@ -114,6 +114,21 @@ private fun mesaDims(forma: MesaForma, girada: Boolean): Pair<Float, Float> {
     return CARD_W to mesaAltura(forma)
 }
 
+/** Color de fondo de una carta según su estado */
+private fun mesaColor(estado: MesaEstado): Color = when (estado) {
+    MesaEstado.LIBRE -> Color(0xFFC8E6C9)
+    MesaEstado.OCUPADA -> Color(0xFFFFE0B2)
+    MesaEstado.EN_COCINA -> Color(0xFFB3E5FC)
+}
+
+/** Radio de esquinas de una carta según su forma */
+private fun mesaShapeRadius(forma: MesaForma): androidx.compose.ui.unit.Dp = when (forma) {
+    MesaForma.REDONDA -> 999.dp
+    MesaForma.CUADRADA -> 16.dp
+    MesaForma.RECTANGULAR -> 14.dp
+    MesaForma.RECTANGULAR_XL -> 12.dp
+}
+
 /** Detecta si dos rectángulos (x,y,w,h) se solapan (AABB collision) */
 private fun colisionan(
     x1: Float, y1: Float, w1: Float, h1: Float,
@@ -326,7 +341,6 @@ fun MesasScreen(
                                     onEditClick = { mesaEditando = mesa },
                                     onDeleteClick = { mesaBorrando = mesa },
                                     onRotateClick = { viewModel.toggleGiro(mesa) },
-                                    onDragStart = { },
                                     onDragStarted = {
                                         draggedMesa = mesa
                                         dragBaseX = animX
@@ -605,17 +619,12 @@ private fun MesaCard(
     onClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onDragStart: () -> Unit,
     onDragStarted: () -> Unit,
     onDrag: (Offset) -> Unit,
     onDragEnd: () -> Unit,
     onRotateClick: () -> Unit
 ) {
-    val color = when (mesa.estado) {
-        MesaEstado.LIBRE -> Color(0xFFC8E6C9)
-        MesaEstado.OCUPADA -> Color(0xFFFFE0B2)
-        MesaEstado.EN_COCINA -> Color(0xFFB3E5FC)
-    }
+    val color = mesaColor(mesa.estado)
     val label = when (mesa.estado) {
         MesaEstado.LIBRE -> stringResource(R.string.mesas_free)
         MesaEstado.OCUPADA -> stringResource(R.string.mesas_occupied)
@@ -623,12 +632,7 @@ private fun MesaCard(
     }
     val tieneComanda = mesa.comandaActivaId != null
 
-    val shapeRadius = when (mesa.forma) {
-        MesaForma.REDONDA -> 999.dp
-        MesaForma.CUADRADA -> 16.dp
-        MesaForma.RECTANGULAR -> 14.dp
-        MesaForma.RECTANGULAR_XL -> 12.dp
-    }
+    val shapeRadius = mesaShapeRadius(mesa.forma)
     val (cardWf, cardHf) = mesaDims(mesa.forma, mesa.girada)
     val cardHeight = cardHf.dp
 
@@ -649,7 +653,6 @@ private fun MesaCard(
                     onDragStart = { _ ->
                         menuExpanded = true
                         dragArrancado = false
-                        onDragStart()
                     },
                     onDrag = { change, dragAmount ->
                         change.consume()
@@ -751,19 +754,10 @@ private fun MesaCard(
 
 @Composable
 private fun DragOverlayCard(mesa: Mesa) {
-    val shapeRadius = when (mesa.forma) {
-        MesaForma.REDONDA -> 999.dp
-        MesaForma.CUADRADA -> 16.dp
-        MesaForma.RECTANGULAR -> 14.dp
-        MesaForma.RECTANGULAR_XL -> 12.dp
-    }
+    val shapeRadius = mesaShapeRadius(mesa.forma)
     val (cardWf, cardHf) = mesaDims(mesa.forma, mesa.girada)
     val cardHeight = cardHf.dp
-    val color = when (mesa.estado) {
-        MesaEstado.LIBRE -> Color(0xFFC8E6C9)
-        MesaEstado.OCUPADA -> Color(0xFFFFE0B2)
-        MesaEstado.EN_COCINA -> Color(0xFFB3E5FC)
-    }
+    val color = mesaColor(mesa.estado)
 
     Card(
         modifier = Modifier.width(cardWf.dp).height(cardHeight),

@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaminsmoke.personalcomander.PersonalComanderApp
+import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaForma
 import kotlinx.coroutines.flow.Flow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 
 class MesasViewModel(application: Application) : AndroidViewModel(application) {
     private val db = (application as PersonalComanderApp).db
+    private val ctx = getApplication<Application>()
     val mesas: Flow<List<Mesa>> = db.mesaDao().observeAll()
 
     private val _zona = MutableStateFlow<String?>(null)
@@ -32,7 +34,7 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
                 val cap = capacidad.coerceIn(1, 99)
                 db.mesaDao().updateConfig(mesa.id, a, cap, forma)
             } catch (e: Exception) {
-                _mensaje.value = "Error al actualizar mesa: ${e.message}"
+                _mensaje.value = ctx.getString(R.string.error_update_table, e.message ?: e.javaClass.simpleName)
             }
         }
     }
@@ -43,7 +45,7 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
                 db.mesaDao().deleteById(mesa.id)
                 db.mesaDao().renumberAfter(mesa.numero)
             } catch (e: Exception) {
-                _mensaje.value = "Error al eliminar mesa: ${e.message}"
+                _mensaje.value = ctx.getString(R.string.error_delete_table, e.message ?: e.javaClass.simpleName)
             }
         }
     }
@@ -54,7 +56,7 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 db.mesaDao().swapNumeros(mesa1.numero, mesa2.numero)
             } catch (e: Exception) {
-                _mensaje.value = "Error al reordenar: ${e.message}"
+                _mensaje.value = ctx.getString(R.string.error_reorder_table, e.message ?: e.javaClass.simpleName)
             }
         }
     }
@@ -64,7 +66,7 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 db.mesaDao().updatePosicion(mesa.id, posX, posY)
             } catch (e: Exception) {
-                _mensaje.value = "Error al mover mesa: ${e.message}"
+                _mensaje.value = ctx.getString(R.string.error_move_table, e.message ?: e.javaClass.simpleName)
             }
         }
     }
@@ -74,7 +76,7 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 db.mesaDao().updateGiro(mesa.id, !mesa.girada)
             } catch (e: Exception) {
-                _mensaje.value = "Error al girar mesa: ${e.message}"
+                _mensaje.value = ctx.getString(R.string.error_rotate_table, e.message ?: e.javaClass.simpleName)
             }
         }
     }
@@ -85,8 +87,6 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
                 val maxNum = db.mesaDao().getMaxNumero()
                 val a = alias?.trim()?.ifBlank { null }
                 // Place new mesa at the bottom-right of existing mesas
-                val mesas = db.mesaDao().observeAll()
-                // Use a simple default position
                 db.mesaDao().insertMesa(
                     Mesa(
                         numero = maxNum + 1, alias = a, forma = forma,
@@ -96,7 +96,7 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 )
             } catch (e: Exception) {
-                _mensaje.value = "Error al crear mesa: ${e.message}"
+                _mensaje.value = ctx.getString(R.string.error_create_table, e.message ?: e.javaClass.simpleName)
             }
         }
     }

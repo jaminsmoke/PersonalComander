@@ -115,6 +115,12 @@
     <string name="export_error">Error al exportar: %s</string>
 
     <!-- Error Messages (ViewModel operations) -->
+    <string name="error_update_table">Error al actualizar mesa: %s</string>
+    <string name="error_delete_table">Error al eliminar mesa: %s</string>
+    <string name="error_reorder_table">Error al reordenar: %s</string>
+    <string name="error_move_table">Error al mover mesa: %s</string>
+    <string name="error_rotate_table">Error al girar mesa: %s</string>
+    <string name="error_create_table">Error al crear mesa: %s</string>
     <string name="error_add_product">Error al añadir producto: %s</string>
     <string name="error_update_product">Error al actualizar producto: %s</string>
     <string name="error_toggle_availability">Error al cambiar disponibilidad: %s</string>
