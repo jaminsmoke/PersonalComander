@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.key
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -70,7 +71,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -219,63 +219,65 @@ fun MesasScreen(
 
                         // Render each mesa with animated position
                         mesasFiltradas.forEach { mesa ->
-                            val isDragging = draggedMesa?.id == mesa.id
+                            key(mesa.id) {
+                                val isDragging = draggedMesa?.id == mesa.id
 
-                            // Animate position changes (smoothly interpolate when DB updates posX/posY)
-                            val animX by animateFloatAsState(
-                                targetValue = mesa.posX,
-                                animationSpec = tween(250, easing = FastOutSlowInEasing),
-                                label = "posX"
-                            )
-                            val animY by animateFloatAsState(
-                                targetValue = mesa.posY,
-                                animationSpec = tween(250, easing = FastOutSlowInEasing),
-                                label = "posY"
-                            )
+                                // Animate position changes (smoothly interpolate when DB updates posX/posY)
+                                val animX by animateFloatAsState(
+                                    targetValue = mesa.posX,
+                                    animationSpec = tween(250, easing = FastOutSlowInEasing),
+                                    label = "posX"
+                                )
+                                val animY by animateFloatAsState(
+                                    targetValue = mesa.posY,
+                                    animationSpec = tween(250, easing = FastOutSlowInEasing),
+                                    label = "posY"
+                                )
 
-                            MesaCard(
-                                mesa = mesa,
-                                isDragging = isDragging,
-                                modifier = Modifier
-                                    .offset(x = animX.dp, y = animY.dp)
-                                    .width(CARD_WIDTH),
-                                onClick = {
-                                    if (draggedMesa == null) onOpenMesa(mesa.id)
-                                },
-                                onEditClick = { mesaEditando = mesa },
-                                onDeleteClick = { mesaBorrando = mesa },
-                                onDragStart = { },
-                                onDragStarted = {
-                                    draggedMesa = mesa
-                                    dragBaseX = mesa.posX
-                                    dragBaseY = mesa.posY
-                                    dragPxX = 0f
-                                    dragPxY = 0f
-                                },
-                                onDrag = { deltaPx ->
-                                    dragPxX += deltaPx.x
-                                    dragPxY += deltaPx.y
-                                },
-                                onDragEnd = {
-                                    draggedMesa?.let { dragged ->
-                                        val deltaDpX = with(density) { dragPxX.toDp().value }
-                                        val deltaDpY = with(density) { dragPxY.toDp().value }
-                                        val rawX = dragBaseX + deltaDpX
-                                        val rawY = dragBaseY + deltaDpY
-                                        // Snap to grid
-                                        val snappedX = (rawX / CELL_F).roundToInt() * CELL_F
-                                        val snappedY = (rawY / CELL_F).roundToInt() * CELL_F
-                                        viewModel.updatePosicion(
-                                            dragged,
-                                            snappedX.coerceAtLeast(0f),
-                                            snappedY.coerceAtLeast(0f)
-                                        )
+                                MesaCard(
+                                    mesa = mesa,
+                                    isDragging = isDragging,
+                                    modifier = Modifier
+                                        .offset(x = animX.dp, y = animY.dp)
+                                        .width(CARD_WIDTH),
+                                    onClick = {
+                                        if (draggedMesa == null) onOpenMesa(mesa.id)
+                                    },
+                                    onEditClick = { mesaEditando = mesa },
+                                    onDeleteClick = { mesaBorrando = mesa },
+                                    onDragStart = { },
+                                    onDragStarted = {
+                                        draggedMesa = mesa
+                                        dragBaseX = mesa.posX
+                                        dragBaseY = mesa.posY
+                                        dragPxX = 0f
+                                        dragPxY = 0f
+                                    },
+                                    onDrag = { deltaPx ->
+                                        dragPxX += deltaPx.x
+                                        dragPxY += deltaPx.y
+                                    },
+                                    onDragEnd = {
+                                        draggedMesa?.let { dragged ->
+                                            val deltaDpX = with(density) { dragPxX.toDp().value }
+                                            val deltaDpY = with(density) { dragPxY.toDp().value }
+                                            val rawX = dragBaseX + deltaDpX
+                                            val rawY = dragBaseY + deltaDpY
+                                            // Snap to grid
+                                            val snappedX = (rawX / CELL_F).roundToInt() * CELL_F
+                                            val snappedY = (rawY / CELL_F).roundToInt() * CELL_F
+                                            viewModel.updatePosicion(
+                                                dragged,
+                                                snappedX.coerceAtLeast(0f),
+                                                snappedY.coerceAtLeast(0f)
+                                            )
+                                        }
+                                        draggedMesa = null
+                                        dragPxX = 0f
+                                        dragPxY = 0f
                                     }
-                                    draggedMesa = null
-                                    dragPxX = 0f
-                                    dragPxY = 0f
-                                }
-                            )
+                                )
+                            }
                         }
 
                         // Drag overlay
