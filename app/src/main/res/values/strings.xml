@@ -24,6 +24,7 @@
     <string name="mesas_alias_title">Alias de %s</string>
     <string name="mesas_alias_desc">Asigna un nombre personalizado. Se borrará al cerrar la mesa.</string>
     <string name="mesas_alias_label">Nombre (opcional)</string>
+    <string name="mesas_capacidad_label">Capacidad (personas)</string>
 
     <!-- Menu Screen -->
     <string name="menu_title">Gestión del menú</string>

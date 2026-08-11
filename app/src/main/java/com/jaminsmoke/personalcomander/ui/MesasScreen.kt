@@ -29,6 +29,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
@@ -52,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -177,6 +179,7 @@ fun MesasScreen(
     // Alias edit dialog
     mesaEditando?.let { mesa ->
         var aliasText by remember(mesa) { mutableStateOf(mesa.alias ?: "") }
+        var capacidadText by remember(mesa) { mutableStateOf(mesa.capacidad.toString()) }
         AlertDialog(
             onDismissRequest = { mesaEditando = null },
             title = { Text(stringResource(R.string.mesas_alias_title, mesa.nombreVisible)) },
@@ -191,11 +194,20 @@ fun MesasScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    OutlinedTextField(
+                        value = capacidadText,
+                        onValueChange = { capacidadText = it.filter { c -> c.isDigit() } },
+                        label = { Text(stringResource(R.string.mesas_capacidad_label)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.setAlias(mesa, aliasText.ifBlank { null })
+                    val cap = capacidadText.toIntOrNull() ?: mesa.capacidad
+                    viewModel.updateConfig(mesa, aliasText.ifBlank { null }, cap)
                     mesaEditando = null
                 }) { Text(stringResource(R.string.menu_save)) }
             },

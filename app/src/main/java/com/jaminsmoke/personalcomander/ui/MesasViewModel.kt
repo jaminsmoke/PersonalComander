@@ -24,13 +24,14 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
     fun setZona(z: String?) { _zona.value = z }
     fun limpiarMensaje() { _mensaje.value = null }
 
-    fun setAlias(mesa: Mesa, alias: String?) {
+    fun updateConfig(mesa: Mesa, alias: String?, capacidad: Int) {
         viewModelScope.launch {
             try {
                 val a = alias?.trim()?.ifBlank { null }
-                db.mesaDao().setAlias(mesa.id, a)
+                val cap = capacidad.coerceIn(1, 99)
+                db.mesaDao().updateConfig(mesa.id, a, cap)
             } catch (e: Exception) {
-                _mensaje.value = "Error al cambiar alias: ${e.message}"
+                _mensaje.value = "Error al actualizar mesa: ${e.message}"
             }
         }
     }
