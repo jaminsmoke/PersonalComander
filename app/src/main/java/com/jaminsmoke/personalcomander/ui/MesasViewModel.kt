@@ -62,17 +62,6 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun swapMesas(mesa1: Mesa, mesa2: Mesa) {
-        if (mesa1.id == mesa2.id) return
-        viewModelScope.launch {
-            try {
-                db.mesaDao().swapNumeros(mesa1.numero, mesa2.numero)
-            } catch (e: Exception) {
-                _mensaje.value = ctx.getString(R.string.error_reorder_table, e.message ?: e.javaClass.simpleName)
-            }
-        }
-    }
-
     fun updatePosicion(mesa: Mesa, posX: Float, posY: Float) {
         viewModelScope.launch {
             try {

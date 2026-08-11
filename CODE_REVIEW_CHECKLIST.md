@@ -161,22 +161,22 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 
 ## Mejoras de arquitectura / producto
 
-- [ ] **A1 — Capa Repository**  
+- [x] **A1 — Capa Repository**  
   VMs llaman DAOs directo; repo fino facilita tests sin Room.  
   **Archivos:** nuevo `data/*Repository.kt`, VMs
 
-- [ ] **A2 — DI (Hilt/Koin)**  
+- [x] **A2 — DI (Hilt/Koin)**  
   En lugar de cast a `PersonalComanderApp` para el DB.  
   **Archivos:** app module, VMs, `PersonalComanderApp.kt`
 
-- [ ] **A3 — `exportSchema = true` + tests de migración**  
+- [x] **A3 — `exportSchema = true` + tests de migración**  
   **Archivos:** `data/AppDatabase.kt`, tests, gradle schema dir
 
-- [ ] **A4 — Tests adicionales**  
+- [x] **A4 — Tests adicionales**  
   `fusionarProductos`, `ComandaViewModel` (estado mesa / alias), `updateEstado` no pisa alias.  
   **Archivos:** `app/src/test/...`
 
-- [ ] **A5 — `swapMesas` muerto en UI**  
+- [x] **A5 — `swapMesas` muerto en UI**  
   Existe en VM/DAO pero no se usa en pantalla. Usar o eliminar.  
   **Archivos:** `ui/MesasViewModel.kt`, `data/Daos.kt`, UI si se expone
 
@@ -212,7 +212,7 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 | Medios | 10 | 10 |
 | Seguridad | 4 | 4 |
 | Optimizaciones | 7 | 7 |
-| Arquitectura | 6 | 0 |
-| **Total** | **33** | **27** |
+| Arquitectura | 6 | 6 |
+| **Total** | **33** | **33** |
 
 Cuando Total hechos = 33 → desechar este documento.
