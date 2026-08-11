@@ -33,6 +33,10 @@
     <string name="mesas_delete_confirm">¿Eliminar %s permanentemente? Se renumerarán las mesas siguientes.</string>
     <string name="mesas_menu_edit">Editar</string>
     <string name="mesas_menu_delete">Eliminar</string>
+    <string name="mesas_isolated_title">¿Mantener %s alejada?</string>
+    <string name="mesas_isolated_body">Está muy lejos del resto de mesas. Puede ser difícil de encontrar.</string>
+    <string name="mesas_isolated_keep">Mantener</string>
+    <string name="mesas_isolated_bring">Traer cerca</string>
 
     <!-- Menu Screen -->
     <string name="menu_title">Gestión del menú</string>

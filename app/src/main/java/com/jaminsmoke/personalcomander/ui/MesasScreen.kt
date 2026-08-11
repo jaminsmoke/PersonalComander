@@ -121,6 +121,9 @@ fun MesasScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var mesaEditando by remember { mutableStateOf<Mesa?>(null) }
     var mesaBorrando by remember { mutableStateOf<Mesa?>(null) }
+    var mesaAislada by remember { mutableStateOf<Mesa?>(null) }
+    var aisladaFinalX by remember { mutableStateOf(0f) }
+    var aisladaFinalY by remember { mutableStateOf(0f) }
     var crearVisible by remember { mutableStateOf(false) }
     val density = LocalDensity.current
 
@@ -317,10 +320,8 @@ fun MesasScreen(
                                             val deltaDpY = with(density) { dragPxY.toDp().value }
                                             val rawX = dragBaseX + deltaDpX
                                             val rawY = dragBaseY + deltaDpY
-                                            // Snap to grid
                                             val snappedX = (rawX / CELL_F).roundToInt() * CELL_F
                                             val snappedY = (rawY / CELL_F).roundToInt() * CELL_F
-                                            // Anti-colisión con bounding boxes (no solo centros)
                                             val draggedH = mesaAltura(dragged.forma)
                                             val occupied = mesas
                                                 .filter { it.id != dragged.id }
@@ -328,7 +329,14 @@ fun MesasScreen(
                                             val (finalX, finalY) = findNearestFreeCell(
                                                 snappedX, snappedY, CARD_W, draggedH, occupied
                                             )
-                                            viewModel.updatePosicion(dragged, finalX, finalY)
+                                            // Warning: mesa muy alejada del cluster
+                                            if (isIsolated(finalX, finalY, dragged.id, mesas)) {
+                                                mesaAislada = dragged
+                                                aisladaFinalX = finalX
+                                                aisladaFinalY = finalY
+                                            } else {
+                                                viewModel.updatePosicion(dragged, finalX, finalY)
+                                            }
                                         }
                                         draggedMesa = null
                                         dragPxX = 0f
@@ -484,6 +492,34 @@ fun MesasScreen(
                 }) { Text(stringResource(R.string.menu_save)) }
             },
             dismissButton = { TextButton(onClick = { mesaEditando = null }) { Text(stringResource(R.string.menu_cancel)) } }
+        )
+    }
+
+    // Isolated mesa rescue dialog
+    mesaAislada?.let { mesa ->
+        AlertDialog(
+            onDismissRequest = { mesaAislada = null },
+            title = { Text(stringResource(R.string.mesas_isolated_title, mesa.nombreVisible)) },
+            text = { Text(stringResource(R.string.mesas_isolated_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.updatePosicion(mesa, aisladaFinalX, aisladaFinalY)
+                    mesaAislada = null
+                }) { Text(stringResource(R.string.mesas_isolated_keep)) }
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = {
+                        viewModel.deleteMesa(mesa)
+                        mesaAislada = null
+                    }) { Text(stringResource(R.string.btn_delete), color = MaterialTheme.colorScheme.error) }
+                    TextButton(onClick = {
+                        val safe = safePosition(mesas.filter { it.id != mesa.id })
+                        viewModel.updatePosicion(mesa, safe.first, safe.second)
+                        mesaAislada = null
+                    }) { Text(stringResource(R.string.mesas_isolated_bring)) }
+                }
+            }
         )
     }
 
@@ -722,6 +758,21 @@ private fun findNearestFreeCell(
         ring++
     }
     return targetX to targetY
+}
+
+/** Detecta si una mesa está demasiado lejos del cluster (Manhattan > 500dp) */
+private fun isIsolated(x: Float, y: Float, draggedId: Long, allMesas: List<Mesa>): Boolean {
+    val others = allMesas.filter { it.id != draggedId }
+    if (others.isEmpty()) return false
+    return others.minOf { abs(x - it.posX) + abs(y - it.posY) } > 500f
+}
+
+/** Posición segura: al borde inferior-derecho del cluster */
+private fun safePosition(allMesas: List<Mesa>): Pair<Float, Float> {
+    if (allMesas.isEmpty()) return CELL_F to CELL_F
+    val maxX = allMesas.maxOf { it.posX } + CARD_W + CELL_F
+    val avgY = allMesas.map { it.posY }.average().toFloat()
+    return ((maxX / CELL_F).roundToInt() * CELL_F) to ((avgY / CELL_F).roundToInt() * CELL_F)
 }
 
 private fun formaLabel(forma: MesaForma): String = when (forma) {
