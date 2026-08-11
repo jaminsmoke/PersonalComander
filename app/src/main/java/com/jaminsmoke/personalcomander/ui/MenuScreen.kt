@@ -120,10 +120,11 @@ fun MenuScreen(
             categoriasExistentes = productos.map { it.categoria }.distinct(),
             onDismiss = { dialogVisible = false },
             onGuardar = { nombre, categoria, precio ->
-                if (editando == null) {
+                val productoEditado = editando
+                if (productoEditado == null) {
                     viewModel.addProducto(nombre, categoria, precio)
                 } else {
-                    viewModel.updateProducto(editando!!, nombre, categoria, precio)
+                    viewModel.updateProducto(productoEditado, nombre, categoria, precio)
                 }
                 dialogVisible = false
             }
@@ -241,7 +242,9 @@ private fun ProductoDialog(
             else -> null
         }
         if (error != null) return
-        onGuardar(nombre, categoria, p!!)
+        val precioFinal = p
+        if (precioFinal == null) return
+        onGuardar(nombre, categoria, precioFinal)
     }
 
     AlertDialog(

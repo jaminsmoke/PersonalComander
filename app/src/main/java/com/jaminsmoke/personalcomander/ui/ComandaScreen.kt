@@ -146,8 +146,12 @@ fun ComandaScreen(
                         Icon(Icons.Default.Mic, null, tint = MaterialTheme.colorScheme.onErrorContainer)
                         Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
                             Text(stringResource(R.string.comanda_listening), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
-                            if (textoParcial != null) Text(textoParcial!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            else Text(stringResource(R.string.comanda_voice_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f))
+                            val parcial = textoParcial
+                            if (parcial != null) {
+                                Text(parcial, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            } else {
+                                Text(stringResource(R.string.comanda_voice_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f))
+                            }
                         }
                         OutlinedButton(onClick = detenerVoz) { Text(stringResource(R.string.comanda_cancel)) }
                     }

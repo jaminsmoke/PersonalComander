@@ -1,3 +1,7 @@
 package com.jaminsmoke.personalcomander.ui
 
-internal fun Double.formatoEuro(): String = String.format("%.2f €", this)
+import java.util.Locale
+
+private val EURO_FORMAT_LOCALE = Locale("es", "ES")
+
+internal fun Double.formatoEuro(): String = String.format(EURO_FORMAT_LOCALE, "%.2f €", this)

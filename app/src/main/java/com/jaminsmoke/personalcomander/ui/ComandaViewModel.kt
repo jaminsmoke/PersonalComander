@@ -113,18 +113,22 @@ class ComandaViewModel(
 
     fun procesarVoz(texto: String) {
         viewModelScope.launch {
-            val productos = db.productoDao().getAllDisponibles()
-            val resultado = parsearComanda(texto, productos)
-            resultado.lineas.forEach { linea -> addProducto(linea.producto, linea.cantidad) }
-            val resumen = resultado.lineas.joinToString(", ") { "${it.cantidad}× ${it.producto.nombre}" }
-            val pendientes = resultado.noEntendido.joinToString(" ")
-            _feedbackVoz.value = when {
-                resumen.isEmpty() && pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_unrecognized, texto, pendientes)
-                resumen.isEmpty() -> ctx.getString(R.string.comanda_voice_not_understood, texto)
-                pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_partial, texto, resumen, pendientes)
-                else -> ctx.getString(R.string.comanda_voice_added, texto, resumen)
+            try {
+                val productos = db.productoDao().getAllDisponibles()
+                val resultado = parsearComanda(texto, productos)
+                resultado.lineas.forEach { linea -> addProducto(linea.producto, linea.cantidad) }
+                val resumen = resultado.lineas.joinToString(", ") { "${it.cantidad}× ${it.producto.nombre}" }
+                val pendientes = resultado.noEntendido.joinToString(" ")
+                _feedbackVoz.value = when {
+                    resumen.isEmpty() && pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_unrecognized, texto, pendientes)
+                    resumen.isEmpty() -> ctx.getString(R.string.comanda_voice_not_understood, texto)
+                    pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_partial, texto, resumen, pendientes)
+                    else -> ctx.getString(R.string.comanda_voice_added, texto, resumen)
+                }
+                clearFeedbackVoz()
+            } catch (e: Exception) {
+                _error.value = ctx.getString(R.string.error_add_product, e.message ?: e.javaClass.simpleName)
             }
-            clearFeedbackVoz()
         }
     }
 
