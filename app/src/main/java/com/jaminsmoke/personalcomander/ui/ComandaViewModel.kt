@@ -42,6 +42,8 @@ class ComandaViewModel(
     private val mesaId: Long
 ) : ViewModel() {
 
+    private var cerrada = false
+
     private val pedido: StateFlow<Pedido?> = db.pedidoDao().observeActivo(mesaId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -98,7 +100,7 @@ class ComandaViewModel(
         viewModelScope.launch {
             val productos = db.productoDao().getAllDisponibles()
             val resultado = parsearComanda(texto, productos)
-            resultado.lineas.forEach { linea -> repeat(linea.cantidad) { addProducto(linea.producto) } }
+            resultado.lineas.forEach { linea -> addProducto(linea.producto, linea.cantidad) }
             val resumen = resultado.lineas.joinToString(", ") { "${it.cantidad}× ${it.producto.nombre}" }
             val pendientes = resultado.noEntendido.joinToString(" ")
             _feedbackVoz.value = when {
@@ -115,10 +117,12 @@ class ComandaViewModel(
         viewModelScope.launch { kotlinx.coroutines.delay(5000); _feedbackVoz.value = null }
     }
 
-    fun addProducto(producto: Producto) {
+    fun addProducto(producto: Producto, cantidad: Int = 1) {
+        if (cerrada) return
         viewModelScope.launch {
             val p = db.pedidoDao().getActivo(mesaId)
             val pedidoActivo = if (p == null) {
+                if (cerrada) return@launch
                 val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
                 db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, nuevoId)
                 Pedido(id = nuevoId, mesaId = mesaId)
@@ -127,11 +131,11 @@ class ComandaViewModel(
             val lineas = db.lineaPedidoDao().getForPedido(pedidoActivo.id)
             val existente = lineas.firstOrNull { it.productoId == producto.id }
             if (existente != null) {
-                db.lineaPedidoDao().update(existente.copy(cantidad = existente.cantidad + 1))
+                db.lineaPedidoDao().update(existente.copy(cantidad = existente.cantidad + cantidad))
             } else {
                 db.lineaPedidoDao().insert(LineaPedido(
                     pedidoId = pedidoActivo.id, productoId = producto.id,
-                    nombreProducto = producto.nombre, precioUnitario = producto.precio, cantidad = 1
+                    nombreProducto = producto.nombre, precioUnitario = producto.precio, cantidad = cantidad
                 ))
             }
         }
@@ -157,6 +161,7 @@ class ComandaViewModel(
     }
 
     fun cerrarMesa() {
+        cerrada = true
         viewModelScope.launch {
             val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
             db.pedidoDao().update(p.copy(estado = PedidoEstado.CERRADA, cerradoEn = System.currentTimeMillis()))
