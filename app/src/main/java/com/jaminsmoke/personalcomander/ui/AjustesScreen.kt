@@ -48,7 +48,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -60,9 +59,7 @@ import com.jaminsmoke.personalcomander.data.TpvPrograma
 @Composable
 fun AjustesScreen(
     onBack: () -> Unit,
-    viewModel: AjustesViewModel = viewModel(
-        factory = AjustesViewModel.factory(LocalContext.current.applicationContext)
-    )
+    viewModel: AjustesViewModel = viewModel()
 ) {
     val sync by viewModel.sync.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()

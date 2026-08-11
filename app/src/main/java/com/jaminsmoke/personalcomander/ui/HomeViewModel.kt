@@ -1,10 +1,9 @@
 package com.jaminsmoke.personalcomander.ui
 
-import android.content.Context
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.jaminsmoke.personalcomander.data.AppDatabase
+import com.jaminsmoke.personalcomander.PersonalComanderApp
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -19,7 +18,9 @@ data class HomeUiState(
     val totalHoy: Double = 0.0
 )
 
-class HomeViewModel(private val db: AppDatabase) : ViewModel() {
+class HomeViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val db = (application as PersonalComanderApp).db
 
     val uiState: StateFlow<HomeUiState> = run {
         val inicioDelDia = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -36,15 +37,5 @@ class HomeViewModel(private val db: AppDatabase) : ViewModel() {
                 totalHoy = total
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
-    }
-
-    companion object {
-        fun factory(context: Context): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return HomeViewModel(AppDatabase.get(context)) as T
-                }
-            }
     }
 }

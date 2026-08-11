@@ -31,7 +31,7 @@ data class Pedido(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val mesaId: Long,
     val estado: PedidoEstado = PedidoEstado.ABIERTA,
-    val creadoEn: Long = System.currentTimeMillis(),
+    val creadoEn: Long = 0L,
     val cerradoEn: Long? = null
 )
 
@@ -43,5 +43,6 @@ data class LineaPedido(
     val nombreProducto: String,
     val precioUnitario: Double,
     val cantidad: Int,
+    val creadoEn: Long = 0L,
     val estado: LineaEstado = LineaEstado.PENDIENTE
 )

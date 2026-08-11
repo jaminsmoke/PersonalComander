@@ -1,23 +1,12 @@
 package com.jaminsmoke.personalcomander.ui
 
-import android.content.Context
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import com.jaminsmoke.personalcomander.data.AppDatabase
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import com.jaminsmoke.personalcomander.PersonalComanderApp
 import com.jaminsmoke.personalcomander.data.Mesa
-import com.jaminsmoke.personalcomander.data.MesaDao
 import kotlinx.coroutines.flow.Flow
 
-class MesasViewModel(mesaDao: MesaDao) : ViewModel() {
-    val mesas: Flow<List<Mesa>> = mesaDao.observeAll()
-
-    companion object {
-        fun factory(context: Context): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return MesasViewModel(AppDatabase.get(context).mesaDao()) as T
-                }
-            }
-    }
+class MesasViewModel(application: Application) : AndroidViewModel(application) {
+    val mesas: Flow<List<Mesa>> =
+        (application as PersonalComanderApp).db.mesaDao().observeAll()
 }

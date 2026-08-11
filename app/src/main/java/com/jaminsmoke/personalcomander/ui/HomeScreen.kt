@@ -37,7 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
+
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,9 +48,7 @@ fun HomeScreen(
     onOpenMesas: () -> Unit,
     onOpenMenu: () -> Unit,
     onOpenAjustes: () -> Unit,
-    viewModel: HomeViewModel = viewModel(
-        factory = HomeViewModel.factory(LocalContext.current.applicationContext)
-    )
+    viewModel: HomeViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
 

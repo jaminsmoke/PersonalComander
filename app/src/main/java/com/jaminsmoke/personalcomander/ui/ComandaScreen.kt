@@ -68,7 +68,7 @@ fun ComandaScreen(
     onBack: () -> Unit,
     viewModel: ComandaViewModel = viewModel(
         key = "comanda_$mesaId",
-        factory = ComandaViewModel.factory(LocalContext.current.applicationContext, mesaId)
+        factory = ComandaViewModel.Factory(LocalContext.current.applicationContext as android.app.Application, mesaId)
     )
 ) {
     val state by viewModel.uiState.collectAsState()

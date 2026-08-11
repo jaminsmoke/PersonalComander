@@ -29,7 +29,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -42,16 +41,14 @@ fun MesasScreen(
     onOpenMesa: (Long) -> Unit,
     onOpenMenu: () -> Unit,
     onBack: (() -> Unit)? = null,
-    viewModel: MesasViewModel = viewModel(
-        factory = MesasViewModel.factory(LocalContext.current.applicationContext)
-    )
+    viewModel: MesasViewModel = viewModel()
 ) {
     val mesas by viewModel.mesas.collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Personal Comandero") },
+                title = { Text("Personal Comander") },
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) {

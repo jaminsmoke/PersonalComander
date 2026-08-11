@@ -40,7 +40,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,9 +51,7 @@ import com.jaminsmoke.personalcomander.data.Producto
 @Composable
 fun MenuScreen(
     onBack: () -> Unit,
-    viewModel: MenuViewModel = viewModel(
-        factory = MenuViewModel.factory(LocalContext.current.applicationContext)
-    )
+    viewModel: MenuViewModel = viewModel()
 ) {
     val productos by viewModel.productos.collectAsState(initial = emptyList())
     var dialogVisible by remember { mutableStateOf(false) }

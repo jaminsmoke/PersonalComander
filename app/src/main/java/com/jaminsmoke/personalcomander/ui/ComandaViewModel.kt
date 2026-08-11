@@ -1,9 +1,10 @@
 package com.jaminsmoke.personalcomander.ui
 
-import android.content.Context
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.jaminsmoke.personalcomander.PersonalComanderApp
 import com.jaminsmoke.personalcomander.data.AppDatabase
 import com.jaminsmoke.personalcomander.data.LineaPedido
 import com.jaminsmoke.personalcomander.data.Mesa
@@ -60,55 +61,33 @@ class ComandaViewModel(
             pedido,
             lineas,
             db.productoDao().observeAll()
-        ) { mesa, p, ls, prods ->
-            ComandaData(mesa, p, ls, prods)
-        }
+        ) { mesa, p, ls, prods -> ComandaData(mesa, p, ls, prods) }
 
         combine(datos, _busqueda, _categoria, _escuchandoVoz, _feedbackVoz) { d, busqueda, categoria, escuchando, feedback ->
             val cats = d.productos.map { it.categoria }.distinct()
-            val porCategoria = d.productos.filter { prod ->
-                categoria == null || prod.categoria == categoria
-            }
-            val filtrados = if (busqueda.isBlank()) {
-                porCategoria
-            } else {
-                porCategoria
-                    .mapNotNull { p -> coincidenciaBusqueda(busqueda, p)?.let { it to p } }
-                    .sortedWith(compareBy({ it.first }, { it.second.nombre }))
-                    .map { it.second }
-            }
+            val porCategoria = d.productos.filter { categoria == null || it.categoria == categoria }
+            val filtrados = if (busqueda.isBlank()) porCategoria
+            else porCategoria
+                .mapNotNull { p -> coincidenciaBusqueda(busqueda, p)?.let { it to p } }
+                .sortedWith(compareBy({ it.first }, { it.second.nombre }))
+                .map { it.second }
             ComandaUiState(
-                mesa = d.mesa,
-                pedido = d.pedido,
-                lineas = d.lineas,
-                categorias = cats,
-                productos = filtrados,
-                busqueda = busqueda,
-                categoria = categoria,
-                escuchandoVoz = escuchando,
-                feedbackVoz = feedback
+                mesa = d.mesa, pedido = d.pedido, lineas = d.lineas,
+                categorias = cats, productos = filtrados,
+                busqueda = busqueda, categoria = categoria,
+                escuchandoVoz = escuchando, feedbackVoz = feedback
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ComandaUiState())
     }
 
     private data class ComandaData(
-        val mesa: Mesa?,
-        val pedido: Pedido?,
-        val lineas: List<LineaPedido>,
-        val productos: List<Producto>
+        val mesa: Mesa?, val pedido: Pedido?,
+        val lineas: List<LineaPedido>, val productos: List<Producto>
     )
 
-    fun setBusqueda(valor: String) {
-        _busqueda.value = valor
-    }
-
-    fun setCategoria(categoria: String?) {
-        _categoria.value = categoria
-    }
-
-    fun setEscuchandoVoz(valor: Boolean) {
-        _escuchandoVoz.value = valor
-    }
+    fun setBusqueda(valor: String) { _busqueda.value = valor }
+    fun setCategoria(categoria: String?) { _categoria.value = categoria }
+    fun setEscuchandoVoz(valor: Boolean) { _escuchandoVoz.value = valor }
 
     fun informar(mensaje: String?) {
         _feedbackVoz.value = mensaje
@@ -119,78 +98,53 @@ class ComandaViewModel(
         viewModelScope.launch {
             val productos = db.productoDao().getAllDisponibles()
             val resultado = parsearComanda(texto, productos)
-
-            resultado.lineas.forEach { linea ->
-                repeat(linea.cantidad) { addProducto(linea.producto) }
-            }
-
-            val resumen = resultado.lineas.joinToString(", ") {
-                "${it.cantidad}× ${it.producto.nombre}"
-            }
+            resultado.lineas.forEach { linea -> repeat(linea.cantidad) { addProducto(linea.producto) } }
+            val resumen = resultado.lineas.joinToString(", ") { "${it.cantidad}× ${it.producto.nombre}" }
             val pendientes = resultado.noEntendido.joinToString(" ")
             _feedbackVoz.value = when {
-                resumen.isEmpty() && pendientes.isNotEmpty() ->
-                    "«$texto» → No reconocí: $pendientes"
-                resumen.isEmpty() ->
-                    "«$texto» → No entendí la comanda"
-                pendientes.isNotEmpty() ->
-                    "«$texto» → Añadido: $resumen · No reconocido: $pendientes"
-                else ->
-                    "«$texto» → Añadido: $resumen"
+                resumen.isEmpty() && pendientes.isNotEmpty() -> "«$texto» → No reconocí: $pendientes"
+                resumen.isEmpty() -> "«$texto» → No entendí la comanda"
+                pendientes.isNotEmpty() -> "«$texto» → Añadido: $resumen · No reconocido: $pendientes"
+                else -> "«$texto» → Añadido: $resumen"
             }
             clearFeedbackVoz()
         }
     }
 
     private fun clearFeedbackVoz() {
-        viewModelScope.launch {
-            kotlinx.coroutines.delay(5000)
-            _feedbackVoz.value = null
-        }
+        viewModelScope.launch { kotlinx.coroutines.delay(5000); _feedbackVoz.value = null }
     }
 
     fun addProducto(producto: Producto) {
         viewModelScope.launch {
             val p = db.pedidoDao().getActivo(mesaId)
             val pedidoActivo = if (p == null) {
-                val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId))
+                val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
                 db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, nuevoId)
                 Pedido(id = nuevoId, mesaId = mesaId)
-            } else {
-                p
-            }
+            } else p
 
             val lineas = db.lineaPedidoDao().getForPedido(pedidoActivo.id)
             val existente = lineas.firstOrNull { it.productoId == producto.id }
             if (existente != null) {
                 db.lineaPedidoDao().update(existente.copy(cantidad = existente.cantidad + 1))
             } else {
-                db.lineaPedidoDao().insert(
-                    LineaPedido(
-                        pedidoId = pedidoActivo.id,
-                        productoId = producto.id,
-                        nombreProducto = producto.nombre,
-                        precioUnitario = producto.precio,
-                        cantidad = 1
-                    )
-                )
+                db.lineaPedidoDao().insert(LineaPedido(
+                    pedidoId = pedidoActivo.id, productoId = producto.id,
+                    nombreProducto = producto.nombre, precioUnitario = producto.precio, cantidad = 1
+                ))
             }
         }
     }
 
     fun aumentarLinea(linea: LineaPedido) {
-        viewModelScope.launch {
-            db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad + 1))
-        }
+        viewModelScope.launch { db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad + 1)) }
     }
 
     fun disminuirLinea(linea: LineaPedido) {
         viewModelScope.launch {
-            if (linea.cantidad > 1) {
-                db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad - 1))
-            } else {
-                db.lineaPedidoDao().delete(linea)
-            }
+            if (linea.cantidad > 1) db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad - 1))
+            else db.lineaPedidoDao().delete(linea)
         }
     }
 
@@ -205,23 +159,14 @@ class ComandaViewModel(
     fun cerrarMesa() {
         viewModelScope.launch {
             val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
-            db.pedidoDao().update(
-                p.copy(
-                    estado = PedidoEstado.CERRADA,
-                    cerradoEn = System.currentTimeMillis()
-                )
-            )
+            db.pedidoDao().update(p.copy(estado = PedidoEstado.CERRADA, cerradoEn = System.currentTimeMillis()))
             db.mesaDao().updateEstado(mesaId, MesaEstado.LIBRE, null)
         }
     }
 
-    companion object {
-        fun factory(context: Context, mesaId: Long): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return ComandaViewModel(AppDatabase.get(context), mesaId) as T
-                }
-            }
+    class Factory(private val app: Application, private val mesaId: Long) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            ComandaViewModel((app as PersonalComanderApp).db, mesaId) as T
     }
 }
