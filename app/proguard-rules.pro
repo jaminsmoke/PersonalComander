@@ -1,21 +1,35 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Personal Comander — ProGuard/R8 rules for release builds
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# ---- Room ----
+-keep class * extends androidx.room.RoomDatabase
+-keep @androidx.room.Entity class *
+-keepclassmembers @androidx.room.Entity class * {
+    <fields>;
+}
+-dontwarn androidx.room.paging.**
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ---- Gson (backup JSON) ----
+-keepattributes Signature
+-keepattributes *Annotation*
+-keep class com.jaminsmoke.personalcomander.data.BackupJson* { *; }
+-keepclassmembers class com.jaminsmoke.personalcomander.data.Producto { *; }
+-keepclassmembers class com.jaminsmoke.personalcomander.data.Mesa { *; }
+-keepclassmembers class com.jaminsmoke.personalcomander.data.Pedido { *; }
+-keepclassmembers class com.jaminsmoke.personalcomander.data.LineaPedido { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ---- Enums (Room stores enums as strings) ----
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+# ---- Coroutines ----
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+
+# ---- Compose ----
+-keep class androidx.compose.** { *; }
+
+# ---- Keep line numbers for crash reports ----
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

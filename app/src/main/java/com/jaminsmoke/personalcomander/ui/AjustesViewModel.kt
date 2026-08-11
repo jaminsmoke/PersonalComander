@@ -16,6 +16,7 @@ import com.jaminsmoke.personalcomander.data.fusionarProductos
 import com.jaminsmoke.personalcomander.data.mapFilaProducto
 import com.jaminsmoke.personalcomander.data.mapearCategoria
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -66,6 +67,8 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
 
     private val _importPreview = MutableStateFlow<ImportPreview?>(null)
     val importPreview: StateFlow<ImportPreview?> = _importPreview.asStateFlow()
+
+    private var scanJob: Job? = null
 
     fun limpiarMensaje() { _mensaje.value = null }
 
@@ -146,7 +149,8 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
     fun cancelarImportacion() { _importPreview.value = null }
 
     fun buscarServidores() {
-        viewModelScope.launch {
+        scanJob?.cancel()
+        scanJob = viewModelScope.launch {
             _sync.update { it.copy(escaneando = true, servidores = emptyList(), mensaje = null) }
             val puertoActual = _sync.value.puerto.toIntOrNull() ?: _sync.value.programa.puertoPorDefecto
             val puertos = listOf(puertoActual) + listOf(80, 8080, 8000).filterNot { it == puertoActual }
@@ -187,6 +191,12 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
             }
             aplicarProductos(productos)
         } catch (e: Exception) { ctx.getString(R.string.sync_error, e.message ?: e.javaClass.simpleName) }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        scanJob?.cancel()
+        EscaneadorRed.cancelar()
     }
 
     private suspend fun aplicarProductos(importados: List<com.jaminsmoke.personalcomander.data.Producto>): String {

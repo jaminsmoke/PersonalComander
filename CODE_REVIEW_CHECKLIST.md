@@ -102,22 +102,22 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 
 ## Seguridad / red
 
-- [ ] **S1 — `usesCleartextTraffic="true"` global**  
+- [x] **S1 — `usesCleartextTraffic="true"` global**  
   OK en LAN de bar; arriesgado si se amplía.  
   **Fix:** network security config (cleartext solo a IPs privadas / debug).  
   **Archivos:** `AndroidManifest.xml`, `res/xml/`
 
-- [ ] **S2 — Filtro SQL TPV concatenado**  
+- [x] **S2 — Filtro SQL TPV concatenado**  
   `WHERE $filtro` en `SqliteFilasProvider`; hoy viene del enum; si se hace editable → inyección.  
   **Fix:** whitelist de filtros o parámetros bound; no aceptar SQL libre del usuario.  
   **Archivos:** `data/TpvCliente.kt`, `data/Tpv.kt`, UI ajustes si aplica
 
-- [ ] **S3 — Escaneo LAN sin cancelación**  
+- [x] **S3 — Escaneo LAN sin cancelación**  
   254 hosts × N puertos, pool 40, hasta 30s; no se cancela al salir de Ajustes.  
   **Fix:** `coroutineScope` + cancel en `onCleared` / al abandonar pantalla.  
   **Archivos:** `data/TpvCliente.kt`, `ui/AjustesViewModel.kt`
 
-- [ ] **S4 — Release sin minify**  
+- [x] **S4 — Release sin minify**  
   `isMinifyEnabled = false`.  
   **Fix:** activar R8/Proguard en release y probar.  
   **Archivos:** `app/build.gradle.kts`, `proguard-rules.pro`
@@ -210,9 +210,9 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 |--------|------:|-------:|
 | Críticos | 6 | 6 |
 | Medios | 10 | 10 |
-| Seguridad | 4 | 0 |
+| Seguridad | 4 | 4 |
 | Optimizaciones | 7 | 0 |
 | Arquitectura | 6 | 0 |
-| **Total** | **33** | **16** |
+| **Total** | **33** | **20** |
 
 Cuando Total hechos = 33 → desechar este documento.

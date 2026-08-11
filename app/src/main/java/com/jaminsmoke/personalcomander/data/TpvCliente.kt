@@ -32,9 +32,15 @@ class SqliteFilasProvider(private val archivo: File) : FilasProvider {
         }
 
     override fun filasDe(tabla: String, filtro: String?): List<Map<String, Any?>> {
+        // Validate filtro: only allow alphanumeric, comparison operators, spaces, quotes, dots, underscores
+        val safeFiltro = filtro?.takeIf { it.isNotBlank() }?.also {
+            require(it.matches(Regex("^[a-zA-Z0-9_\\s=<>!'.()]*$"))) {
+                "Invalid filter: contains characters not allowed in SQL WHERE clause"
+            }
+        }
         val seleccion = buildString {
             append("SELECT * FROM \"$tabla\"")
-            if (!filtro.isNullOrBlank()) append(" WHERE $filtro")
+            if (safeFiltro != null) append(" WHERE $safeFiltro")
         }
         val columnas = db.rawQuery("$seleccion LIMIT 0", null).use { c ->
             (0 until c.columnCount).map { c.getColumnName(it) }
@@ -105,6 +111,11 @@ object TpvCliente {
 
 object EscaneadorRed {
 
+    @Volatile
+    private var cancelado = false
+
+    fun cancelar() { cancelado = true }
+
     fun ipLocal(): String? {
         val interfaces = NetworkInterface.getNetworkInterfaces() ?: return null
         for (i in interfaces) {
@@ -124,12 +135,16 @@ object EscaneadorRed {
         if (partes.size != 4) return emptyList()
         val red = "${partes[0]}.${partes[1]}.${partes[2]}"
 
+        cancelado = false
         val encontrados = java.util.concurrent.ConcurrentLinkedQueue<ServidorDescubierto>()
         val pool = java.util.concurrent.Executors.newFixedThreadPool(40)
         for (host in 1..254) {
+            if (cancelado) break
             val destino = "$red.$host"
             pool.execute {
+                if (cancelado) return@execute
                 for (puerto in puertos) {
+                    if (cancelado) break
                     if (puertoDisponible(destino, puerto, timeoutMs)) {
                         encontrados.add(ServidorDescubierto(destino, puerto))
                         break
