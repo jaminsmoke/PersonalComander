@@ -40,6 +40,10 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deleteMesa(mesa: Mesa) {
+        if (mesa.comandaActivaId != null) {
+            _mensaje.value = ctx.getString(R.string.error_delete_table_active)
+            return
+        }
         viewModelScope.launch {
             try {
                 db.mesaDao().deleteById(mesa.id)

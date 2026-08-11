@@ -117,6 +117,7 @@
     <!-- Error Messages (ViewModel operations) -->
     <string name="error_update_table">Error updating table: %s</string>
     <string name="error_delete_table">Error deleting table: %s</string>
+    <string name="error_delete_table_active">Cannot delete a table with an active order. Close it first.</string>
     <string name="error_reorder_table">Error reordering: %s</string>
     <string name="error_move_table">Error moving table: %s</string>
     <string name="error_rotate_table">Error rotating table: %s</string>

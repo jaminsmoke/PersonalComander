@@ -117,6 +117,7 @@
     <!-- Error Messages (ViewModel operations) -->
     <string name="error_update_table">Error al actualizar mesa: %s</string>
     <string name="error_delete_table">Error al eliminar mesa: %s</string>
+    <string name="error_delete_table_active">No se puede eliminar una mesa con comanda activa. Ciérrala primero.</string>
     <string name="error_reorder_table">Error al reordenar: %s</string>
     <string name="error_move_table">Error al mover mesa: %s</string>
     <string name="error_rotate_table">Error al girar mesa: %s</string>
