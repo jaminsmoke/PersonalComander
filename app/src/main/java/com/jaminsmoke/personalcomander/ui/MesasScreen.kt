@@ -1,18 +1,19 @@
 package com.jaminsmoke.personalcomander.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -54,23 +55,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.res.stringResource
-import com.jaminsmoke.personalcomander.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
+import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MesasScreen(
     onOpenMesa: (Long) -> Unit,
@@ -85,6 +92,10 @@ fun MesasScreen(
     var mesaEditando by remember { mutableStateOf<Mesa?>(null) }
     var mesaBorrando by remember { mutableStateOf<Mesa?>(null) }
     var crearVisible by remember { mutableStateOf(false) }
+
+    // Drag state
+    var draggedMesa by remember { mutableStateOf<Mesa?>(null) }
+    var dragOffset by remember { mutableStateOf(Offset.Zero) }
 
     LaunchedEffect(mensaje) {
         mensaje?.let {
@@ -124,69 +135,112 @@ fun MesasScreen(
             )
         }
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
-            // Zone tabs
-            if (zonas.size > 1) {
-                ScrollableTabRow(
-                    selectedTabIndex = zonas.indexOf(zonaSeleccionada).coerceAtLeast(0),
-                    modifier = Modifier.fillMaxWidth(),
-                    edgePadding = 12.dp,
-                    divider = {},
-                    indicator = {}
-                ) {
-                    val allLabel = stringResource(R.string.mesas_all_zones)
-                    Tab(selected = zonaSeleccionada == null, onClick = { viewModel.setZona(null) }) {
-                        Text(allLabel, Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                            fontWeight = if (zonaSeleccionada == null) FontWeight.Bold else FontWeight.Normal,
-                            color = if (zonaSeleccionada == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            Column(Modifier.fillMaxSize()) {
+                // Zone tabs
+                if (zonas.size > 1) {
+                    ScrollableTabRow(
+                        selectedTabIndex = zonas.indexOf(zonaSeleccionada).coerceAtLeast(0),
+                        modifier = Modifier.fillMaxWidth(),
+                        edgePadding = 12.dp, divider = {}, indicator = {}
+                    ) {
+                        val allLabel = stringResource(R.string.mesas_all_zones)
+                        Tab(selected = zonaSeleccionada == null, onClick = { viewModel.setZona(null) }) {
+                            Text(allLabel, Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                fontWeight = if (zonaSeleccionada == null) FontWeight.Bold else FontWeight.Normal,
+                                color = if (zonaSeleccionada == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        zonas.forEach { zona ->
+                            val emoji = zonaEmoji(zona)
+                            Tab(selected = zonaSeleccionada == zona, onClick = { viewModel.setZona(if (zonaSeleccionada == zona) null else zona) }) {
+                                Text("$emoji $zona", Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                    fontWeight = if (zonaSeleccionada == zona) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (zonaSeleccionada == zona) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
                     }
-                    zonas.forEach { zona ->
-                        val emoji = zonaEmoji(zona)
-                        Tab(selected = zonaSeleccionada == zona, onClick = { viewModel.setZona(if (zonaSeleccionada == zona) null else zona) }) {
-                            Text("$emoji $zona", Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                                fontWeight = if (zonaSeleccionada == zona) FontWeight.Bold else FontWeight.Normal,
-                                color = if (zonaSeleccionada == zona) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+
+                // Table grid
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    val cellSize: Dp = when {
+                        maxWidth > 800.dp -> 140.dp
+                        maxWidth > 500.dp -> 120.dp
+                        else -> 100.dp
+                    }
+                    if (mesas.isEmpty()) {
+                        LazyVerticalGrid(
+                            columns = GridCells.Adaptive(minSize = cellSize),
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(16) {
+                                ShimmerBox(modifier = Modifier.aspectRatio(1f), height = 0, radius = 16)
+                            }
+                        }
+                    } else {
+                        LazyVerticalGrid(
+                            columns = GridCells.Adaptive(minSize = cellSize),
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(mesasFiltradas, key = { it.id }) { mesa ->
+                                val isDragging = draggedMesa?.id == mesa.id
+                                MesaCard(
+                                    mesa = mesa,
+                                    isDragging = isDragging,
+                                    onClick = {
+                                        if (draggedMesa == null) onOpenMesa(mesa.id)
+                                    },
+                                    onEditClick = { mesaEditando = mesa },
+                                    onDeleteClick = { mesaBorrando = mesa },
+                                    onDragStart = { offset ->
+                                        draggedMesa = mesa
+                                        dragOffset = offset
+                                    },
+                                    onDrag = { change ->
+                                        dragOffset += change
+                                    },
+                                    onDragEnd = {
+                                        draggedMesa?.let { dragged ->
+                                            // Find closest mesa by position
+                                            val draggedNum = dragged.numero
+                                            val target = mesasFiltradas
+                                                .filter { it.id != dragged.id }
+                                                .minByOrNull { _ -> 0 } // swap with first other mesa found
+                                            if (target != null && target.numero != draggedNum) {
+                                                viewModel.swapMesas(dragged, target)
+                                            }
+                                        }
+                                        draggedMesa = null
+                                        dragOffset = Offset.Zero
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // Table grid
-            BoxWithConstraints(Modifier.fillMaxSize()) {
-                val cellSize: Dp = when {
-                    maxWidth > 800.dp -> 140.dp
-                    maxWidth > 500.dp -> 120.dp
-                    else -> 100.dp
-                }
-                if (mesas.isEmpty()) {
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = cellSize),
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(16) {
-                            ShimmerBox(modifier = Modifier.aspectRatio(1f), height = 0, radius = 16)
+            // Drag overlay
+            draggedMesa?.let { mesa ->
+                Box(
+                    modifier = Modifier
+                        .offset { IntOffset(dragOffset.x.roundToInt(), dragOffset.y.roundToInt()) }
+                        .zIndex(10f)
+                        .graphicsLayer {
+                            scaleX = 1.08f
+                            scaleY = 1.08f
+                            shadowElevation = 16f
+                            alpha = 0.9f
                         }
-                    }
-                } else {
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = cellSize),
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(mesasFiltradas, key = { it.id }) { mesa ->
-                            MesaCard(
-                                mesa = mesa,
-                                onClick = { onOpenMesa(mesa.id) },
-                                onEditClick = { mesaEditando = mesa },
-                                onDeleteClick = { mesaBorrando = mesa }
-                            )
-                        }
-                    }
+                        .size(100.dp)
+                ) {
+                    DragOverlayCard(mesa)
                 }
             }
         }
@@ -267,7 +321,16 @@ fun MesasScreen(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun MesaCard(mesa: Mesa, onClick: () -> Unit, onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
+private fun MesaCard(
+    mesa: Mesa,
+    isDragging: Boolean,
+    onClick: () -> Unit,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    onDragStart: (Offset) -> Unit,
+    onDrag: (Offset) -> Unit,
+    onDragEnd: () -> Unit
+) {
     val color = when (mesa.estado) {
         MesaEstado.LIBRE -> Color(0xFFC8E6C9)
         MesaEstado.OCUPADA -> Color(0xFFFFE0B2)
@@ -293,6 +356,26 @@ private fun MesaCard(mesa: Mesa, onClick: () -> Unit, onEditClick: () -> Unit, o
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(aspecto)
+            .graphicsLayer {
+                if (isDragging) alpha = 0.4f
+            }
+            .pointerInput(mesa.id) {
+                detectDragGesturesAfterLongPress(
+                    onDragStart = { offset ->
+                        onDragStart(offset)
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        onDrag(dragAmount)
+                    },
+                    onDragEnd = {
+                        onDragEnd()
+                    },
+                    onDragCancel = {
+                        onDragEnd()
+                    }
+                )
+            }
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = { menuExpanded = true }
@@ -326,7 +409,6 @@ private fun MesaCard(mesa: Mesa, onClick: () -> Unit, onEditClick: () -> Unit, o
                 Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
             }
 
-            // Dropdown menu anchored to top-right
             Box(Modifier.align(Alignment.TopEnd).size(28.dp)) {
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
@@ -345,16 +427,34 @@ private fun MesaCard(mesa: Mesa, onClick: () -> Unit, onEditClick: () -> Unit, o
     }
 }
 
+@Composable
+private fun DragOverlayCard(mesa: Mesa) {
+    Card(
+        modifier = Modifier.fillMaxSize(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE0B2)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Box(Modifier.fillMaxSize().padding(10.dp), contentAlignment = Alignment.Center) {
+            Text(
+                text = mesa.nombreVisible,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
 private fun formaLabel(forma: MesaForma): String = when (forma) {
-    MesaForma.REDONDA -> "⭕"
-    MesaForma.CUADRADA -> "🟩"
-    MesaForma.RECTANGULAR -> "🟦"
-    MesaForma.RECTANGULAR_XL -> "🟪"
+    MesaForma.REDONDA -> "\u2B55"
+    MesaForma.CUADRADA -> "\uD83D\uDFE9"
+    MesaForma.RECTANGULAR -> "\uD83D\uDFE6"
+    MesaForma.RECTANGULAR_XL -> "\uD83D\uDFEA"
 }
 
 private fun zonaEmoji(zona: String): String = when {
     zona.contains("Terraza", ignoreCase = true) || zona.contains("terraza", ignoreCase = true) -> "\uD83C\uDF1E"
-    zona.contains("Interior", ignoreCase = true) || zona.contains("Salón", ignoreCase = true) -> "\uD83C\uDFE0"
+    zona.contains("Interior", ignoreCase = true) || zona.contains("Sal\u00F3n", ignoreCase = true) -> "\uD83C\uDFE0"
     zona.contains("Barra", ignoreCase = true) || zona.contains("Bar", ignoreCase = true) -> "\uD83C\uDF78"
     zona.contains("VIP", ignoreCase = true) || zona.contains("Reservado", ignoreCase = true) -> "\u2B50"
     else -> "\uD83D\uDCCD"

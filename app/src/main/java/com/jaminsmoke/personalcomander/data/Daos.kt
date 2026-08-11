@@ -47,6 +47,9 @@ interface MesaDao {
 
     @Insert
     suspend fun insertMesa(mesa: Mesa): Long
+
+    @Query("UPDATE mesas SET numero = CASE WHEN numero = :n1 THEN :n2 WHEN numero = :n2 THEN :n1 ELSE numero END WHERE numero IN (:n1, :n2)")
+    suspend fun swapNumeros(n1: Int, n2: Int)
 }
 
 @Dao
