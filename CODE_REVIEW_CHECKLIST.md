@@ -16,7 +16,7 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 
 ## Bugs críticos
 
-- [ ] **C1 — `updateEstado` borra el alias de la mesa**  
+- [x] **C1 — `updateEstado` borra el alias de la mesa**  
   `MesaDao.updateEstado` escribe `alias = :alias` y `ComandaViewModel` siempre pasa `null` (abrir comanda, enviar a cocina, cerrar).  
   **Fix:** quitar `alias` del UPDATE de estado, o no tocarlo si no cambia.  
   **Archivos:** `data/Daos.kt`, `ui/ComandaViewModel.kt`
@@ -208,11 +208,11 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 
 | Bloque | Total | Hechos |
 |--------|------:|-------:|
-| Críticos | 6 | 0 |
+| Críticos | 6 | 1 |
 | Medios | 10 | 0 |
 | Seguridad | 4 | 0 |
 | Optimizaciones | 7 | 0 |
 | Arquitectura | 6 | 0 |
-| **Total** | **33** | **0** |
+| **Total** | **33** | **1** |
 
 Cuando Total hechos = 33 → desechar este documento.

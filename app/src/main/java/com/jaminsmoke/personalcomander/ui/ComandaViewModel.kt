@@ -205,14 +205,16 @@ class ComandaViewModel(
     }
 
     fun cerrarMesa() {
-        cerrada = true
         viewModelScope.launch {
             mutex.withLock {
                 try {
                     val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
                     db.pedidoDao().update(p.copy(estado = PedidoEstado.CERRADA, cerradoEn = System.currentTimeMillis()))
                     db.mesaDao().updateEstado(mesaId, MesaEstado.LIBRE, null)
-                } catch (e: Exception) { _error.value = ctx.getString(R.string.error_close_table, e.message ?: e.javaClass.simpleName) }
+                    cerrada = true  // solo tras éxito: si falla, se puede reintentar
+                } catch (e: Exception) {
+                    _error.value = ctx.getString(R.string.error_close_table, e.message ?: e.javaClass.simpleName)
+                }
             }
         }
     }
