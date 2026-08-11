@@ -214,12 +214,12 @@ fun MesasScreen(
                     }
                 }
 
-                // Board — large canvas so dragging never hits a wall
+                // Board — canvas wraps content tightly with one extra column/row of room
                 val scrollH = rememberScrollState()
                 val scrollV = rememberScrollState()
-                val PAD = 600f
-                val maxX = ((mesasFiltradas.maxOfOrNull { it.posX } ?: 0f) + CARD_W + PAD).coerceAtLeast(1000f)
-                val maxY = ((mesasFiltradas.maxOfOrNull { it.posY } ?: 0f) + CARD_W + PAD).coerceAtLeast(1500f)
+                val PAD = CELL_F * 3f  // 120dp — just one card width of extra space
+                val maxX = ((mesasFiltradas.maxOfOrNull { it.posX } ?: 0f) + CARD_W + PAD).coerceAtLeast(800f)
+                val maxY = ((mesasFiltradas.maxOfOrNull { it.posY } ?: 0f) + CARD_W + PAD).coerceAtLeast(1200f)
 
                 Box(
                     modifier = Modifier
@@ -349,16 +349,19 @@ fun MesasScreen(
                                                 val (ow, oh) = mesaDims(it.forma, it.girada)
                                                 listOf(it.posX, it.posY, ow, oh)
                                             }
-                                            val (finalX, finalY) = findNearestFreeCell(
+                                            val (rawFinalX, rawFinalY) = findNearestFreeCell(
                                                 snappedX, snappedY, draggedW, draggedH, occupied
                                             )
+                                            // Clamp to board boundaries (keep mesa inside the bordered area)
+                                            val clampX = rawFinalX.coerceIn(CELL_F, (maxX - CELL_F - draggedW).coerceAtLeast(CELL_F))
+                                            val clampY = rawFinalY.coerceIn(CELL_F, (maxY - CELL_F - draggedH).coerceAtLeast(CELL_F))
                                             // Warning: mesa muy alejada del cluster
-                                            if (isIsolated(finalX, finalY, dragged.id, mesas)) {
+                                            if (isIsolated(clampX, clampY, dragged.id, mesas)) {
                                                 mesaAislada = dragged
-                                                aisladaFinalX = finalX
-                                                aisladaFinalY = finalY
+                                                aisladaFinalX = clampX
+                                                aisladaFinalY = clampY
                                             } else {
-                                                viewModel.updatePosicion(dragged, finalX, finalY)
+                                                viewModel.updatePosicion(dragged, clampX, clampY)
                                             }
                                         }
                                         draggedMesa = null
