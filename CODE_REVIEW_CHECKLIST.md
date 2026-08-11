@@ -41,7 +41,7 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
   **Fix:** bloquear borrado si hay comanda, o cascada + confirmación fuerte.  
   **Archivos:** `ui/MesasViewModel.kt`, `ui/MesasScreen.kt`, DAOs si hace falta
 
-- [ ] **C6 — Operaciones multi-tabla sin `@Transaction`**  
+- [x] **C6 — Operaciones multi-tabla sin `@Transaction`**  
   Crear pedido + ocupar mesa, cerrar pedido + liberar mesa, etc. Si falla a mitad → estado inconsistente.  
   **Fix:** `@Transaction` en DAOs o `db.withTransaction { }`.  
   **Archivos:** `data/Daos.kt` / nuevo repo, `ui/ComandaViewModel.kt`
@@ -208,11 +208,11 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 
 | Bloque | Total | Hechos |
 |--------|------:|-------:|
-| Críticos | 6 | 2 |
+| Críticos | 6 | 3 |
 | Medios | 10 | 0 |
 | Seguridad | 4 | 0 |
 | Optimizaciones | 7 | 0 |
 | Arquitectura | 6 | 0 |
-| **Total** | **33** | **2** |
+| **Total** | **33** | **3** |
 
 Cuando Total hechos = 33 → desechar este documento.

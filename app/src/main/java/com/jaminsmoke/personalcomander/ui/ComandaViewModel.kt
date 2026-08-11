@@ -155,7 +155,14 @@ class ComandaViewModel(
                             val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
                             db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, nuevoId)
                             Pedido(id = nuevoId, mesaId = mesaId)
-                        } else p
+                        } else {
+                            // Reabrir pedido enviado: al añadir más productos, vuelve a ABIERTA
+                            if (p.estado == PedidoEstado.ENVIADA) {
+                                db.pedidoDao().update(p.copy(estado = PedidoEstado.ABIERTA))
+                                db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, p.id)
+                            }
+                            p
+                        }
 
                         val lineas = db.lineaPedidoDao().getForPedido(pedidoActivo.id)
                         val existente = lineas.firstOrNull { it.productoId == producto.id }
