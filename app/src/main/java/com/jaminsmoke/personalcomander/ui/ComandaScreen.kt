@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+
 package com.jaminsmoke.personalcomander.ui
 
 import android.Manifest
@@ -7,16 +9,21 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,16 +35,17 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -54,16 +62,17 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jaminsmoke.personalcomander.data.CategoriaIcono
 import com.jaminsmoke.personalcomander.data.LineaPedido
 import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.PedidoEstado
 import com.jaminsmoke.personalcomander.data.Producto
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComandaScreen(
     mesaId: Long,
@@ -79,52 +88,28 @@ fun ComandaScreen(
     val context = LocalContext.current
     var micPermissionGranted by remember {
         mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.RECORD_AUDIO
-            ) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         )
     }
 
     var textoParcial by remember { mutableStateOf<String?>(null) }
     val recognizer = remember { VozRecognizer(context) }
-    DisposableEffect(Unit) {
-        onDispose { recognizer.destruir() }
-    }
+    DisposableEffect(Unit) { onDispose { recognizer.destruir() } }
 
     val iniciarVoz: () -> Unit = {
-        textoParcial = null
-        viewModel.setEscuchandoVoz(true)
-        recognizer.onParcial = { parcial -> textoParcial = parcial }
-        recognizer.onResultado = { texto ->
-            textoParcial = null
-            viewModel.setEscuchandoVoz(false)
-            viewModel.procesarVoz(texto)
-        }
-        recognizer.onError = { error ->
-            textoParcial = null
-            viewModel.setEscuchandoVoz(false)
-            viewModel.informar(mensajeErrorVoz(error))
-        }
+        textoParcial = null; viewModel.setEscuchandoVoz(true)
+        recognizer.onParcial = { textoParcial = it }
+        recognizer.onResultado = { textoParcial = null; viewModel.setEscuchandoVoz(false); viewModel.procesarVoz(it) }
+        recognizer.onError = { textoParcial = null; viewModel.setEscuchandoVoz(false); viewModel.informar(mensajeErrorVoz(it)) }
         recognizer.empezar()
     }
+    val detenerVoz: () -> Unit = { textoParcial = null; recognizer.detener(); viewModel.setEscuchandoVoz(false) }
 
-    val detenerVoz: () -> Unit = {
-        textoParcial = null
-        recognizer.detener()
-        viewModel.setEscuchandoVoz(false)
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        micPermissionGranted = granted; if (granted) iniciarVoz()
     }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        micPermissionGranted = granted
-        if (granted) iniciarVoz()
-    }
-
-    LaunchedEffect(state.feedbackVoz) {
-        state.feedbackVoz?.let { snackbarHostState.showSnackbar(it) }
-    }
+    LaunchedEffect(state.feedbackVoz) { state.feedbackVoz?.let { snackbarHostState.showSnackbar(it) } }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -133,358 +118,172 @@ fun ComandaScreen(
                 title = {
                     Column {
                         Text("Mesa ${state.mesa?.numero ?: mesaId}")
-                        Text(
-                            text = estadoLabel(state.mesa?.estado),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Text(estadoLabel(state.mesa?.estado), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
-                    }
-                }
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } }
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = state.busqueda,
-                    onValueChange = viewModel::setBusqueda,
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("Buscar producto...") },
-                    singleLine = true
-                )
-                IconButton(
-                    onClick = {
-                        if (micPermissionGranted) {
-                            iniciarVoz()
-                        } else {
-                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        }
-                    },
-                    enabled = !state.escuchandoVoz
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Mic,
-                        contentDescription = "Hablar comanda",
-                        tint = if (state.escuchandoVoz) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.primary
-                        }
-                    )
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            // Search + mic row
+            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(state.busqueda, viewModel::setBusqueda, Modifier.weight(1f), placeholder = { Text("Buscar producto...") }, singleLine = true)
+                IconButton(onClick = { if (micPermissionGranted) iniciarVoz() else permissionLauncher.launch(Manifest.permission.RECORD_AUDIO) }, enabled = !state.escuchandoVoz) {
+                    Icon(Icons.Default.Mic, "Hablar comanda", tint = if (state.escuchandoVoz) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
                 }
             }
+
+            // Listening card
             if (state.escuchandoVoz) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Mic,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        Column(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
-                            Text(
-                                text = "Escuchando…",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                            if (textoParcial != null) {
-                                Text(
-                                    text = textoParcial!!,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            } else {
-                                Text(
-                                    text = "Di la comanda, ej: «dos cafés con leche»",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f)
-                                )
-                            }
+                Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Mic, null, tint = MaterialTheme.colorScheme.onErrorContainer)
+                        Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
+                            Text("Escuchando…", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
+                            if (textoParcial != null) Text(textoParcial!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            else Text("Di la comanda, ej: «dos cafés con leche»", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f))
                         }
-                        OutlinedButton(onClick = detenerVoz) {
-                            Text("Cancelar")
-                        }
+                        OutlinedButton(onClick = detenerVoz) { Text("Cancelar") }
                     }
                 }
             }
 
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // Category tabs with emojis
+            ScrollableTabRow(
+                selectedTabIndex = state.categorias.indexOf(state.categoria).coerceAtLeast(0),
+                modifier = Modifier.fillMaxWidth(),
+                edgePadding = 12.dp,
+                divider = {},
+                indicator = {}
             ) {
-                item {
-                    FilterChip(
-                        selected = state.categoria == null,
-                        onClick = { viewModel.setCategoria(null) },
-                        label = { Text("Todas") }
-                    )
+                Tab(selected = state.categoria == null, onClick = { viewModel.setCategoria(null) }) {
+                    Text("📋 Todas", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                        fontWeight = if (state.categoria == null) FontWeight.Bold else FontWeight.Normal,
+                        color = if (state.categoria == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                items(state.categorias) { cat ->
-                    FilterChip(
-                        selected = state.categoria == cat,
-                        onClick = { viewModel.setCategoria(if (state.categoria == cat) null else cat) },
-                        label = { Text(cat) }
-                    )
+                state.categorias.forEach { cat ->
+                    val emoji = CategoriaIcono.de(cat)
+                    Tab(selected = state.categoria == cat, onClick = { viewModel.setCategoria(if (state.categoria == cat) null else cat) }) {
+                        Text("$emoji $cat", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            fontWeight = if (state.categoria == cat) FontWeight.Bold else FontWeight.Normal,
+                            color = if (state.categoria == cat) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(state.productos, key = { it.id }) { producto ->
-                    ProductoRow(
-                        producto = producto,
-                        onClick = { viewModel.addProducto(producto) }
-                    )
+            Spacer(Modifier.height(4.dp))
+
+            // Products: grid when filtered, sticky headers when "Todas"
+            if (state.categoria == null && state.busqueda.isBlank()) {
+                // Sticky headers grouped by category
+                val agrupados = state.productos.groupBy { it.categoria }
+                LazyColumn(
+                    Modifier.fillMaxWidth().weight(1f),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    agrupados.forEach { (categoria, prods) ->
+                        stickyHeader {
+                            Surface(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface) {
+                                Text(
+                                    "${CategoriaIcono.de(categoria)} $categoria",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                                )
+                            }
+                        }
+                        items(prods, key = { it.id }) { p -> ProductoRow(p, onClick = { viewModel.addProducto(p) }) }
+                    }
+                }
+            } else {
+                // Grid for filtered view
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    Modifier.fillMaxWidth().weight(1f),
+                    contentPadding = PaddingValues(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(state.productos, key = { it.id }) { p -> ProductoGridCard(p, onClick = { viewModel.addProducto(p) }) }
                 }
             }
 
-            ComandaPanel(
-                lineas = state.lineas,
-                total = state.total,
-                pedidoEstado = state.pedido?.estado,
-                onAumentar = viewModel::aumentarLinea,
-                onDisminuir = viewModel::disminuirLinea,
-                onEnviarACocina = viewModel::enviarACocina,
-                onCerrarMesa = viewModel::cerrarMesa
-            )
+            // Bottom comanda panel
+            ComandaPanel(state.lineas, state.total, state.pedido?.estado, viewModel::aumentarLinea, viewModel::disminuirLinea, viewModel::enviarACocina, viewModel::cerrarMesa)
         }
     }
 }
 
 @Composable
 private fun ProductoRow(producto: Producto, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = producto.nombre,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = producto.categoria,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+    Card(Modifier.fillMaxWidth().clickable(onClick = onClick), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(producto.nombre, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("${CategoriaIcono.de(producto.categoria)} ${producto.categoria}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Text(
-                text = producto.precio.formatoEuro(),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Añadir",
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .size(20.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            Text(producto.precio.formatoEuro(), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            Icon(Icons.Default.Add, "Añadir", Modifier.padding(start = 6.dp).size(20.dp), tint = MaterialTheme.colorScheme.primary)
+        }
+    }
+}
+
+@Composable
+private fun ProductoGridCard(producto: Producto, onClick: () -> Unit) {
+    Card(Modifier.fillMaxWidth().clickable(onClick = onClick), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(Modifier.fillMaxWidth().padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(CategoriaIcono.de(producto.categoria), style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(4.dp))
+            Text(producto.nombre, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(4.dp))
+            Text(producto.precio.formatoEuro(), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         }
     }
 }
 
 @Composable
 private fun ComandaPanel(
-    lineas: List<LineaPedido>,
-    total: Double,
-    pedidoEstado: PedidoEstado?,
-    onAumentar: (LineaPedido) -> Unit,
-    onDisminuir: (LineaPedido) -> Unit,
-    onEnviarACocina: () -> Unit,
-    onCerrarMesa: () -> Unit
+    lineas: List<LineaPedido>, total: Double, pedidoEstado: PedidoEstado?,
+    onAumentar: (LineaPedido) -> Unit, onDisminuir: (LineaPedido) -> Unit,
+    onEnviarACocina: () -> Unit, onCerrarMesa: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shadowElevation = 8.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp)
-        ) {
-            Text(
-                text = "Comanda",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            if (lineas.isEmpty()) {
-                Text(
-                    text = "Sin artículos. Toca un producto para añadirlo.",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.heightIn(max = 180.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    items(lineas, key = { it.id }) { linea ->
-                        LineaRow(
-                            linea = linea,
-                            onAumentar = { onAumentar(linea) },
-                            onDisminuir = { onDisminuir(linea) }
-                        )
-                    }
-                }
+    Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shadowElevation = 8.dp) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
+            Text("Comanda", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            if (lineas.isEmpty()) Text("Sin artículos. Toca un producto para añadirlo.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 8.dp))
+            else LazyColumn(Modifier.heightIn(max = 160.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                items(lineas, key = { it.id }) { linea -> LineaRow(linea, { onAumentar(linea) }, { onDisminuir(linea) }) }
             }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Total",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = total.formatoEuro(),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Total", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.weight(1f))
+                Text(total.formatoEuro(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                val hayComanda = pedidoEstado != null && lineas.isNotEmpty()
-                Button(
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onEnviarACocina()
-                    },
-                    modifier = Modifier.weight(1f),
-                    enabled = hayComanda && pedidoEstado == PedidoEstado.ABIERTA
-                ) {
-                    Text(
-                        text = when (pedidoEstado) {
-                            PedidoEstado.ENVIADA -> "En cocina ✓"
-                            else -> "Enviar a cocina"
-                        }
-                    )
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val hay = pedidoEstado != null && lineas.isNotEmpty()
+                Button(onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onEnviarACocina() }, Modifier.weight(1f), enabled = hay && pedidoEstado == PedidoEstado.ABIERTA) {
+                    Text(if (pedidoEstado == PedidoEstado.ENVIADA) "En cocina ✓" else "Enviar a cocina")
                 }
-                OutlinedButton(
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onCerrarMesa()
-                    },
-                    modifier = Modifier.weight(1f),
-                    enabled = pedidoEstado != null
-                ) {
-                    Text("Cerrar mesa")
-                }
+                OutlinedButton(onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onCerrarMesa() }, Modifier.weight(1f), enabled = pedidoEstado != null) { Text("Cerrar mesa") }
             }
         }
     }
 }
 
 @Composable
-private fun LineaRow(
-    linea: LineaPedido,
-    onAumentar: () -> Unit,
-    onDisminuir: () -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "${linea.cantidad}×",
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = linea.nombreProducto,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 8.dp)
-        )
-        Text(
-            text = (linea.precioUnitario * linea.cantidad).formatoEuro(),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-        IconButton(onClick = onDisminuir, modifier = Modifier.size(32.dp)) {
-            Icon(
-                imageVector = Icons.Default.Clear,
-                contentDescription = "Quitar",
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        IconButton(onClick = onAumentar, modifier = Modifier.size(32.dp)) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Añadir",
-                modifier = Modifier.size(18.dp)
-            )
-        }
+private fun LineaRow(linea: LineaPedido, onAumentar: () -> Unit, onDisminuir: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text("${linea.cantidad}×", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text(linea.nombreProducto, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
+        Text((linea.precioUnitario * linea.cantidad).formatoEuro(), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+        IconButton(onClick = onDisminuir, Modifier.size(32.dp)) { Icon(Icons.Default.Clear, "Quitar", Modifier.size(18.dp)) }
+        IconButton(onClick = onAumentar, Modifier.size(32.dp)) { Icon(Icons.Default.Add, "Añadir", Modifier.size(18.dp)) }
     }
 }
 
 private fun estadoLabel(estado: MesaEstado?): String = when (estado) {
-    MesaEstado.LIBRE -> "Libre"
-    MesaEstado.OCUPADA -> "Ocupada"
-    MesaEstado.EN_COCINA -> "En cocina"
-    null -> ""
+    MesaEstado.LIBRE -> "Libre"; MesaEstado.OCUPADA -> "Ocupada"; MesaEstado.EN_COCINA -> "En cocina"; null -> ""
 }

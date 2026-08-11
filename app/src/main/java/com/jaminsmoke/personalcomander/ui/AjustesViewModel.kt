@@ -33,6 +33,12 @@ data class AjustesSyncState(
     val mensaje: String? = null
 )
 
+data class ImportPreview(
+    val nuevos: Int,
+    val actualizados: Int,
+    val ignorados: Int
+)
+
 class AjustesViewModel(application: Application) : AndroidViewModel(application) {
     private val context = getApplication<Application>()
     private val db = (application as PersonalComanderApp).db
@@ -55,6 +61,9 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
         _sync.update { it.copy(host = servidor.ip, puerto = servidor.puerto.toString()) }
     }
 
+    private val _importPreview = MutableStateFlow<ImportPreview?>(null)
+    val importPreview: StateFlow<ImportPreview?> = _importPreview.asStateFlow()
+
     fun limpiarMensaje() { _mensaje.value = null }
 
     fun exportar(uri: Uri) {
@@ -73,11 +82,26 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
             if (importados == null) { _mensaje.value = "El archivo no es un JSON válido de Personal Comander"; return@launch }
             val existentes = db.productoDao().getAllIncluyendoOcultos()
             val fusion = fusionarProductos(existentes, importados)
+            // Mostrar preview antes de aplicar
+            _importPreview.value = ImportPreview(fusion.insertados, fusion.actualizados, fusion.ignorados)
+        }
+    }
+
+    fun confirmarImportacion(uri: Uri) {
+        viewModelScope.launch {
+            _importPreview.value = null
+            val texto = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+            val importados = BackupJson.deserializar(texto ?: "")
+            if (importados == null) { _mensaje.value = "El archivo no es un JSON válido"; return@launch }
+            val existentes = db.productoDao().getAllIncluyendoOcultos()
+            val fusion = fusionarProductos(existentes, importados)
             if (fusion.insertar.isNotEmpty()) db.productoDao().insertAll(fusion.insertar)
             fusion.actualizar.forEach { db.productoDao().update(it) }
             _mensaje.value = "Importados: ${fusion.insertados} nuevos, ${fusion.actualizados} actualizados, ${fusion.ignorados} ignorados"
         }
     }
+
+    fun cancelarImportacion() { _importPreview.value = null }
 
     fun buscarServidores() {
         viewModelScope.launch {

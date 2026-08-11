@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -45,7 +46,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -72,15 +75,40 @@ fun AjustesScreen(
         }
     }
 
+    val importPreview by viewModel.importPreview.collectAsState()
+    var pendingImportUri by remember { mutableStateOf<android.net.Uri?>(null) }
+
+    // Import preview dialog
+    importPreview?.let { preview ->
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelarImportacion() },
+            title = { Text("Vista previa de importación") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Se van a importar los siguientes cambios:")
+                    Text("🆕 ${preview.nuevos} productos nuevos", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    Text("🔄 ${preview.actualizados} productos actualizados", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
+                    Text("⏭️ ${preview.ignorados} productos ignorados (nombres vacíos)", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingImportUri?.let { viewModel.confirmarImportacion(it) }
+                }) { Text("Importar", color = MaterialTheme.colorScheme.primary) }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.cancelarImportacion() }) { Text("Cancelar") }
+            }
+        )
+    }
+
     val crearArchivo = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
-    ) { uri ->
-        if (uri != null) viewModel.exportar(uri)
-    }
+    ) { uri -> if (uri != null) viewModel.exportar(uri) }
     val abrirArchivo = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
-        if (uri != null) viewModel.importar(uri)
+        if (uri != null) { pendingImportUri = uri; viewModel.importar(uri) }
     }
 
     Scaffold(
