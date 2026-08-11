@@ -79,10 +79,10 @@ class ComandaViewModel(
             db.productoDao().observeAll()
         ) { mesa, p, ls, prods -> ComandaData(mesa, p, ls, prods) }
 
-        // Merge feedbackVoz + error into one snackbar flow (max 5 flows in combine)
-        val _snackbar = combine(_feedbackVoz, _error) { f, e -> e ?: f }
+        // Wrap feedbackVoz + error to keep them separate within 5-flow combine limit
+        val _snackState = combine(_feedbackVoz, _error) { f, e -> SnackState(f, e) }
 
-        combine(datos, _busqueda, _categoria, _escuchandoVoz, _snackbar) { d, busqueda, categoria, escuchando, snackbar ->
+        combine(datos, _busqueda, _categoria, _escuchandoVoz, _snackState) { d, busqueda, categoria, escuchando, ss ->
             val cats = d.productos.map { it.categoria }.distinct()
             val porCategoria = d.productos.filter { categoria == null || it.categoria == categoria }
             val filtrados = if (busqueda.isBlank()) porCategoria
@@ -94,10 +94,12 @@ class ComandaViewModel(
                 mesa = d.mesa, pedido = d.pedido, lineas = d.lineas,
                 categorias = cats, productos = filtrados,
                 busqueda = busqueda, categoria = categoria,
-                escuchandoVoz = escuchando, feedbackVoz = snackbar, error = snackbar
+                escuchandoVoz = escuchando, feedbackVoz = ss.feedbackVoz, error = ss.error
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ComandaUiState())
     }
+
+    private data class SnackState(val feedbackVoz: String?, val error: String?)
 
     private data class ComandaData(
         val mesa: Mesa?, val pedido: Pedido?,
