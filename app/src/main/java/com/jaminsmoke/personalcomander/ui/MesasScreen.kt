@@ -78,6 +78,7 @@ import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 // Grid system: all positions snap to multiples of CELL
@@ -266,11 +267,15 @@ fun MesasScreen(
                                             // Snap to grid
                                             val snappedX = (rawX / CELL_F).roundToInt() * CELL_F
                                             val snappedY = (rawY / CELL_F).roundToInt() * CELL_F
-                                            viewModel.updatePosicion(
-                                                dragged,
-                                                snappedX.coerceAtLeast(0f),
-                                                snappedY.coerceAtLeast(0f)
+                                            // Evitar colisión: buscar celda libre más cercana
+                                            val occupied = mesas
+                                                .filter { it.id != dragged.id }
+                                                .map { it.posX to it.posY }
+                                                .toSet()
+                                            val (finalX, finalY) = findNearestFreeCell(
+                                                snappedX, snappedY, occupied
                                             )
+                                            viewModel.updatePosicion(dragged, finalX, finalY)
                                         }
                                         draggedMesa = null
                                         dragPxX = 0f
@@ -540,6 +545,36 @@ private fun DragOverlayCard(mesa: Mesa) {
             )
         }
     }
+}
+
+/**
+ * Busca la celda libre más cercana a (targetX, targetY) usando búsqueda en espiral.
+ * Si la celda objetivo está libre, la devuelve directamente.
+ * Si está ocupada, expande en anillos hasta encontrar una libre.
+ */
+private fun findNearestFreeCell(
+    targetX: Float,
+    targetY: Float,
+    occupied: Set<Pair<Float, Float>>
+): Pair<Float, Float> {
+    val target = targetX to targetY
+    if (target !in occupied) return target
+
+    var ring = 1
+    while (ring < 30) {
+        for (dx in -ring..ring) {
+            for (dy in -ring..ring) {
+                if (maxOf(abs(dx), abs(dy)) != ring) continue
+                val cx = targetX + dx * CELL_F
+                val cy = targetY + dy * CELL_F
+                if (cx >= 0 && cy >= 0 && (cx to cy) !in occupied) {
+                    return cx to cy
+                }
+            }
+        }
+        ring++
+    }
+    return target // fallback: mantener posición aunque colisione
 }
 
 private fun formaLabel(forma: MesaForma): String = when (forma) {
