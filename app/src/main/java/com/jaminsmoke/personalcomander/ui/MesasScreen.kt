@@ -18,18 +18,24 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
@@ -52,8 +58,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -75,6 +81,8 @@ fun MesasScreen(
     val mensaje by viewModel.mensaje.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var mesaEditando by remember { mutableStateOf<Mesa?>(null) }
+    var mesaBorrando by remember { mutableStateOf<Mesa?>(null) }
+    var crearVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(mensaje) {
         mensaje?.let {
@@ -91,6 +99,11 @@ fun MesasScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { crearVisible = true }) {
+                Icon(Icons.Default.Add, stringResource(R.string.btn_add))
+            }
+        },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.mesas_title)) },
@@ -167,7 +180,8 @@ fun MesasScreen(
                             MesaCard(
                                 mesa = mesa,
                                 onClick = { onOpenMesa(mesa.id) },
-                                onLongPress = { mesaEditando = mesa }
+                                onEditClick = { mesaEditando = mesa },
+                                onDeleteClick = { mesaBorrando = mesa }
                             )
                         }
                     }
@@ -176,52 +190,81 @@ fun MesasScreen(
         }
     }
 
-    // Alias edit dialog
+    // Create dialog
+    if (crearVisible) {
+        var createZona by remember { mutableStateOf(zonaSeleccionada ?: zonas.firstOrNull() ?: "") }
+        var createForma by remember { mutableStateOf(MesaForma.CUADRADA) }
+        var createCap by remember { mutableStateOf("4") }
+        var createAlias by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { crearVisible = false },
+            title = { Text(stringResource(R.string.mesas_create_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(createZona, { createZona = it }, label = { Text(stringResource(R.string.mesas_zone_label)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    Text(stringResource(R.string.mesas_shape_label), style = MaterialTheme.typography.labelMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        MesaForma.entries.forEach { forma ->
+                            FilterChip(selected = createForma == forma, onClick = { createForma = forma; createCap = forma.capacidadDefecto.toString() },
+                                label = { Text(formaLabel(forma)) })
+                        }
+                    }
+                    OutlinedTextField(createCap, { createCap = it.filter { c -> c.isDigit() } }, label = { Text(stringResource(R.string.mesas_capacidad_label)) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(createAlias, { createAlias = it }, label = { Text(stringResource(R.string.mesas_alias_label)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.createMesa(createZona.ifBlank { "General" }, createForma, createCap.toIntOrNull() ?: 4, createAlias.ifBlank { null })
+                    crearVisible = false
+                }) { Text(stringResource(R.string.mesas_create_btn)) }
+            },
+            dismissButton = { TextButton(onClick = { crearVisible = false }) { Text(stringResource(R.string.menu_cancel)) } }
+        )
+    }
+
+    // Edit dialog
     mesaEditando?.let { mesa ->
-        var aliasText by remember(mesa) { mutableStateOf(mesa.alias ?: "") }
-        var capacidadText by remember(mesa) { mutableStateOf(mesa.capacidad.toString()) }
+        var editAlias by remember(mesa) { mutableStateOf(mesa.alias ?: "") }
+        var editCap by remember(mesa) { mutableStateOf(mesa.capacidad.toString()) }
         AlertDialog(
             onDismissRequest = { mesaEditando = null },
             title = { Text(stringResource(R.string.mesas_alias_title, mesa.nombreVisible)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.mesas_alias_desc))
-                    OutlinedTextField(
-                        value = aliasText,
-                        onValueChange = { aliasText = it },
-                        label = { Text(stringResource(R.string.mesas_alias_label)) },
-                        placeholder = { Text(mesa.numero.toString()) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = capacidadText,
-                        onValueChange = { capacidadText = it.filter { c -> c.isDigit() } },
-                        label = { Text(stringResource(R.string.mesas_capacidad_label)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    OutlinedTextField(editAlias, { editAlias = it }, label = { Text(stringResource(R.string.mesas_alias_label)) }, placeholder = { Text(mesa.numero.toString()) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(editCap, { editCap = it.filter { c -> c.isDigit() } }, label = { Text(stringResource(R.string.mesas_capacidad_label)) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    val cap = capacidadText.toIntOrNull() ?: mesa.capacidad
-                    viewModel.updateConfig(mesa, aliasText.ifBlank { null }, cap)
+                    viewModel.updateConfig(mesa, editAlias.ifBlank { null }, editCap.toIntOrNull() ?: mesa.capacidad)
                     mesaEditando = null
                 }) { Text(stringResource(R.string.menu_save)) }
             },
-            dismissButton = {
-                TextButton(onClick = { mesaEditando = null }) {
-                    Text(stringResource(R.string.menu_cancel))
-                }
-            }
+            dismissButton = { TextButton(onClick = { mesaEditando = null }) { Text(stringResource(R.string.menu_cancel)) } }
+        )
+    }
+
+    // Delete confirmation
+    mesaBorrando?.let { mesa ->
+        AlertDialog(
+            onDismissRequest = { mesaBorrando = null },
+            title = { Text(stringResource(R.string.mesas_delete_title)) },
+            text = { Text(stringResource(R.string.mesas_delete_confirm, mesa.nombreVisible)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteMesa(mesa)
+                    mesaBorrando = null
+                }) { Text(stringResource(R.string.btn_delete), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { mesaBorrando = null }) { Text(stringResource(R.string.menu_cancel)) } }
         )
     }
 }
 
 @Composable
-private fun MesaCard(mesa: Mesa, onClick: () -> Unit, onLongPress: () -> Unit) {
+private fun MesaCard(mesa: Mesa, onClick: () -> Unit, onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
     val color = when (mesa.estado) {
         MesaEstado.LIBRE -> Color(0xFFC8E6C9)
         MesaEstado.OCUPADA -> Color(0xFFFFE0B2)
@@ -241,71 +284,74 @@ private fun MesaCard(mesa: Mesa, onClick: () -> Unit, onLongPress: () -> Unit) {
         MesaForma.RECTANGULAR_XL -> 0.4f to 12.dp
     }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(aspecto)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(shapeRadius),
-        colors = CardDefaults.cardColors(containerColor = color)
-    ) {
-        Box(Modifier.fillMaxSize().padding(if (mesa.forma == MesaForma.REDONDA) 12.dp else 10.dp)) {
-            Column(
-                modifier = Modifier.align(Alignment.TopStart),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = mesa.nombreVisible,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                if (mesa.alias != null) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Box {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(aspecto)
+                .clickable(onClick = onClick),
+            shape = RoundedCornerShape(shapeRadius),
+            colors = CardDefaults.cardColors(containerColor = color)
+        ) {
+            Box(Modifier.fillMaxSize().padding(if (mesa.forma == MesaForma.REDONDA) 12.dp else 10.dp)) {
+                Column(
+                    modifier = Modifier.align(Alignment.TopStart),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
                     Text(
-                        text = "Nº ${mesa.numero}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = mesa.nombreVisible,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
+                    if (mesa.alias != null) {
+                        Text("Nº ${mesa.numero}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
-            }
-
-            Row(
-                modifier = Modifier.align(Alignment.BottomEnd),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "${mesa.capacidad}p",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (tieneComanda) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .background(Color(0xFFFF7043), CircleShape)
-                    )
+                Row(
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("${mesa.capacidad}p", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (tieneComanda) Box(Modifier.size(10.dp).background(Color(0xFFFF7043), CircleShape))
+                    Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
                 }
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.End
-                )
-            }
-
-            // Edit alias button (top right)
-            IconButton(
-                onClick = onLongPress,
-                modifier = Modifier.align(Alignment.TopEnd).size(28.dp)
-            ) {
-                Icon(Icons.Default.Edit, stringResource(R.string.btn_edit), Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                // Menu button (top right)
+                IconButton(
+                    onClick = { menuExpanded = true },
+                    modifier = Modifier.align(Alignment.TopEnd).size(28.dp)
+                ) {
+                    Icon(Icons.Default.Edit, stringResource(R.string.btn_edit), Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                }
             }
         }
+
+        // Dropdown menu
+        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.mesas_menu_edit)) },
+                onClick = { menuExpanded = false; onEditClick() },
+                leadingIcon = { Icon(Icons.Default.Edit, null) }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.mesas_menu_delete), color = MaterialTheme.colorScheme.error) },
+                onClick = { menuExpanded = false; onDeleteClick() },
+                leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }
+            )
+        }
     }
+}
+
+private fun formaLabel(forma: MesaForma): String = when (forma) {
+    MesaForma.REDONDA -> "⭕"
+    MesaForma.CUADRADA -> "🟩"
+    MesaForma.RECTANGULAR -> "🟦"
+    MesaForma.RECTANGULAR_XL -> "🟪"
 }
 
 private fun zonaEmoji(zona: String): String = when {

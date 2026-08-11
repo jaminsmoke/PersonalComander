@@ -25,6 +25,14 @@
     <string name="mesas_alias_desc">Set a custom name. It will be cleared when the table closes.</string>
     <string name="mesas_alias_label">Name (optional)</string>
     <string name="mesas_capacidad_label">Capacity (people)</string>
+    <string name="mesas_zone_label">Zone</string>
+    <string name="mesas_shape_label">Shape</string>
+    <string name="mesas_create_title">New table</string>
+    <string name="mesas_create_btn">Create</string>
+    <string name="mesas_delete_title">Delete table</string>
+    <string name="mesas_delete_confirm">Delete %s permanently? Subsequent tables will be renumbered.</string>
+    <string name="mesas_menu_edit">Edit</string>
+    <string name="mesas_menu_delete">Delete</string>
 
     <!-- Menu Screen -->
     <string name="menu_title">Menu Management</string>

@@ -35,6 +35,18 @@ interface MesaDao {
 
     @Query("UPDATE mesas SET alias = :alias, capacidad = :capacidad WHERE id = :id")
     suspend fun updateConfig(id: Long, alias: String?, capacidad: Int)
+
+    @Query("DELETE FROM mesas WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
+    @Query("UPDATE mesas SET numero = numero - 1 WHERE numero > :numero")
+    suspend fun renumberAfter(numero: Int)
+
+    @Query("SELECT COALESCE(MAX(numero), 0) FROM mesas")
+    suspend fun getMaxNumero(): Int
+
+    @Insert
+    suspend fun insertMesa(mesa: Mesa): Long
 }
 
 @Dao

@@ -25,6 +25,14 @@
     <string name="mesas_alias_desc">Asigna un nombre personalizado. Se borrará al cerrar la mesa.</string>
     <string name="mesas_alias_label">Nombre (opcional)</string>
     <string name="mesas_capacidad_label">Capacidad (personas)</string>
+    <string name="mesas_zone_label">Zona</string>
+    <string name="mesas_shape_label">Forma</string>
+    <string name="mesas_create_title">Nueva mesa</string>
+    <string name="mesas_create_btn">Crear</string>
+    <string name="mesas_delete_title">Eliminar mesa</string>
+    <string name="mesas_delete_confirm">¿Eliminar %s permanentemente? Se renumerarán las mesas siguientes.</string>
+    <string name="mesas_menu_edit">Editar</string>
+    <string name="mesas_menu_delete">Eliminar</string>
 
     <!-- Menu Screen -->
     <string name="menu_title">Gestión del menú</string>
