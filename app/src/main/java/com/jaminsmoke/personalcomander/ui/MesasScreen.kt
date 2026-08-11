@@ -85,6 +85,21 @@ import kotlin.math.roundToInt
 private val CELL = 40.dp
 private val CELL_F = 40f
 private val CARD_WIDTH = 120.dp
+private val CARD_W = 120f
+
+/** Altura en dp de una carta según su forma (misma lógica que MesaCard) */
+private fun mesaAltura(forma: MesaForma): Float = when (forma) {
+    MesaForma.REDONDA -> CARD_W
+    MesaForma.CUADRADA -> CARD_W
+    MesaForma.RECTANGULAR -> CARD_W * 0.55f
+    MesaForma.RECTANGULAR_XL -> CARD_W * 0.4f
+}
+
+/** Detecta si dos rectángulos (x,y,w,h) se solapan (AABB collision) */
+private fun colisionan(
+    x1: Float, y1: Float, w1: Float, h1: Float,
+    x2: Float, y2: Float, w2: Float, h2: Float
+): Boolean = x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -267,13 +282,13 @@ fun MesasScreen(
                                             // Snap to grid
                                             val snappedX = (rawX / CELL_F).roundToInt() * CELL_F
                                             val snappedY = (rawY / CELL_F).roundToInt() * CELL_F
-                                            // Evitar colisión: buscar celda libre más cercana
+                                            // Anti-colisión con bounding boxes (no solo centros)
+                                            val draggedH = mesaAltura(dragged.forma)
                                             val occupied = mesas
                                                 .filter { it.id != dragged.id }
-                                                .map { it.posX to it.posY }
-                                                .toSet()
+                                                .map { Triple(it.posX, it.posY, mesaAltura(it.forma)) }
                                             val (finalX, finalY) = findNearestFreeCell(
-                                                snappedX, snappedY, occupied
+                                                snappedX, snappedY, CARD_W, draggedH, occupied
                                             )
                                             viewModel.updatePosicion(dragged, finalX, finalY)
                                         }
@@ -548,33 +563,38 @@ private fun DragOverlayCard(mesa: Mesa) {
 }
 
 /**
- * Busca la celda libre más cercana a (targetX, targetY) usando búsqueda en espiral.
- * Si la celda objetivo está libre, la devuelve directamente.
- * Si está ocupada, expande en anillos hasta encontrar una libre.
+ * Busca la posición libre más cercana con búsqueda en espiral.
+ * Comprueba colisión de bounding boxes completos (no solo centros).
+ * occupied: lista de (x, y, altura) de las mesas ya colocadas.
  */
 private fun findNearestFreeCell(
     targetX: Float,
     targetY: Float,
-    occupied: Set<Pair<Float, Float>>
+    draggedW: Float,
+    draggedH: Float,
+    occupied: List<Triple<Float, Float, Float>>
 ): Pair<Float, Float> {
-    val target = targetX to targetY
-    if (target !in occupied) return target
+    fun hayColision(x: Float, y: Float): Boolean = occupied.any { (ox, oy, oh) ->
+        colisionan(x, y, draggedW, draggedH, ox, oy, CARD_W, oh)
+    }
+
+    if (!hayColision(targetX, targetY)) return targetX to targetY
 
     var ring = 1
-    while (ring < 30) {
+    while (ring < 50) {
         for (dx in -ring..ring) {
             for (dy in -ring..ring) {
                 if (maxOf(abs(dx), abs(dy)) != ring) continue
                 val cx = targetX + dx * CELL_F
                 val cy = targetY + dy * CELL_F
-                if (cx >= 0 && cy >= 0 && (cx to cy) !in occupied) {
+                if (cx >= 0 && cy >= 0 && !hayColision(cx, cy)) {
                     return cx to cy
                 }
             }
         }
         ring++
     }
-    return target // fallback: mantener posición aunque colisione
+    return targetX to targetY
 }
 
 private fun formaLabel(forma: MesaForma): String = when (forma) {
