@@ -7,7 +7,9 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,9 +21,11 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.key
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -123,10 +127,8 @@ fun MesasScreen(
     var dragPxX by remember { mutableStateOf(0f) }
     var dragPxY by remember { mutableStateOf(0f) }
 
-    // Zoom/pan state
+    // Zoom state (pan is handled by scroll)
     var scale by remember { mutableStateOf(1f) }
-    var panX by remember { mutableStateOf(0f) }
-    var panY by remember { mutableStateOf(0f) }
 
     LaunchedEffect(mensaje) {
         mensaje?.let {
@@ -193,24 +195,43 @@ fun MesasScreen(
                 }
 
                 // Board
+                val scrollH = rememberScrollState()
+                val scrollV = rememberScrollState()
                 val maxX = ((mesasFiltradas.maxOfOrNull { it.posX } ?: 0f) + CARD_WIDTH.value + CELL_F * 2).coerceAtLeast(400f)
                 val maxY = ((mesasFiltradas.maxOfOrNull { it.posY } ?: 0f) + CARD_WIDTH.value + CELL_F * 2).coerceAtLeast(600f)
 
-                Box(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .horizontalScroll(scrollH)
+                        .verticalScroll(scrollV)
+                ) {
                     Box(
                         modifier = Modifier
                             .size(width = maxX.dp, height = maxY.dp)
                             .graphicsLayer {
                                 scaleX = scale
                                 scaleY = scale
-                                translationX = panX
-                                translationY = panY
                             }
                             .pointerInput(Unit) {
-                                detectTransformGestures { _, pan, zoom, _ ->
-                                    scale = (scale * zoom).coerceIn(0.5f, 2f)
-                                    panX += pan.x
-                                    panY += pan.y
+                                awaitEachGesture {
+                                    // Wait for two-finger pinch
+                                    val down = awaitFirstDown(requireUnconsumed = false)
+                                    var prevDist = 0f
+                                    do {
+                                        val event = awaitPointerEvent()
+                                        val changes = event.changes.filter { it.pressed }
+                                        if (changes.size >= 2) {
+                                            val p1 = changes[0].position
+                                            val p2 = changes[1].position
+                                            val dist = (p1 - p2).getDistance()
+                                            if (prevDist > 0f) {
+                                                val zoom = dist / prevDist
+                                                scale = (scale * zoom).coerceIn(0.5f, 2f)
+                                            }
+                                            prevDist = dist
+                                        }
+                                    } while (changes.any { it.pressed })
                                 }
                             }
                             .drawBehind {
@@ -331,10 +352,10 @@ fun MesasScreen(
                     }
 
                     // Zoom indicator badge (bottom-left) — tap to reset
-                    if (scale != 1f || panX != 0f || panY != 0f) {
+                    if (scale != 1f) {
                         val pct = (scale * 100).toInt()
                         Card(
-                            onClick = { scale = 1f; panX = 0f; panY = 0f },
+                            onClick = { scale = 1f },
                             modifier = Modifier
                                 .align(Alignment.BottomStart)
                                 .padding(12.dp)
