@@ -72,7 +72,11 @@ fun HomeScreen(
                 )
             }
             item {
-                ResumenDiaCard(state)
+                if (state.cargando) {
+                    ShimmerBox(height = 100, radius = 20)
+                } else {
+                    ResumenDiaCard(state)
+                }
             }
             item {
                 Spacer(Modifier.height(8.dp))

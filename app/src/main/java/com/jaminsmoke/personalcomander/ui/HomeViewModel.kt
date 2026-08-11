@@ -12,6 +12,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 data class HomeUiState(
+    val cargando: Boolean = true,
     val mesasTotales: Int = 0,
     val mesasOcupadas: Int = 0,
     val pedidosAbiertos: Int = 0,
@@ -31,6 +32,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             db.pedidoDao().observeTotalHoy(inicioDelDia)
         ) { totales, ocupadas, abiertos, total ->
             HomeUiState(
+                cargando = false,
                 mesasTotales = totales,
                 mesasOcupadas = ocupadas,
                 pedidosAbiertos = abiertos,

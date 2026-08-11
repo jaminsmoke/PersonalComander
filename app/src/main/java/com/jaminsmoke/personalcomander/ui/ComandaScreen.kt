@@ -50,7 +50,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -320,6 +322,7 @@ private fun ComandaPanel(
     onEnviarACocina: () -> Unit,
     onCerrarMesa: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shadowElevation = 8.dp
@@ -382,7 +385,10 @@ private fun ComandaPanel(
             ) {
                 val hayComanda = pedidoEstado != null && lineas.isNotEmpty()
                 Button(
-                    onClick = onEnviarACocina,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onEnviarACocina()
+                    },
                     modifier = Modifier.weight(1f),
                     enabled = hayComanda && pedidoEstado == PedidoEstado.ABIERTA
                 ) {
@@ -394,7 +400,10 @@ private fun ComandaPanel(
                     )
                 }
                 OutlinedButton(
-                    onClick = onCerrarMesa,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onCerrarMesa()
+                    },
                     modifier = Modifier.weight(1f),
                     enabled = pedidoEstado != null
                 ) {
