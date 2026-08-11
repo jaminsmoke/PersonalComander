@@ -13,9 +13,17 @@ fun PersonalComanderApp() {
 
     NavHost(navController = navController, startDestination = "mesas") {
         composable("mesas") {
-            MesasScreen(onOpenMesa = { mesaId ->
-                navController.navigate("comanda/$mesaId")
-            })
+            MesasScreen(
+                onOpenMesa = { mesaId ->
+                    navController.navigate("comanda/$mesaId")
+                },
+                onOpenMenu = {
+                    navController.navigate("menu")
+                }
+            )
+        }
+        composable("menu") {
+            MenuScreen(onBack = { navController.popBackStack() })
         }
         composable(
             route = "comanda/{mesaId}",

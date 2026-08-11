@@ -33,8 +33,29 @@ interface ProductoDao {
     @Query("SELECT * FROM productos WHERE disponible = 1 ORDER BY categoria, nombre")
     fun observeAll(): Flow<List<Producto>>
 
+    @Query("SELECT * FROM productos ORDER BY categoria, nombre")
+    fun observeAllIncluyendoOcultos(): Flow<List<Producto>>
+
+    @Query("SELECT * FROM productos WHERE id = :id")
+    suspend fun getById(id: Long): Producto?
+
+    @Query("SELECT COUNT(*) FROM productos")
+    suspend fun count(): Int
+
     @Insert
     suspend fun insertAll(productos: List<Producto>)
+
+    @Insert
+    suspend fun insert(producto: Producto): Long
+
+    @Update
+    suspend fun update(producto: Producto)
+
+    @Query("UPDATE productos SET disponible = :disponible WHERE id = :id")
+    suspend fun updateDisponible(id: Long, disponible: Boolean)
+
+    @Query("DELETE FROM productos WHERE id = :id")
+    suspend fun delete(id: Long)
 }
 
 @Dao

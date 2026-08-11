@@ -340,5 +340,3 @@ private fun estadoLabel(estado: MesaEstado?): String = when (estado) {
     MesaEstado.EN_COCINA -> "En cocina"
     null -> ""
 }
-
-private fun Double.formatoEuro(): String = String.format("%.2f €", this)
