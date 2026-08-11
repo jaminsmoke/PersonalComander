@@ -135,6 +135,7 @@ private fun buscarExacto(
 
 /**
  * Empareja desde i permitiendo errores de voz (plurales, palabras pegadas, erratas).
+ * Tolerancia aumentada para ambientes con ruido: len + 1 (más permisivo).
  * Ante empate de distancia prefiere consumir más tokens (la comanda más larga).
  */
 private fun buscarDifuso(
@@ -161,7 +162,8 @@ private fun buscarDifuso(
                 levenshtein(sub, objetivoFull),
                 levenshtein(subSingular, objetivoFull)
             )
-            val tolerancia = len
+            // Tolerancia aumentada: len + 1 para ambientes ruidosos
+            val tolerancia = len + 1
             if (d <= tolerancia && (d < mejorDist || (d == mejorDist && len > mejorLen))) {
                 mejorDist = d
                 mejorLen = len
@@ -189,17 +191,20 @@ fun coincidenciaBusqueda(query: String, producto: Producto): Int? {
     val pTokens = nombre.split(" ")
     var dist = 0
     for (t in qTokens) {
+        // Tolerancia aumentada para búsqueda manual en entorno ruidoso
         val min = pTokens.minOfOrNull { levenshtein(t, it) } ?: return null
-        if (min > 2) return null
+        if (min > 3) return null
         dist += min
     }
     return 2 + dist
 }
 
-/** Envuelve SpeechRecognizer para capturar una comanda hablada. */
+/** Envuelve SpeechRecognizer optimizado para ambientes con ruido de bar/restaurante. */
 class VozRecognizer(private val appContext: Context) {
     private val speech: SpeechRecognizer? = SpeechRecognizer.createSpeechRecognizer(appContext)
     private var activo = false
+    private var reintentos = 0
+    private val maxReintentos = 1
     private val handler = Handler(Looper.getMainLooper())
     private val timeoutRunnable = Runnable {
         if (activo) {
@@ -210,12 +215,13 @@ class VozRecognizer(private val appContext: Context) {
     }
 
     var onResultado: ((String) -> Unit)? = null
+    var onParcial: ((String) -> Unit)? = null
     var onError: ((Int) -> Unit)? = null
 
     init {
         speech?.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {}
-            override fun onBeginningOfSpeech() {}
+            override fun onBeginningOfSpeech() { reintentos = 0 }
             override fun onRmsChanged(rmsdB: Float) {}
             override fun onBufferReceived(buffer: ByteArray?) {}
             override fun onEndOfSpeech() {}
@@ -223,6 +229,12 @@ class VozRecognizer(private val appContext: Context) {
             override fun onError(error: Int) {
                 handler.removeCallbacks(timeoutRunnable)
                 activo = false
+                // Auto-retry en ambientes ruidosos: si no se entendió, reintentar una vez
+                if (error == SpeechRecognizer.ERROR_NO_MATCH && reintentos < maxReintentos) {
+                    reintentos++
+                    handler.postDelayed({ empezar() }, 300)
+                    return
+                }
                 onError?.invoke(error)
             }
 
@@ -239,7 +251,15 @@ class VozRecognizer(private val appContext: Context) {
                 }
             }
 
-            override fun onPartialResults(partialResults: Bundle?) {}
+            override fun onPartialResults(partialResults: Bundle?) {
+                val parcial = partialResults
+                    ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull()
+                if (!parcial.isNullOrBlank()) {
+                    onParcial?.invoke(parcial)
+                }
+            }
+
             override fun onEvent(eventType: Int, params: Bundle?) {}
         })
     }
@@ -255,13 +275,15 @@ class VozRecognizer(private val appContext: Context) {
         }
         activo = true
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(
-                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-            )
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, idioma)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, idioma)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+            // Optimizaciones para ambientes ruidosos
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            // Silencio más corto = captura más rápida en entornos con ruido de fondo
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L)
         }
         try {
             speech.startListening(intent)

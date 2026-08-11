@@ -86,18 +86,23 @@ fun ComandaScreen(
         )
     }
 
+    var textoParcial by remember { mutableStateOf<String?>(null) }
     val recognizer = remember { VozRecognizer(context) }
     DisposableEffect(Unit) {
         onDispose { recognizer.destruir() }
     }
 
     val iniciarVoz: () -> Unit = {
+        textoParcial = null
         viewModel.setEscuchandoVoz(true)
+        recognizer.onParcial = { parcial -> textoParcial = parcial }
         recognizer.onResultado = { texto ->
+            textoParcial = null
             viewModel.setEscuchandoVoz(false)
             viewModel.procesarVoz(texto)
         }
         recognizer.onError = { error ->
+            textoParcial = null
             viewModel.setEscuchandoVoz(false)
             viewModel.informar(mensajeErrorVoz(error))
         }
@@ -105,6 +110,7 @@ fun ComandaScreen(
     }
 
     val detenerVoz: () -> Unit = {
+        textoParcial = null
         recognizer.detener()
         viewModel.setEscuchandoVoz(false)
     }
@@ -201,14 +207,29 @@ fun ComandaScreen(
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onErrorContainer
                         )
-                        Text(
-                            text = "Escuchando… Di la comanda, ej: «dos cafés con leche»",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(horizontal = 8.dp)
-                        )
+                        Column(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
+                            Text(
+                                text = "Escuchando…",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            if (textoParcial != null) {
+                                Text(
+                                    text = textoParcial!!,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            } else {
+                                Text(
+                                    text = "Di la comanda, ej: «dos cafés con leche»",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f)
+                                )
+                            }
+                        }
                         OutlinedButton(onClick = detenerVoz) {
                             Text("Cancelar")
                         }
