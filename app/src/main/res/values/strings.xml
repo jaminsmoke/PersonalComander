@@ -126,6 +126,7 @@
     <string name="error_update_product">Error al actualizar producto: %s</string>
     <string name="error_toggle_availability">Error al cambiar disponibilidad: %s</string>
     <string name="error_delete_product">Error al eliminar producto: %s</string>
+    <string name="error_delete_product_active">«%1$s» está en %2$d comandas activas. Ciérralas antes de eliminarlo.</string>
     <string name="error_increase_quantity">Error al aumentar cantidad: %s</string>
     <string name="error_decrease_quantity">Error al disminuir cantidad: %s</string>
     <string name="error_send_to_kitchen">Error al enviar a cocina: %s</string>

@@ -65,6 +65,11 @@ class MenuViewModel(application: Application) : AndroidViewModel(application) {
     fun deleteProducto(producto: Producto) {
         viewModelScope.launch {
             try {
+                val activas = db.lineaPedidoDao().countActiveLinesForProduct(producto.id)
+                if (activas > 0) {
+                    _mensaje.value = ctx.getString(R.string.error_delete_product_active, producto.nombre, activas)
+                    return@launch
+                }
                 db.productoDao().delete(producto.id)
             } catch (e: Exception) {
                 _mensaje.value = ctx.getString(R.string.error_delete_product, e.message ?: e.javaClass.simpleName)

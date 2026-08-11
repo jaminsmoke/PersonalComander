@@ -129,6 +129,9 @@ interface LineaPedidoDao {
     @Update
     suspend fun update(linea: LineaPedido)
 
+    @Query("SELECT COUNT(*) FROM lineas_pedido lp INNER JOIN pedidos p ON lp.pedidoId = p.id WHERE lp.productoId = :productoId AND p.estado != 'CERRADA'")
+    suspend fun countActiveLinesForProduct(productoId: Long): Int
+
     @Delete
     suspend fun delete(linea: LineaPedido)
 }

@@ -126,6 +126,7 @@
     <string name="error_update_product">Error updating product: %s</string>
     <string name="error_toggle_availability">Error changing availability: %s</string>
     <string name="error_delete_product">Error deleting product: %s</string>
+    <string name="error_delete_product_active">"%1$s" is in %2$d active orders. Close them first.</string>
     <string name="error_increase_quantity">Error increasing quantity: %s</string>
     <string name="error_decrease_quantity">Error decreasing quantity: %s</string>
     <string name="error_send_to_kitchen">Error sending to kitchen: %s</string>

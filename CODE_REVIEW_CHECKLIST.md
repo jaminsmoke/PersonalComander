@@ -54,7 +54,7 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
   Sin FK/índice en `Pedido.mesaId`, `LineaPedido.pedidoId` / `productoId`; `comandaActivaId` sin `@Index`.  
   **Archivos:** `data/Entities.kt` (+ migración Room)
 
-- [ ] **M2 — Borrar producto usado en comandas**  
+- [x] **M2 — Borrar producto usado en comandas**  
   No avisa si está en líneas; `productoId` queda roto (el nombre snapshot salva el ticket).  
   **Fix:** avisar / soft-delete / bloquear si hay líneas abiertas.  
   **Archivos:** `ui/MenuViewModel.kt`, `ui/MenuScreen.kt`
@@ -64,7 +64,7 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
   **Fix:** recalcular por día (timer, `distinctUntilChanged` por fecha, o query con fecha actual).  
   **Archivos:** `ui/HomeViewModel.kt`
 
-- [ ] **M4 — Shimmer eterno con 0 mesas**  
+- [x] **M4 — Shimmer eterno con 0 mesas**  
   `mesas.isEmpty()` se trata como loading → shimmer infinito si no hay mesas.  
   **Fix:** estado de carga explícito vs lista vacía.  
   **Archivos:** `ui/MesasScreen.kt`, `ui/MesasViewModel.kt`
@@ -209,10 +209,10 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 | Bloque | Total | Hechos |
 |--------|------:|-------:|
 | Críticos | 6 | 6 |
-| Medios | 10 | 3 |
+| Medios | 10 | 6 |
 | Seguridad | 4 | 0 |
 | Optimizaciones | 7 | 0 |
 | Arquitectura | 6 | 0 |
-| **Total** | **33** | **9** |
+| **Total** | **33** | **12** |
 
 Cuando Total hechos = 33 → desechar este documento.

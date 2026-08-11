@@ -96,6 +96,7 @@ fun MesasScreen(
     viewModel: MesasViewModel = viewModel()
 ) {
     val mesas by viewModel.mesas.collectAsState(initial = emptyList())
+    val cargando by viewModel.cargando.collectAsState()
     val zonaSeleccionada by viewModel.zona.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -250,8 +251,8 @@ fun MesasScreen(
                                 }
                             }
                     ) {
-                        // Shimmer loading
-                        if (mesas.isEmpty()) {
+                        // Shimmer loading — only while data hasn't arrived yet
+                        if (cargando) {
                             for (i in 0 until 12) {
                                 ShimmerBox(
                                     modifier = Modifier

@@ -8,15 +8,23 @@ import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaForma
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class MesasViewModel(application: Application) : AndroidViewModel(application) {
     private val db = (application as PersonalComanderApp).db
     private val ctx = getApplication<Application>()
     val mesas: Flow<List<Mesa>> = db.mesaDao().observeAll()
+
+    /** True while Room has not emitted the first list yet; false afterwards (even if empty) */
+    val cargando: StateFlow<Boolean> = db.mesaDao().observeAll()
+        .map { false }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     private val _zona = MutableStateFlow<String?>(null)
     val zona: StateFlow<String?> = _zona.asStateFlow()
