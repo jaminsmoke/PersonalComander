@@ -8,10 +8,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -149,64 +151,110 @@ fun ComandaScreen(
                 }
             }
 
-            // Category tabs with emojis
-            ScrollableTabRow(
-                selectedTabIndex = state.categorias.indexOf(state.categoria).coerceAtLeast(0),
-                modifier = Modifier.fillMaxWidth(),
-                edgePadding = 12.dp,
-                divider = {},
-                indicator = {}
-            ) {
-                Tab(selected = state.categoria == null, onClick = { viewModel.setCategoria(null) }) {
-                    Text("📋 Todas", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                        fontWeight = if (state.categoria == null) FontWeight.Bold else FontWeight.Normal,
-                        color = if (state.categoria == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                state.categorias.forEach { cat ->
-                    val emoji = CategoriaIcono.de(cat)
-                    Tab(selected = state.categoria == cat, onClick = { viewModel.setCategoria(if (state.categoria == cat) null else cat) }) {
-                        Text("$emoji $cat", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                            fontWeight = if (state.categoria == cat) FontWeight.Bold else FontWeight.Normal,
-                            color = if (state.categoria == cat) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            }
+            // Category + Products area — adapts to screen width
+            BoxWithConstraints(Modifier.weight(1f)) {
+                val esAncho = maxWidth > 600.dp
 
-            Spacer(Modifier.height(4.dp))
-
-            // Products: grid when filtered, sticky headers when "Todas"
-            if (state.categoria == null && state.busqueda.isBlank()) {
-                // Sticky headers grouped by category
-                val agrupados = state.productos.groupBy { it.categoria }
-                LazyColumn(
-                    Modifier.fillMaxWidth().weight(1f),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    agrupados.forEach { (categoria, prods) ->
-                        stickyHeader {
-                            Surface(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface) {
-                                Text(
-                                    "${CategoriaIcono.de(categoria)} $categoria",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
-                                )
+                if (esAncho) {
+                    // Tablet / landscape: sidebar + grid
+                    Row(Modifier.fillMaxSize()) {
+                        // Category sidebar
+                        LazyColumn(
+                            Modifier.width(150.dp).fillMaxSize().padding(vertical = 8.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            item {
+                                CategorySidebarItem("📋 Todas", selected = state.categoria == null) { viewModel.setCategoria(null) }
+                            }
+                            items(state.categorias) { cat ->
+                                CategorySidebarItem("${CategoriaIcono.de(cat)} $cat", selected = state.categoria == cat) {
+                                    viewModel.setCategoria(if (state.categoria == cat) null else cat)
+                                }
                             }
                         }
-                        items(prods, key = { it.id }) { p -> ProductoRow(p, onClick = { viewModel.addProducto(p) }) }
+
+                        // Product grid (more columns on wide screens)
+                        val gridCols = if (state.categoria == null && state.busqueda.isBlank()) 3 else 4
+                        if (state.categoria == null && state.busqueda.isBlank()) {
+                            val agrupados = state.productos.groupBy { it.categoria }
+                            LazyColumn(
+                                Modifier.weight(1f).fillMaxSize(),
+                                contentPadding = PaddingValues(4.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                agrupados.forEach { (categoria, prods) ->
+                                    stickyHeader {
+                                        Text("${CategoriaIcono.de(categoria)} $categoria", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp))
+                                    }
+                                    items(prods, key = { it.id }) { p -> ProductoRow(p, onClick = { viewModel.addProducto(p) }) }
+                                }
+                            }
+                        } else {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(gridCols),
+                                Modifier.weight(1f).fillMaxSize(),
+                                contentPadding = PaddingValues(4.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                items(state.productos, key = { it.id }) { p -> ProductoGridCard(p, onClick = { viewModel.addProducto(p) }) }
+                            }
+                        }
                     }
-                }
-            } else {
-                // Grid for filtered view
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    Modifier.fillMaxWidth().weight(1f),
-                    contentPadding = PaddingValues(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(state.productos, key = { it.id }) { p -> ProductoGridCard(p, onClick = { viewModel.addProducto(p) }) }
+                } else {
+                    // Phone: tabs at top
+                    Column(Modifier.fillMaxSize()) {
+                        ScrollableTabRow(
+                            selectedTabIndex = state.categorias.indexOf(state.categoria).coerceAtLeast(0),
+                            modifier = Modifier.fillMaxWidth(),
+                            edgePadding = 12.dp, divider = {}, indicator = {}
+                        ) {
+                            Tab(selected = state.categoria == null, onClick = { viewModel.setCategoria(null) }) {
+                                Text("📋 Todas", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                    fontWeight = if (state.categoria == null) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (state.categoria == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            state.categorias.forEach { cat ->
+                                val emoji = CategoriaIcono.de(cat)
+                                Tab(selected = state.categoria == cat, onClick = { viewModel.setCategoria(if (state.categoria == cat) null else cat) }) {
+                                    Text("$emoji $cat", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                        fontWeight = if (state.categoria == cat) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (state.categoria == cat) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(4.dp))
+
+                        if (state.categoria == null && state.busqueda.isBlank()) {
+                            val agrupados = state.productos.groupBy { it.categoria }
+                            LazyColumn(
+                                Modifier.fillMaxWidth().weight(1f),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                agrupados.forEach { (categoria, prods) ->
+                                    stickyHeader {
+                                        Surface(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface) {
+                                            Text("${CategoriaIcono.de(categoria)} $categoria", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp))
+                                        }
+                                    }
+                                    items(prods, key = { it.id }) { p -> ProductoRow(p, onClick = { viewModel.addProducto(p) }) }
+                                }
+                            }
+                        } else {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                Modifier.fillMaxWidth().weight(1f),
+                                contentPadding = PaddingValues(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(state.productos, key = { it.id }) { p -> ProductoGridCard(p, onClick = { viewModel.addProducto(p) }) }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -281,6 +329,25 @@ private fun LineaRow(linea: LineaPedido, onAumentar: () -> Unit, onDisminuir: ()
         Text((linea.precioUnitario * linea.cantidad).formatoEuro(), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
         IconButton(onClick = onDisminuir, Modifier.size(32.dp)) { Icon(Icons.Default.Clear, "Quitar", Modifier.size(18.dp)) }
         IconButton(onClick = onAumentar, Modifier.size(32.dp)) { Icon(Icons.Default.Add, "Añadir", Modifier.size(18.dp)) }
+    }
+}
+
+@Composable
+private fun CategorySidebarItem(label: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(10.dp),
+        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

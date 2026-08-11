@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -36,6 +37,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.data.Mesa
@@ -76,33 +78,35 @@ fun MesasScreen(
             )
         }
     ) { padding ->
-        if (mesas.isEmpty()) {
-            // Shimmer placeholder grid
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 100.dp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(16) {
-                    ShimmerBox(modifier = Modifier.aspectRatio(1f), height = 0, radius = 16)
-                }
+        BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
+            val cellSize: Dp = when {
+                maxWidth > 800.dp -> 130.dp   // tablet landscape
+                maxWidth > 500.dp -> 120.dp   // tablet portrait / phone landscape
+                else -> 100.dp                // phone portrait
             }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 100.dp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(mesas, key = { it.id }) { mesa ->
-                    MesaCard(mesa = mesa, onClick = { onOpenMesa(mesa.id) })
+            if (mesas.isEmpty()) {
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = cellSize),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(16) {
+                        ShimmerBox(modifier = Modifier.aspectRatio(1f), height = 0, radius = 16)
+                    }
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = cellSize),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(mesas, key = { it.id }) { mesa ->
+                        MesaCard(mesa = mesa, onClick = { onOpenMesa(mesa.id) })
+                    }
                 }
             }
         }
