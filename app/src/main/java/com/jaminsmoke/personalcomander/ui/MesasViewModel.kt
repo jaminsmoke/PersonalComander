@@ -16,6 +16,5 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
     private val _mensaje = MutableStateFlow<String?>(null)
     val mensaje: StateFlow<String?> = _mensaje.asStateFlow()
 
-    fun mostrarError(mensaje: String) { _mensaje.value = mensaje }
     fun limpiarMensaje() { _mensaje.value = null }
 }
