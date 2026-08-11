@@ -287,7 +287,18 @@ private fun SincronizarCard(
                     Text("Sincronizar")
                 }
             }
-            if (state.servidores.isNotEmpty()) {
+            if (state.escaneando) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    ShimmerBox(height = 16, radius = 4)
+                    ShimmerBox(height = 40, radius = 8)
+                    ShimmerBox(height = 40, radius = 8)
+                }
+            } else if (state.sincronizando) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    ShimmerBox(height = 12, radius = 4)
+                    ShimmerBox(height = 20, radius = 4)
+                }
+            } else if (state.servidores.isNotEmpty()) {
                 Text(
                     text = stringResource(R.string.ajustes_servers_found),
                     style = MaterialTheme.typography.labelLarge,

@@ -53,6 +53,10 @@ class ComandaViewModel(
     private val mutex = Mutex()
     private var cerrada = false
 
+    companion object {
+        private const val FEEDBACK_VOZ_TIMEOUT_MS = 5000L
+    }
+
     private val pedido: StateFlow<Pedido?> = db.pedidoDao().observeActivo(mesaId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -133,7 +137,7 @@ class ComandaViewModel(
     }
 
     private fun clearFeedbackVoz() {
-        viewModelScope.launch { kotlinx.coroutines.delay(5000); _feedbackVoz.value = null }
+        viewModelScope.launch { kotlinx.coroutines.delay(FEEDBACK_VOZ_TIMEOUT_MS); _feedbackVoz.value = null }
     }
 
     fun addProducto(producto: Producto, cantidad: Int = 1) {

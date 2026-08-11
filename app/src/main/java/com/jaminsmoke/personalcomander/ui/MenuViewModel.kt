@@ -23,11 +23,14 @@ class MenuViewModel(application: Application) : AndroidViewModel(application) {
     fun limpiarMensaje() { _mensaje.value = null }
 
     fun addProducto(nombre: String, categoria: String, precio: Double) {
+        val n = nombre.trim()
+        val c = categoria.trim()
+        if (n.isBlank()) { _mensaje.value = ctx.getString(R.string.menu_validation_name_required); return }
+        if (c.isBlank()) { _mensaje.value = ctx.getString(R.string.menu_validation_category_required); return }
+        if (precio < 0) { _mensaje.value = ctx.getString(R.string.menu_validation_negative_price); return }
         viewModelScope.launch {
             try {
-                db.productoDao().insert(
-                    Producto(nombre = nombre.trim(), categoria = categoria.trim(), precio = precio, disponible = true)
-                )
+                db.productoDao().insert(Producto(nombre = n, categoria = c, precio = precio, disponible = true))
             } catch (e: Exception) {
                 _mensaje.value = ctx.getString(R.string.error_add_product, e.message ?: e.javaClass.simpleName)
             }
@@ -35,9 +38,14 @@ class MenuViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateProducto(producto: Producto, nombre: String, categoria: String, precio: Double) {
+        val n = nombre.trim()
+        val c = categoria.trim()
+        if (n.isBlank()) { _mensaje.value = ctx.getString(R.string.menu_validation_name_required); return }
+        if (c.isBlank()) { _mensaje.value = ctx.getString(R.string.menu_validation_category_required); return }
+        if (precio < 0) { _mensaje.value = ctx.getString(R.string.menu_validation_negative_price); return }
         viewModelScope.launch {
             try {
-                db.productoDao().update(producto.copy(nombre = nombre.trim(), categoria = categoria.trim(), precio = precio))
+                db.productoDao().update(producto.copy(nombre = n, categoria = c, precio = precio))
             } catch (e: Exception) {
                 _mensaje.value = ctx.getString(R.string.error_update_product, e.message ?: e.javaClass.simpleName)
             }
