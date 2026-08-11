@@ -68,36 +68,47 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
 
     fun exportar(uri: Uri) {
         viewModelScope.launch {
-            val productos = db.productoDao().getAllIncluyendoOcultos()
-            val json = BackupJson.serializar(productos)
-            context.contentResolver.openOutputStream(uri)?.use { out -> out.write(json.toByteArray(Charsets.UTF_8)) }
-            _mensaje.value = "Exportados ${productos.size} productos"
+            try {
+                val productos = db.productoDao().getAllIncluyendoOcultos()
+                val json = BackupJson.serializar(productos)
+                context.contentResolver.openOutputStream(uri)?.use { out -> out.write(json.toByteArray(Charsets.UTF_8)) }
+                _mensaje.value = "Exportados ${productos.size} productos"
+            } catch (e: Exception) {
+                _mensaje.value = "Error al exportar: ${e.message ?: e.javaClass.simpleName}"
+            }
         }
     }
 
     fun importar(uri: Uri) {
         viewModelScope.launch {
-            val texto = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
-            val importados = BackupJson.deserializar(texto ?: "")
-            if (importados == null) { _mensaje.value = "El archivo no es un JSON válido de Personal Comander"; return@launch }
-            val existentes = db.productoDao().getAllIncluyendoOcultos()
-            val fusion = fusionarProductos(existentes, importados)
-            // Mostrar preview antes de aplicar
-            _importPreview.value = ImportPreview(fusion.insertados, fusion.actualizados, fusion.ignorados)
+            try {
+                val texto = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                val importados = BackupJson.deserializar(texto ?: "")
+                if (importados == null) { _mensaje.value = "El archivo no es un JSON válido de Personal Comander"; return@launch }
+                val existentes = db.productoDao().getAllIncluyendoOcultos()
+                val fusion = fusionarProductos(existentes, importados)
+                _importPreview.value = ImportPreview(fusion.insertados, fusion.actualizados, fusion.ignorados)
+            } catch (e: Exception) {
+                _mensaje.value = "Error al leer archivo: ${e.message ?: e.javaClass.simpleName}"
+            }
         }
     }
 
     fun confirmarImportacion(uri: Uri) {
         viewModelScope.launch {
-            _importPreview.value = null
-            val texto = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
-            val importados = BackupJson.deserializar(texto ?: "")
-            if (importados == null) { _mensaje.value = "El archivo no es un JSON válido"; return@launch }
-            val existentes = db.productoDao().getAllIncluyendoOcultos()
-            val fusion = fusionarProductos(existentes, importados)
-            if (fusion.insertar.isNotEmpty()) db.productoDao().insertAll(fusion.insertar)
-            fusion.actualizar.forEach { db.productoDao().update(it) }
-            _mensaje.value = "Importados: ${fusion.insertados} nuevos, ${fusion.actualizados} actualizados, ${fusion.ignorados} ignorados"
+            try {
+                _importPreview.value = null
+                val texto = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                val importados = BackupJson.deserializar(texto ?: "")
+                if (importados == null) { _mensaje.value = "El archivo no es un JSON válido"; return@launch }
+                val existentes = db.productoDao().getAllIncluyendoOcultos()
+                val fusion = fusionarProductos(existentes, importados)
+                if (fusion.insertar.isNotEmpty()) db.productoDao().insertAll(fusion.insertar)
+                fusion.actualizar.forEach { db.productoDao().update(it) }
+                _mensaje.value = "Importados: ${fusion.insertados} nuevos, ${fusion.actualizados} actualizados, ${fusion.ignorados} ignorados"
+            } catch (e: Exception) {
+                _mensaje.value = "Error al importar: ${e.message ?: e.javaClass.simpleName}"
+            }
         }
     }
 

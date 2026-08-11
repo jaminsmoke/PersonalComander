@@ -112,6 +112,7 @@ fun ComandaScreen(
     }
 
     LaunchedEffect(state.feedbackVoz) { state.feedbackVoz?.let { snackbarHostState.showSnackbar(it) } }
+    LaunchedEffect(state.error) { state.error?.let { snackbarHostState.showSnackbar(it); viewModel.limpiarError() } }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },

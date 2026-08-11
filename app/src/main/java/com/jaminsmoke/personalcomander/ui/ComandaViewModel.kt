@@ -33,7 +33,8 @@ data class ComandaUiState(
     val busqueda: String = "",
     val categoria: String? = null,
     val escuchandoVoz: Boolean = false,
-    val feedbackVoz: String? = null
+    val feedbackVoz: String? = null,
+    val error: String? = null
 ) {
     val total: Double get() = lineas.sumOf { it.precioUnitario * it.cantidad }
 }
@@ -59,6 +60,7 @@ class ComandaViewModel(
     private val _categoria = MutableStateFlow<String?>(null)
     private val _escuchandoVoz = MutableStateFlow(false)
     private val _feedbackVoz = MutableStateFlow<String?>(null)
+    private val _error = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<ComandaUiState> = run {
         val datos = combine(
@@ -68,7 +70,10 @@ class ComandaViewModel(
             db.productoDao().observeAll()
         ) { mesa, p, ls, prods -> ComandaData(mesa, p, ls, prods) }
 
-        combine(datos, _busqueda, _categoria, _escuchandoVoz, _feedbackVoz) { d, busqueda, categoria, escuchando, feedback ->
+        // Merge feedbackVoz + error into one snackbar flow (max 5 flows in combine)
+        val _snackbar = combine(_feedbackVoz, _error) { f, e -> e ?: f }
+
+        combine(datos, _busqueda, _categoria, _escuchandoVoz, _snackbar) { d, busqueda, categoria, escuchando, snackbar ->
             val cats = d.productos.map { it.categoria }.distinct()
             val porCategoria = d.productos.filter { categoria == null || it.categoria == categoria }
             val filtrados = if (busqueda.isBlank()) porCategoria
@@ -80,7 +85,7 @@ class ComandaViewModel(
                 mesa = d.mesa, pedido = d.pedido, lineas = d.lineas,
                 categorias = cats, productos = filtrados,
                 busqueda = busqueda, categoria = categoria,
-                escuchandoVoz = escuchando, feedbackVoz = feedback
+                escuchandoVoz = escuchando, feedbackVoz = snackbar, error = snackbar
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ComandaUiState())
     }
@@ -98,6 +103,8 @@ class ComandaViewModel(
         _feedbackVoz.value = mensaje
         if (mensaje != null) clearFeedbackVoz()
     }
+
+    fun limpiarError() { _error.value = null }
 
     fun procesarVoz(texto: String) {
         viewModelScope.launch {
@@ -124,23 +131,27 @@ class ComandaViewModel(
         if (cerrada) return
         viewModelScope.launch {
             mutex.withLock {
-                val p = db.pedidoDao().getActivo(mesaId)
-                val pedidoActivo = if (p == null) {
-                    if (cerrada) return@launch
-                    val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
-                    db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, nuevoId)
-                    Pedido(id = nuevoId, mesaId = mesaId)
-                } else p
+                try {
+                    val p = db.pedidoDao().getActivo(mesaId)
+                    val pedidoActivo = if (p == null) {
+                        if (cerrada) return@launch
+                        val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
+                        db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, nuevoId)
+                        Pedido(id = nuevoId, mesaId = mesaId)
+                    } else p
 
-                val lineas = db.lineaPedidoDao().getForPedido(pedidoActivo.id)
-                val existente = lineas.firstOrNull { it.productoId == producto.id }
-                if (existente != null) {
-                    db.lineaPedidoDao().update(existente.copy(cantidad = existente.cantidad + cantidad))
-                } else {
-                    db.lineaPedidoDao().insert(LineaPedido(
-                        pedidoId = pedidoActivo.id, productoId = producto.id,
-                        nombreProducto = producto.nombre, precioUnitario = producto.precio, cantidad = cantidad
-                    ))
+                    val lineas = db.lineaPedidoDao().getForPedido(pedidoActivo.id)
+                    val existente = lineas.firstOrNull { it.productoId == producto.id }
+                    if (existente != null) {
+                        db.lineaPedidoDao().update(existente.copy(cantidad = existente.cantidad + cantidad))
+                    } else {
+                        db.lineaPedidoDao().insert(LineaPedido(
+                            pedidoId = pedidoActivo.id, productoId = producto.id,
+                            nombreProducto = producto.nombre, precioUnitario = producto.precio, cantidad = cantidad
+                        ))
+                    }
+                } catch (e: Exception) {
+                    _error.value = "Error al añadir producto: ${e.message ?: e.javaClass.simpleName}"
                 }
             }
         }
@@ -148,15 +159,20 @@ class ComandaViewModel(
 
     fun aumentarLinea(linea: LineaPedido) {
         viewModelScope.launch {
-            mutex.withLock { db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad + 1)) }
+            mutex.withLock {
+                try { db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad + 1)) }
+                catch (e: Exception) { _error.value = "Error al aumentar cantidad: ${e.message ?: e.javaClass.simpleName}" }
+            }
         }
     }
 
     fun disminuirLinea(linea: LineaPedido) {
         viewModelScope.launch {
             mutex.withLock {
-                if (linea.cantidad > 1) db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad - 1))
-                else db.lineaPedidoDao().delete(linea)
+                try {
+                    if (linea.cantidad > 1) db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad - 1))
+                    else db.lineaPedidoDao().delete(linea)
+                } catch (e: Exception) { _error.value = "Error al disminuir cantidad: ${e.message ?: e.javaClass.simpleName}" }
             }
         }
     }
@@ -164,9 +180,11 @@ class ComandaViewModel(
     fun enviarACocina() {
         viewModelScope.launch {
             mutex.withLock {
-                val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
-                db.pedidoDao().update(p.copy(estado = PedidoEstado.ENVIADA))
-                db.mesaDao().updateEstado(mesaId, MesaEstado.EN_COCINA, p.id)
+                try {
+                    val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
+                    db.pedidoDao().update(p.copy(estado = PedidoEstado.ENVIADA))
+                    db.mesaDao().updateEstado(mesaId, MesaEstado.EN_COCINA, p.id)
+                } catch (e: Exception) { _error.value = "Error al enviar a cocina: ${e.message ?: e.javaClass.simpleName}" }
             }
         }
     }
@@ -175,9 +193,11 @@ class ComandaViewModel(
         cerrada = true
         viewModelScope.launch {
             mutex.withLock {
-                val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
-                db.pedidoDao().update(p.copy(estado = PedidoEstado.CERRADA, cerradoEn = System.currentTimeMillis()))
-                db.mesaDao().updateEstado(mesaId, MesaEstado.LIBRE, null)
+                try {
+                    val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
+                    db.pedidoDao().update(p.copy(estado = PedidoEstado.CERRADA, cerradoEn = System.currentTimeMillis()))
+                    db.mesaDao().updateEstado(mesaId, MesaEstado.LIBRE, null)
+                } catch (e: Exception) { _error.value = "Error al cerrar mesa: ${e.message ?: e.javaClass.simpleName}" }
             }
         }
     }

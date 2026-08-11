@@ -28,10 +28,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,11 +57,21 @@ fun MenuScreen(
     viewModel: MenuViewModel = viewModel()
 ) {
     val productos by viewModel.productos.collectAsState(initial = emptyList())
+    val mensaje by viewModel.mensaje.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     var dialogVisible by remember { mutableStateOf(false) }
     var editando by remember { mutableStateOf<Producto?>(null) }
     var confirmarBorrado by remember { mutableStateOf<Producto?>(null) }
 
+    LaunchedEffect(mensaje) {
+        mensaje?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.limpiarMensaje()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Gestión del menú") },

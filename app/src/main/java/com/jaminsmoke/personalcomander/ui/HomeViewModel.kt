@@ -16,7 +16,8 @@ data class HomeUiState(
     val mesasTotales: Int = 0,
     val mesasOcupadas: Int = 0,
     val pedidosAbiertos: Int = 0,
-    val totalHoy: Double = 0.0
+    val totalHoy: Double = 0.0,
+    val error: String? = null
 )
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
@@ -40,4 +41,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
     }
+
+
 }
