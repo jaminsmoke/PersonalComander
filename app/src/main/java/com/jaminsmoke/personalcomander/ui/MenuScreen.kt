@@ -40,6 +40,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.jaminsmoke.personalcomander.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -74,10 +76,10 @@ fun MenuScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Gestión del menú") },
+                title = { Text(stringResource(R.string.menu_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back))
                     }
                 },
                 actions = {
@@ -85,7 +87,7 @@ fun MenuScreen(
                         editando = null
                         dialogVisible = true
                     }) {
-                        Icon(Icons.Default.Add, contentDescription = "Nuevo producto")
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.menu_new_product))
                     }
                 }
             )
@@ -131,19 +133,19 @@ fun MenuScreen(
     confirmarBorrado?.let { producto ->
         AlertDialog(
             onDismissRequest = { confirmarBorrado = null },
-            title = { Text("Eliminar producto") },
-            text = { Text("¿Eliminar \"${producto.nombre}\" definitivamente?") },
+            title = { Text(stringResource(R.string.menu_delete_product)) },
+            text = { Text(stringResource(R.string.menu_delete_confirm, producto.nombre)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteProducto(producto)
                     confirmarBorrado = null
                 }) {
-                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.btn_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { confirmarBorrado = null }) {
-                    Text("Cancelar")
+                    Text(stringResource(R.string.menu_cancel))
                 }
             }
         )
@@ -184,7 +186,7 @@ private fun MenuProductoRow(
                     color = textoColor
                 )
                 Text(
-                    text = if (producto.disponible) producto.categoria else "Oculto · ${producto.categoria}",
+                    text = if (producto.disponible) producto.categoria else stringResource(R.string.menu_hidden_label, producto.categoria),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -206,7 +208,7 @@ private fun MenuProductoRow(
             IconButton(onClick = onEliminar) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar",
+                    contentDescription = stringResource(R.string.btn_delete),
                     tint = MaterialTheme.colorScheme.error
                 )
             }
@@ -227,14 +229,15 @@ private fun ProductoDialog(
         mutableStateOf(if (producto == null) "" else producto.precio.toString())
     }
     var error by remember { mutableStateOf<String?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     fun guardar() {
         val p = parsePrecio(precio)
         error = when {
-            nombre.isBlank() -> "El nombre es obligatorio"
-            categoria.isBlank() -> "La categoría es obligatoria"
-            p == null -> "Precio no válido"
-            p < 0 -> "El precio no puede ser negativo"
+            nombre.isBlank() -> context.getString(R.string.menu_validation_name_required)
+            categoria.isBlank() -> context.getString(R.string.menu_validation_category_required)
+            p == null -> context.getString(R.string.menu_validation_invalid_price)
+            p < 0 -> context.getString(R.string.menu_validation_negative_price)
             else -> null
         }
         if (error != null) return
@@ -243,20 +246,20 @@ private fun ProductoDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (producto == null) "Nuevo producto" else "Editar producto") },
+        title = { Text(if (producto == null) stringResource(R.string.menu_new_product) else stringResource(R.string.menu_edit_product)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = { nombre = it },
-                    label = { Text("Nombre") },
+                    label = { Text(stringResource(R.string.menu_field_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = categoria,
                     onValueChange = { categoria = it },
-                    label = { Text("Categoría") },
+                    label = { Text(stringResource(R.string.menu_field_category)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -274,7 +277,7 @@ private fun ProductoDialog(
                 OutlinedTextField(
                     value = precio,
                     onValueChange = { precio = it },
-                    label = { Text("Precio (€)") },
+                    label = { Text(stringResource(R.string.menu_field_price)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
@@ -289,10 +292,10 @@ private fun ProductoDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { guardar() }) { Text("Guardar") }
+            TextButton(onClick = { guardar() }) { Text(stringResource(R.string.menu_save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.menu_cancel)) }
         }
     )
 }

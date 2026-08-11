@@ -36,6 +36,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
+import com.jaminsmoke.personalcomander.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -64,7 +66,7 @@ fun HomeScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(title = { Text("Personal Comander") })
+            TopAppBar(title = { Text(stringResource(R.string.home_title)) })
         }
     ) { padding ->
         LazyColumn(
@@ -76,7 +78,7 @@ fun HomeScreen(
         ) {
             item {
                 Text(
-                    text = "Resumen del día",
+                    text = stringResource(R.string.home_summary_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -98,8 +100,8 @@ fun HomeScreen(
             }
             item {
                 HomeAcceso(
-                    titulo = "Mesas",
-                    descripcion = "Gestionar comandas por mesa",
+                    titulo = stringResource(R.string.home_tables_card),
+                    descripcion = stringResource(R.string.home_tables_desc),
                     icono = Icons.Default.TableRestaurant,
                     color = Color(0xFF7E57C2),
                     onClick = onOpenMesas
@@ -107,8 +109,8 @@ fun HomeScreen(
             }
             item {
                 HomeAcceso(
-                    titulo = "Gestión del menú",
-                    descripcion = "Productos, precios y categorías",
+                    titulo = stringResource(R.string.home_menu_card),
+                    descripcion = stringResource(R.string.home_menu_desc),
                     icono = Icons.Default.RestaurantMenu,
                     color = Color(0xFF26A69A),
                     onClick = onOpenMenu
@@ -116,8 +118,8 @@ fun HomeScreen(
             }
             item {
                 HomeAcceso(
-                    titulo = "Ajustes",
-                    descripcion = "Importar, exportar y sincronizar TPV",
+                    titulo = stringResource(R.string.home_settings_card),
+                    descripcion = stringResource(R.string.home_settings_desc),
                     icono = Icons.Default.Settings,
                     color = Color(0xFF5C6BC0),
                     onClick = onOpenAjustes
@@ -144,20 +146,20 @@ private fun ResumenDiaCard(state: HomeUiState) {
                 ResumenStat(
                     icono = Icons.Default.TableRestaurant,
                     valor = "${state.mesasOcupadas} / ${state.mesasTotales}",
-                    etiqueta = "Mesas ocupadas",
+                    etiqueta = stringResource(R.string.home_tables_label),
                     modifier = Modifier.weight(1f)
                 )
                 ResumenStat(
                     icono = Icons.AutoMirrored.Filled.ReceiptLong,
                     valor = state.pedidosAbiertos.toString(),
-                    etiqueta = "Pedidos abiertos",
+                    etiqueta = stringResource(R.string.home_orders_label),
                     modifier = Modifier.weight(1f)
                 )
             }
             ResumenStat(
                 icono = Icons.Default.Paid,
                 valor = state.totalHoy.formatoEuro(),
-                etiqueta = "Facturado hoy",
+                etiqueta = stringResource(R.string.home_revenue_label),
                 grande = true
             )
         }

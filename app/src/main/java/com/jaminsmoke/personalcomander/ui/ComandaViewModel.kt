@@ -1,10 +1,12 @@
 package com.jaminsmoke.personalcomander.ui
 
 import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.jaminsmoke.personalcomander.PersonalComanderApp
+import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.AppDatabase
 import com.jaminsmoke.personalcomander.data.LineaPedido
 import com.jaminsmoke.personalcomander.data.Mesa
@@ -41,9 +43,12 @@ data class ComandaUiState(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ComandaViewModel(
-    private val db: AppDatabase,
+    application: Application,
     private val mesaId: Long
-) : ViewModel() {
+) : AndroidViewModel(application) {
+
+    private val db = (application as PersonalComanderApp).db
+    private val ctx = getApplication<Application>()
 
     private val mutex = Mutex()
     private var cerrada = false
@@ -114,10 +119,10 @@ class ComandaViewModel(
             val resumen = resultado.lineas.joinToString(", ") { "${it.cantidad}× ${it.producto.nombre}" }
             val pendientes = resultado.noEntendido.joinToString(" ")
             _feedbackVoz.value = when {
-                resumen.isEmpty() && pendientes.isNotEmpty() -> "«$texto» → No reconocí: $pendientes"
-                resumen.isEmpty() -> "«$texto» → No entendí la comanda"
-                pendientes.isNotEmpty() -> "«$texto» → Añadido: $resumen · No reconocido: $pendientes"
-                else -> "«$texto» → Añadido: $resumen"
+                resumen.isEmpty() && pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_unrecognized, texto, pendientes)
+                resumen.isEmpty() -> ctx.getString(R.string.comanda_voice_not_understood, texto)
+                pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_partial, texto, resumen, pendientes)
+                else -> ctx.getString(R.string.comanda_voice_added, texto, resumen)
             }
             clearFeedbackVoz()
         }
@@ -151,7 +156,7 @@ class ComandaViewModel(
                         ))
                     }
                 } catch (e: Exception) {
-                    _error.value = "Error al añadir producto: ${e.message ?: e.javaClass.simpleName}"
+                    _error.value = ctx.getString(R.string.error_add_product, e.message ?: e.javaClass.simpleName)
                 }
             }
         }
@@ -161,7 +166,7 @@ class ComandaViewModel(
         viewModelScope.launch {
             mutex.withLock {
                 try { db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad + 1)) }
-                catch (e: Exception) { _error.value = "Error al aumentar cantidad: ${e.message ?: e.javaClass.simpleName}" }
+                catch (e: Exception) { _error.value = ctx.getString(R.string.error_increase_quantity, e.message ?: e.javaClass.simpleName) }
             }
         }
     }
@@ -172,7 +177,7 @@ class ComandaViewModel(
                 try {
                     if (linea.cantidad > 1) db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad - 1))
                     else db.lineaPedidoDao().delete(linea)
-                } catch (e: Exception) { _error.value = "Error al disminuir cantidad: ${e.message ?: e.javaClass.simpleName}" }
+                } catch (e: Exception) { _error.value = ctx.getString(R.string.error_decrease_quantity, e.message ?: e.javaClass.simpleName) }
             }
         }
     }
@@ -184,7 +189,7 @@ class ComandaViewModel(
                     val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
                     db.pedidoDao().update(p.copy(estado = PedidoEstado.ENVIADA))
                     db.mesaDao().updateEstado(mesaId, MesaEstado.EN_COCINA, p.id)
-                } catch (e: Exception) { _error.value = "Error al enviar a cocina: ${e.message ?: e.javaClass.simpleName}" }
+                } catch (e: Exception) { _error.value = ctx.getString(R.string.error_send_to_kitchen, e.message ?: e.javaClass.simpleName) }
             }
         }
     }
@@ -197,7 +202,7 @@ class ComandaViewModel(
                     val p = db.pedidoDao().getActivo(mesaId) ?: return@launch
                     db.pedidoDao().update(p.copy(estado = PedidoEstado.CERRADA, cerradoEn = System.currentTimeMillis()))
                     db.mesaDao().updateEstado(mesaId, MesaEstado.LIBRE, null)
-                } catch (e: Exception) { _error.value = "Error al cerrar mesa: ${e.message ?: e.javaClass.simpleName}" }
+                } catch (e: Exception) { _error.value = ctx.getString(R.string.error_close_table, e.message ?: e.javaClass.simpleName) }
             }
         }
     }
@@ -205,6 +210,6 @@ class ComandaViewModel(
     class Factory(private val app: Application, private val mesaId: Long) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            ComandaViewModel((app as PersonalComanderApp).db, mesaId) as T
+            ComandaViewModel(app, mesaId) as T
     }
 }

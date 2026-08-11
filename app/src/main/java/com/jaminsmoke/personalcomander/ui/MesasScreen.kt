@@ -35,6 +35,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
+import com.jaminsmoke.personalcomander.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.size
@@ -70,13 +72,13 @@ fun MesasScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Personal Comander") },
+                title = { Text(stringResource(R.string.mesas_title)) },
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Volver"
+                                contentDescription = stringResource(R.string.btn_back)
                             )
                         }
                     }
@@ -85,7 +87,7 @@ fun MesasScreen(
                     IconButton(onClick = onOpenMenu) {
                         Icon(
                             imageVector = Icons.Default.RestaurantMenu,
-                            contentDescription = "Gestionar menú"
+                            contentDescription = stringResource(R.string.mesas_manage_menu)
                         )
                     }
                 }
@@ -135,9 +137,9 @@ private fun MesaCard(mesa: Mesa, onClick: () -> Unit) {
         MesaEstado.EN_COCINA -> Color(0xFFB3E5FC)
     }
     val label = when (mesa.estado) {
-        MesaEstado.LIBRE -> "Libre"
-        MesaEstado.OCUPADA -> "Ocupada"
-        MesaEstado.EN_COCINA -> "En cocina"
+        MesaEstado.LIBRE -> stringResource(R.string.mesas_free)
+        MesaEstado.OCUPADA -> stringResource(R.string.mesas_occupied)
+        MesaEstado.EN_COCINA -> stringResource(R.string.mesas_in_kitchen)
     }
     val tieneComanda = mesa.comandaActivaId != null
 

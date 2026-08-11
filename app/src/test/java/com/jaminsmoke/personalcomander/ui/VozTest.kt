@@ -112,6 +112,6 @@ class VozTest {
 
     @Test
     fun mensaje_error_voz_no_vacio() {
-        assertTrue(mensajeErrorVoz(7).isNotBlank())
+        assertTrue(mensajeErrorVoz(null, 7).isNotBlank())
     }
 }

@@ -8,6 +8,7 @@ import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Producto
 
 /** Normaliza texto: minúsculas, sin acentos, sin puntuación, espacios colapsados. */
@@ -307,12 +308,23 @@ class VozRecognizer(private val appContext: Context) {
     }
 }
 
-fun mensajeErrorVoz(error: Int): String = when (error) {
-    SpeechRecognizer.ERROR_AUDIO -> "No se captó audio, inténtalo de nuevo"
-    SpeechRecognizer.ERROR_NETWORK -> "Error de red con el reconocimiento de voz"
-    SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Tiempo de espera de red agotado"
-    SpeechRecognizer.ERROR_NO_MATCH -> "No te he oído bien, inténtalo de nuevo"
-    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Falta el permiso de micrófono"
-    SpeechRecognizer.ERROR_CLIENT -> "El reconocimiento de voz no está disponible en este dispositivo"
-    else -> "Error de voz ($error), inténtalo de nuevo"
+fun mensajeErrorVoz(context: android.content.Context?, error: Int): String {
+    val c = context
+    return if (c != null) when (error) {
+        SpeechRecognizer.ERROR_AUDIO -> c.getString(R.string.voice_error_audio)
+        SpeechRecognizer.ERROR_NETWORK -> c.getString(R.string.voice_error_network)
+        SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> c.getString(R.string.voice_error_network_timeout)
+        SpeechRecognizer.ERROR_NO_MATCH -> c.getString(R.string.voice_error_no_match)
+        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> c.getString(R.string.voice_error_permissions)
+        SpeechRecognizer.ERROR_CLIENT -> c.getString(R.string.voice_error_unavailable)
+        else -> c.getString(R.string.voice_error_generic, error)
+    } else when (error) {
+        SpeechRecognizer.ERROR_AUDIO -> "No se captó audio, inténtalo de nuevo"
+        SpeechRecognizer.ERROR_NETWORK -> "Error de red con el reconocimiento de voz"
+        SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Tiempo de espera de red agotado"
+        SpeechRecognizer.ERROR_NO_MATCH -> "No te he oído bien, inténtalo de nuevo"
+        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Falta el permiso de micrófono"
+        SpeechRecognizer.ERROR_CLIENT -> "El reconocimiento de voz no está disponible en este dispositivo"
+        else -> "Error de voz ($error), inténtalo de nuevo"
+    }
 }

@@ -1,3 +1,115 @@
 <resources>
-    <string name="app_name">PersonalComander</string>
+    <string name="app_name">Personal Comander</string>
+
+    <!-- Home Screen -->
+    <string name="home_title">Personal Comander</string>
+    <string name="home_summary_title">Resumen del día</string>
+    <string name="home_tables_label">Mesas ocupadas</string>
+    <string name="home_orders_label">Pedidos abiertos</string>
+    <string name="home_revenue_label">Facturado hoy</string>
+    <string name="home_tables_card">Mesas</string>
+    <string name="home_tables_desc">Gestionar comandas por mesa</string>
+    <string name="home_menu_card">Gestión del menú</string>
+    <string name="home_menu_desc">Productos, precios y categorías</string>
+    <string name="home_settings_card">Ajustes</string>
+    <string name="home_settings_desc">Importar, exportar y sincronizar TPV</string>
+
+    <!-- Mesas Screen -->
+    <string name="mesas_title">Personal Comander</string>
+    <string name="mesas_manage_menu">Gestionar menú</string>
+    <string name="mesas_free">Libre</string>
+    <string name="mesas_occupied">Ocupada</string>
+    <string name="mesas_in_kitchen">En cocina</string>
+
+    <!-- Menu Screen -->
+    <string name="menu_title">Gestión del menú</string>
+    <string name="menu_new_product">Nuevo producto</string>
+    <string name="menu_edit_product">Editar producto</string>
+    <string name="menu_delete_product">Eliminar producto</string>
+    <string name="menu_delete_confirm">¿Eliminar \"%s\" definitivamente?</string>
+    <string name="menu_hidden_label">Oculto · %s</string>
+    <string name="menu_field_name">Nombre</string>
+    <string name="menu_field_category">Categoría</string>
+    <string name="menu_field_price">Precio (€)</string>
+    <string name="menu_save">Guardar</string>
+    <string name="menu_cancel">Cancelar</string>
+    <string name="menu_validation_name_required">El nombre es obligatorio</string>
+    <string name="menu_validation_category_required">La categoría es obligatoria</string>
+    <string name="menu_validation_invalid_price">Precio no válido</string>
+    <string name="menu_validation_negative_price">El precio no puede ser negativo</string>
+
+    <!-- Comanda Screen -->
+    <string name="comanda_table_prefix">Mesa %d</string>
+    <string name="comanda_search_placeholder">Buscar producto…</string>
+    <string name="comanda_voice_talk">Hablar comanda</string>
+    <string name="comanda_listening">Escuchando…</string>
+    <string name="comanda_voice_hint">Di la comanda, ej: «dos cafés con leche»</string>
+    <string name="comanda_cancel">Cancelar</string>
+    <string name="comanda_panel_title">Comanda</string>
+    <string name="comanda_empty">Sin artículos. Toca un producto para añadirlo.</string>
+    <string name="comanda_total_label">Total</string>
+    <string name="comanda_send_to_kitchen">Enviar a cocina</string>
+    <string name="comanda_in_kitchen">En cocina ✓</string>
+    <string name="comanda_close_table">Cerrar mesa</string>
+    <string name="comanda_all_categories">📋 Todas</string>
+    <string name="comanda_voice_added">«%1$s» → Añadido: %2$s</string>
+    <string name="comanda_voice_partial">«%1$s» → Añadido: %2$s · No reconocido: %3$s</string>
+    <string name="comanda_voice_unrecognized">«%1$s» → No reconocí: %2$s</string>
+    <string name="comanda_voice_not_understood">«%s» → No entendí la comanda</string>
+
+    <!-- Ajustes Screen -->
+    <string name="ajustes_title">Ajustes</string>
+    <string name="ajustes_import_preview_title">Vista previa de importación</string>
+    <string name="ajustes_import_preview_desc">Se van a importar los siguientes cambios:</string>
+    <string name="ajustes_import_confirm">Importar</string>
+    <string name="ajustes_sync_title">Sincronizar con TPV</string>
+    <string name="ajustes_sync_desc">Importa tus productos desde el programa de gestión del restaurante a través de la red local.</string>
+    <string name="ajustes_backup_title">Copia de seguridad</string>
+    <string name="ajustes_backup_desc">Exporta o importa todos los productos en un archivo JSON.</string>
+    <string name="ajustes_program_label">Programa de gestión</string>
+    <string name="ajustes_search_network">Buscar en red</string>
+    <string name="ajustes_servers_found">Servidores encontrados</string>
+
+    <!-- Voice Error Messages -->
+    <string name="voice_error_audio">No se captó audio, inténtalo de nuevo</string>
+    <string name="voice_error_network">Error de red con el reconocimiento de voz</string>
+    <string name="voice_error_network_timeout">Tiempo de espera de red agotado</string>
+    <string name="voice_error_no_match">No te he oído bien, inténtalo de nuevo</string>
+    <string name="voice_error_permissions">Falta el permiso de micrófono</string>
+    <string name="voice_error_unavailable">El reconocimiento de voz no está disponible en este dispositivo</string>
+    <string name="voice_error_generic">Error de voz (%d), inténtalo de nuevo</string>
+
+    <!-- Import/Export Messages -->
+    <string name="export_success">Exportados %d productos</string>
+    <string name="import_invalid_json">El archivo no es un JSON válido de Personal Comander</string>
+    <string name="import_invalid_json_generic">El archivo no es un JSON válido</string>
+    <string name="import_success">Importados: %1$d nuevos, %2$d actualizados, %3$d ignorados</string>
+    <string name="sync_no_servers">No se encontraron servidores en la red local</string>
+    <string name="sync_servers_found">Se encontraron %d servidores</string>
+    <string name="sync_need_ip">Indica la IP del servidor TPV</string>
+    <string name="sync_cannot_read_json">No se pudo leer el JSON en %s</string>
+    <string name="sync_no_mapping">El programa seleccionado no tiene mapeo</string>
+    <string name="sync_cannot_download_db">No se pudo descargar la base de datos en %s</string>
+    <string name="sync_table_not_found">No existe la tabla \'%s\'. Disponibles: %s</string>
+    <string name="sync_error">Error de sincronización: %s</string>
+    <string name="import_error_read">Error al leer archivo: %s</string>
+    <string name="import_error_apply">Error al importar: %s</string>
+    <string name="export_error">Error al exportar: %s</string>
+
+    <!-- Error Messages (ViewModel operations) -->
+    <string name="error_add_product">Error al añadir producto: %s</string>
+    <string name="error_update_product">Error al actualizar producto: %s</string>
+    <string name="error_toggle_availability">Error al cambiar disponibilidad: %s</string>
+    <string name="error_delete_product">Error al eliminar producto: %s</string>
+    <string name="error_increase_quantity">Error al aumentar cantidad: %s</string>
+    <string name="error_decrease_quantity">Error al disminuir cantidad: %s</string>
+    <string name="error_send_to_kitchen">Error al enviar a cocina: %s</string>
+    <string name="error_close_table">Error al cerrar mesa: %s</string>
+
+    <!-- General -->
+    <string name="btn_back">Volver</string>
+    <string name="btn_edit">Editar</string>
+    <string name="btn_delete">Eliminar</string>
+    <string name="btn_add">Añadir</string>
+    <string name="btn_remove">Quitar</string>
 </resources>

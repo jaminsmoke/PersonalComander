@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaminsmoke.personalcomander.PersonalComanderApp
+import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.BackupJson
 import com.jaminsmoke.personalcomander.data.EscaneadorRed
 import com.jaminsmoke.personalcomander.data.ServidorDescubierto
@@ -40,7 +41,7 @@ data class ImportPreview(
 )
 
 class AjustesViewModel(application: Application) : AndroidViewModel(application) {
-    private val context = getApplication<Application>()
+    private val ctx = getApplication<Application>()
     private val db = (application as PersonalComanderApp).db
 
     private val _sync = MutableStateFlow(AjustesSyncState())
@@ -71,10 +72,10 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
             try {
                 val productos = db.productoDao().getAllIncluyendoOcultos()
                 val json = BackupJson.serializar(productos)
-                context.contentResolver.openOutputStream(uri)?.use { out -> out.write(json.toByteArray(Charsets.UTF_8)) }
-                _mensaje.value = "Exportados ${productos.size} productos"
+                ctx.contentResolver.openOutputStream(uri)?.use { out -> out.write(json.toByteArray(Charsets.UTF_8)) }
+                _mensaje.value = ctx.getString(R.string.export_success, productos.size)
             } catch (e: Exception) {
-                _mensaje.value = "Error al exportar: ${e.message ?: e.javaClass.simpleName}"
+                _mensaje.value = ctx.getString(R.string.export_error, e.message ?: e.javaClass.simpleName)
             }
         }
     }
@@ -82,14 +83,14 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
     fun importar(uri: Uri) {
         viewModelScope.launch {
             try {
-                val texto = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                val texto = ctx.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
                 val importados = BackupJson.deserializar(texto ?: "")
-                if (importados == null) { _mensaje.value = "El archivo no es un JSON válido de Personal Comander"; return@launch }
+                if (importados == null) { _mensaje.value = ctx.getString(R.string.import_invalid_json); return@launch }
                 val existentes = db.productoDao().getAllIncluyendoOcultos()
                 val fusion = fusionarProductos(existentes, importados)
                 _importPreview.value = ImportPreview(fusion.insertados, fusion.actualizados, fusion.ignorados)
             } catch (e: Exception) {
-                _mensaje.value = "Error al leer archivo: ${e.message ?: e.javaClass.simpleName}"
+                _mensaje.value = ctx.getString(R.string.import_error_read, e.message ?: e.javaClass.simpleName)
             }
         }
     }
@@ -98,16 +99,16 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             try {
                 _importPreview.value = null
-                val texto = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                val texto = ctx.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
                 val importados = BackupJson.deserializar(texto ?: "")
-                if (importados == null) { _mensaje.value = "El archivo no es un JSON válido"; return@launch }
+                if (importados == null) { _mensaje.value = ctx.getString(R.string.import_invalid_json_generic); return@launch }
                 val existentes = db.productoDao().getAllIncluyendoOcultos()
                 val fusion = fusionarProductos(existentes, importados)
                 if (fusion.insertar.isNotEmpty()) db.productoDao().insertAll(fusion.insertar)
                 fusion.actualizar.forEach { db.productoDao().update(it) }
-                _mensaje.value = "Importados: ${fusion.insertados} nuevos, ${fusion.actualizados} actualizados, ${fusion.ignorados} ignorados"
+                _mensaje.value = ctx.getString(R.string.import_success, fusion.insertados, fusion.actualizados, fusion.ignorados)
             } catch (e: Exception) {
-                _mensaje.value = "Error al importar: ${e.message ?: e.javaClass.simpleName}"
+                _mensaje.value = ctx.getString(R.string.import_error_apply, e.message ?: e.javaClass.simpleName)
             }
         }
     }
@@ -120,13 +121,13 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
             val puertoActual = _sync.value.puerto.toIntOrNull() ?: _sync.value.programa.puertoPorDefecto
             val puertos = listOf(puertoActual) + listOf(80, 8080, 8000).filterNot { it == puertoActual }
             val resultados = withContext(Dispatchers.IO) { EscaneadorRed.escanear(puertos) }
-            _sync.update { it.copy(escaneando = false, servidores = resultados, mensaje = if (resultados.isEmpty()) "No se encontraron servidores en la red local" else "Se encontraron ${resultados.size} servidores") }
+            _sync.update { it.copy(escaneando = false, servidores = resultados, mensaje = if (resultados.isEmpty()) ctx.getString(R.string.sync_no_servers) else ctx.getString(R.string.sync_servers_found, resultados.size)) }
         }
     }
 
     fun sincronizar() {
         val estado = _sync.value
-        if (estado.host.isBlank()) { _mensaje.value = "Indica la IP del servidor TPV"; return }
+        if (estado.host.isBlank()) { _mensaje.value = ctx.getString(R.string.sync_need_ip); return }
         viewModelScope.launch {
             _sync.update { it.copy(sincronizando = true, mensaje = null) }
             val resultado = withContext(Dispatchers.IO) { ejecutarSincronizacion(estado) }
@@ -140,21 +141,21 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
         return try {
             val productos = when (estado.programa.tipo) {
                 com.jaminsmoke.personalcomander.data.TipoFuenteTpv.JSON ->
-                    TpvCliente.descargarProductosJson(url) ?: return "No se pudo leer el JSON en $url"
+                    TpvCliente.descargarProductosJson(url) ?: return ctx.getString(R.string.sync_cannot_read_json, url)
                 com.jaminsmoke.personalcomander.data.TipoFuenteTpv.SQLITE -> {
-                    val mapeo = estado.programa.mapeo ?: return "El programa seleccionado no tiene mapeo"
-                    val archivo = File(context.cacheDir, "tpv_${System.currentTimeMillis()}.db")
-                    if (!TpvCliente.descargarArchivo(url, archivo)) return "No se pudo descargar la base de datos en $url"
+                    val mapeo = estado.programa.mapeo ?: return ctx.getString(R.string.sync_no_mapping)
+                    val archivo = File(ctx.cacheDir, "tpv_${System.currentTimeMillis()}.db")
+                    if (!TpvCliente.descargarArchivo(url, archivo)) return ctx.getString(R.string.sync_cannot_download_db, url)
                     val provider = SqliteFilasProvider(archivo)
                     try {
                         val tablas = provider.tablas()
-                        if (mapeo.tabla !in tablas) return "No existe la tabla '${mapeo.tabla}'. Disponibles: " + tablas.take(8).joinToString(", ")
+                        if (mapeo.tabla !in tablas) return ctx.getString(R.string.sync_table_not_found, mapeo.tabla, tablas.take(8).joinToString(", "))
                         provider.filasDe(mapeo.tabla, mapeo.filtro).mapNotNull { mapFilaProducto(it, mapeo) }
                     } finally { provider.cerrar(); archivo.delete() }
                 }
             }
             aplicarProductos(productos)
-        } catch (e: Exception) { "Error de sincronización: ${e.message ?: e.javaClass.simpleName}" }
+        } catch (e: Exception) { ctx.getString(R.string.sync_error, e.message ?: e.javaClass.simpleName) }
     }
 
     private suspend fun aplicarProductos(importados: List<com.jaminsmoke.personalcomander.data.Producto>): String {
@@ -162,6 +163,6 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
         val fusion = fusionarProductos(existentes, importados)
         if (fusion.insertar.isNotEmpty()) db.productoDao().insertAll(fusion.insertar)
         fusion.actualizar.forEach { db.productoDao().update(it) }
-        return "Sincronizados ${fusion.insertados} nuevos, ${fusion.actualizados} actualizados, ${fusion.ignorados} ignorados"
+        return ctx.getString(R.string.import_success, fusion.insertados, fusion.actualizados, fusion.ignorados)
     }
 }

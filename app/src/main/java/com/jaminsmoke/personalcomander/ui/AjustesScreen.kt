@@ -51,6 +51,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.jaminsmoke.personalcomander.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -82,10 +84,10 @@ fun AjustesScreen(
     importPreview?.let { preview ->
         AlertDialog(
             onDismissRequest = { viewModel.cancelarImportacion() },
-            title = { Text("Vista previa de importación") },
+            title = { Text(stringResource(R.string.ajustes_import_preview_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Se van a importar los siguientes cambios:")
+                    Text(stringResource(R.string.ajustes_import_preview_desc))
                     Text("🆕 ${preview.nuevos} productos nuevos", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     Text("🔄 ${preview.actualizados} productos actualizados", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
                     Text("⏭️ ${preview.ignorados} productos ignorados (nombres vacíos)", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -94,10 +96,10 @@ fun AjustesScreen(
             confirmButton = {
                 TextButton(onClick = {
                     pendingImportUri?.let { viewModel.confirmarImportacion(it) }
-                }) { Text("Importar", color = MaterialTheme.colorScheme.primary) }
+                }) { Text(stringResource(R.string.ajustes_import_confirm), color = MaterialTheme.colorScheme.primary) }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.cancelarImportacion() }) { Text("Cancelar") }
+                TextButton(onClick = { viewModel.cancelarImportacion() }) { Text(stringResource(R.string.menu_cancel)) }
             }
         )
     }
@@ -114,10 +116,10 @@ fun AjustesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Ajustes") },
+                title = { Text(stringResource(R.string.ajustes_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back))
                     }
                 }
             )
@@ -133,12 +135,12 @@ fun AjustesScreen(
         ) {
             item {
                 Text(
-                    text = "Sincronizar con TPV",
+                    text = stringResource(R.string.ajustes_sync_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Importa tus productos desde el programa de gestión del restaurante a través de la red local.",
+                    text = stringResource(R.string.ajustes_sync_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -158,12 +160,12 @@ fun AjustesScreen(
             item {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Copia de seguridad",
+                    text = stringResource(R.string.ajustes_backup_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Exporta o importa todos los productos en un archivo JSON.",
+                    text = stringResource(R.string.ajustes_backup_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -203,7 +205,7 @@ private fun SincronizarCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Programa de gestión",
+                text = stringResource(R.string.ajustes_program_label),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -256,7 +258,7 @@ private fun SincronizarCard(
                     } else {
                         Icon(Icons.Default.Search, contentDescription = null)
                     }
-                    Text("Buscar en red")
+                    Text(stringResource(R.string.ajustes_search_network))
                 }
                 Button(
                     onClick = onSincronizar,
@@ -277,7 +279,7 @@ private fun SincronizarCard(
             }
             if (state.servidores.isNotEmpty()) {
                 Text(
-                    text = "Servidores encontrados",
+                    text = stringResource(R.string.ajustes_servers_found),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -63,6 +63,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import com.jaminsmoke.personalcomander.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -102,7 +104,7 @@ fun ComandaScreen(
         textoParcial = null; viewModel.setEscuchandoVoz(true)
         recognizer.onParcial = { textoParcial = it }
         recognizer.onResultado = { textoParcial = null; viewModel.setEscuchandoVoz(false); viewModel.procesarVoz(it) }
-        recognizer.onError = { textoParcial = null; viewModel.setEscuchandoVoz(false); viewModel.informar(mensajeErrorVoz(it)) }
+        recognizer.onError = { textoParcial = null; viewModel.setEscuchandoVoz(false); viewModel.informar(mensajeErrorVoz(context, it)) }
         recognizer.empezar()
     }
     val detenerVoz: () -> Unit = { textoParcial = null; recognizer.detener(); viewModel.setEscuchandoVoz(false) }
@@ -120,8 +122,8 @@ fun ComandaScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Mesa ${state.mesa?.numero ?: mesaId}")
-                        Text(estadoLabel(state.mesa?.estado), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.comanda_table_prefix, state.mesa?.numero ?: mesaId))
+                        Text(estadoLabel(state.mesa?.estado, context), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver") } }
@@ -131,9 +133,9 @@ fun ComandaScreen(
         Column(Modifier.fillMaxSize().padding(padding)) {
             // Search + mic row
             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(state.busqueda, viewModel::setBusqueda, Modifier.weight(1f), placeholder = { Text("Buscar producto...") }, singleLine = true)
+                OutlinedTextField(state.busqueda, viewModel::setBusqueda, Modifier.weight(1f), placeholder = { Text(stringResource(R.string.comanda_search_placeholder)) }, singleLine = true)
                 IconButton(onClick = { if (micPermissionGranted) iniciarVoz() else permissionLauncher.launch(Manifest.permission.RECORD_AUDIO) }, enabled = !state.escuchandoVoz) {
-                    Icon(Icons.Default.Mic, "Hablar comanda", tint = if (state.escuchandoVoz) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.Mic, stringResource(R.string.comanda_voice_talk), tint = if (state.escuchandoVoz) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
                 }
             }
 
@@ -143,11 +145,11 @@ fun ComandaScreen(
                     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Mic, null, tint = MaterialTheme.colorScheme.onErrorContainer)
                         Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
-                            Text("Escuchando…", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
+                            Text(stringResource(R.string.comanda_listening), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
                             if (textoParcial != null) Text(textoParcial!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            else Text("Di la comanda, ej: «dos cafés con leche»", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f))
+                            else Text(stringResource(R.string.comanda_voice_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f))
                         }
-                        OutlinedButton(onClick = detenerVoz) { Text("Cancelar") }
+                        OutlinedButton(onClick = detenerVoz) { Text(stringResource(R.string.comanda_cancel)) }
                     }
                 }
             }
@@ -166,7 +168,7 @@ fun ComandaScreen(
                             verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             item {
-                                CategorySidebarItem("📋 Todas", selected = state.categoria == null) { viewModel.setCategoria(null) }
+                                CategorySidebarItem(stringResource(R.string.comanda_all_categories), selected = state.categoria == null) { viewModel.setCategoria(null) }
                             }
                             items(state.categorias) { cat ->
                                 CategorySidebarItem("${CategoriaIcono.de(cat)} $cat", selected = state.categoria == cat) {
@@ -212,7 +214,7 @@ fun ComandaScreen(
                             edgePadding = 12.dp, divider = {}, indicator = {}
                         ) {
                             Tab(selected = state.categoria == null, onClick = { viewModel.setCategoria(null) }) {
-                                Text("📋 Todas", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                Text(stringResource(R.string.comanda_all_categories), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                                     fontWeight = if (state.categoria == null) FontWeight.Bold else FontWeight.Normal,
                                     color = if (state.categoria == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                             }
@@ -301,22 +303,22 @@ private fun ComandaPanel(
     val haptic = LocalHapticFeedback.current
     Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shadowElevation = 8.dp) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
-            Text("Comanda", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            if (lineas.isEmpty()) Text("Sin artículos. Toca un producto para añadirlo.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 8.dp))
+            Text(stringResource(R.string.comanda_panel_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            if (lineas.isEmpty()) Text(stringResource(R.string.comanda_empty), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 8.dp))
             else LazyColumn(Modifier.heightIn(max = 160.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 items(lineas, key = { it.id }) { linea -> LineaRow(linea, { onAumentar(linea) }, { onDisminuir(linea) }) }
             }
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Total", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.comanda_total_label), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.weight(1f))
                 Text(total.formatoEuro(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val hay = pedidoEstado != null && lineas.isNotEmpty()
                 Button(onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onEnviarACocina() }, Modifier.weight(1f), enabled = hay && pedidoEstado == PedidoEstado.ABIERTA) {
-                    Text(if (pedidoEstado == PedidoEstado.ENVIADA) "En cocina ✓" else "Enviar a cocina")
+                    Text(if (pedidoEstado == PedidoEstado.ENVIADA) stringResource(R.string.comanda_in_kitchen) else stringResource(R.string.comanda_send_to_kitchen))
                 }
-                OutlinedButton(onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onCerrarMesa() }, Modifier.weight(1f), enabled = pedidoEstado != null) { Text("Cerrar mesa") }
+                OutlinedButton(onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onCerrarMesa() }, Modifier.weight(1f), enabled = pedidoEstado != null) { Text(stringResource(R.string.comanda_close_table)) }
             }
         }
     }
@@ -352,6 +354,9 @@ private fun CategorySidebarItem(label: String, selected: Boolean, onClick: () ->
     }
 }
 
-private fun estadoLabel(estado: MesaEstado?): String = when (estado) {
-    MesaEstado.LIBRE -> "Libre"; MesaEstado.OCUPADA -> "Ocupada"; MesaEstado.EN_COCINA -> "En cocina"; null -> ""
+private fun estadoLabel(estado: MesaEstado?, context: android.content.Context): String = when (estado) {
+    MesaEstado.LIBRE -> context.getString(R.string.mesas_free)
+    MesaEstado.OCUPADA -> context.getString(R.string.mesas_occupied)
+    MesaEstado.EN_COCINA -> context.getString(R.string.mesas_in_kitchen)
+    null -> ""
 }
