@@ -11,7 +11,14 @@ import androidx.navigation.navArgument
 fun PersonalComanderApp() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = "mesas") {
+    NavHost(navController = navController, startDestination = "home") {
+        composable("home") {
+            HomeScreen(
+                onOpenMesas = { navController.navigate("mesas") },
+                onOpenMenu = { navController.navigate("menu") },
+                onOpenAjustes = { navController.navigate("ajustes") }
+            )
+        }
         composable("mesas") {
             MesasScreen(
                 onOpenMesa = { mesaId ->
@@ -19,8 +26,12 @@ fun PersonalComanderApp() {
                 },
                 onOpenMenu = {
                     navController.navigate("menu")
-                }
+                },
+                onBack = { navController.popBackStack() }
             )
+        }
+        composable("ajustes") {
+            AjustesScreen(onBack = { navController.popBackStack() })
         }
         composable("menu") {
             MenuScreen(onBack = { navController.popBackStack() })

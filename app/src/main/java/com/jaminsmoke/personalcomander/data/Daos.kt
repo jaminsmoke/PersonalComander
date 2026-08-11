@@ -18,6 +18,12 @@ interface MesaDao {
     @Query("SELECT COUNT(*) FROM mesas")
     suspend fun count(): Int
 
+    @Query("SELECT COUNT(*) FROM mesas")
+    fun observeCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM mesas WHERE estado != 'LIBRE'")
+    fun observeOcupadas(): Flow<Int>
+
     @Insert
     suspend fun insertAll(mesas: List<Mesa>)
 
@@ -35,6 +41,12 @@ interface ProductoDao {
 
     @Query("SELECT * FROM productos ORDER BY categoria, nombre")
     fun observeAllIncluyendoOcultos(): Flow<List<Producto>>
+
+    @Query("SELECT * FROM productos ORDER BY categoria, nombre")
+    suspend fun getAllIncluyendoOcultos(): List<Producto>
+
+    @Query("SELECT * FROM productos WHERE disponible = 1")
+    suspend fun getAllDisponibles(): List<Producto>
 
     @Query("SELECT * FROM productos WHERE id = :id")
     suspend fun getById(id: Long): Producto?
@@ -65,6 +77,12 @@ interface PedidoDao {
 
     @Query("SELECT * FROM pedidos WHERE mesaId = :mesaId AND estado != 'CERRADA' ORDER BY id DESC LIMIT 1")
     suspend fun getActivo(mesaId: Long): Pedido?
+
+    @Query("SELECT COUNT(*) FROM pedidos WHERE estado = 'ABIERTA'")
+    fun observeAbiertos(): Flow<Int>
+
+    @Query("SELECT COALESCE(SUM(l.precioUnitario * l.cantidad), 0) FROM lineas_pedido l INNER JOIN pedidos p ON l.pedidoId = p.id WHERE p.creadoEn >= :inicioDelDia")
+    fun observeTotalHoy(inicioDelDia: Long): Flow<Double>
 
     @Insert
     suspend fun insert(pedido: Pedido): Long

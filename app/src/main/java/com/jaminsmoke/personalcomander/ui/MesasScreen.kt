@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,6 +41,7 @@ import com.jaminsmoke.personalcomander.data.MesaEstado
 fun MesasScreen(
     onOpenMesa: (Long) -> Unit,
     onOpenMenu: () -> Unit,
+    onBack: (() -> Unit)? = null,
     viewModel: MesasViewModel = viewModel(
         factory = MesasViewModel.factory(LocalContext.current.applicationContext)
     )
@@ -50,6 +52,16 @@ fun MesasScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Personal Comandero") },
+                navigationIcon = {
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Volver"
+                            )
+                        }
+                    }
+                },
                 actions = {
                     IconButton(onClick = onOpenMenu) {
                         Icon(

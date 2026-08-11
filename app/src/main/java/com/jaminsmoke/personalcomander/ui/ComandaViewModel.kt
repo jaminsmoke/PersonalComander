@@ -28,7 +28,9 @@ data class ComandaUiState(
     val categorias: List<String> = emptyList(),
     val productos: List<Producto> = emptyList(),
     val busqueda: String = "",
-    val categoria: String? = null
+    val categoria: String? = null,
+    val escuchandoVoz: Boolean = false,
+    val feedbackVoz: String? = null
 ) {
     val total: Double get() = lineas.sumOf { it.precioUnitario * it.cantidad }
 }
@@ -49,6 +51,8 @@ class ComandaViewModel(
 
     private val _busqueda = MutableStateFlow("")
     private val _categoria = MutableStateFlow<String?>(null)
+    private val _escuchandoVoz = MutableStateFlow(false)
+    private val _feedbackVoz = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<ComandaUiState> = run {
         val datos = combine(
@@ -60,11 +64,18 @@ class ComandaViewModel(
             ComandaData(mesa, p, ls, prods)
         }
 
-        combine(datos, _busqueda, _categoria) { d, busqueda, categoria ->
+        combine(datos, _busqueda, _categoria, _escuchandoVoz, _feedbackVoz) { d, busqueda, categoria, escuchando, feedback ->
             val cats = d.productos.map { it.categoria }.distinct()
-            val filtrados = d.productos.filter { prod ->
-                (categoria == null || prod.categoria == categoria) &&
-                    prod.nombre.contains(busqueda.trim(), ignoreCase = true)
+            val porCategoria = d.productos.filter { prod ->
+                categoria == null || prod.categoria == categoria
+            }
+            val filtrados = if (busqueda.isBlank()) {
+                porCategoria
+            } else {
+                porCategoria
+                    .mapNotNull { p -> coincidenciaBusqueda(busqueda, p)?.let { it to p } }
+                    .sortedWith(compareBy({ it.first }, { it.second.nombre }))
+                    .map { it.second }
             }
             ComandaUiState(
                 mesa = d.mesa,
@@ -73,7 +84,9 @@ class ComandaViewModel(
                 categorias = cats,
                 productos = filtrados,
                 busqueda = busqueda,
-                categoria = categoria
+                categoria = categoria,
+                escuchandoVoz = escuchando,
+                feedbackVoz = feedback
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ComandaUiState())
     }
@@ -91,6 +104,49 @@ class ComandaViewModel(
 
     fun setCategoria(categoria: String?) {
         _categoria.value = categoria
+    }
+
+    fun setEscuchandoVoz(valor: Boolean) {
+        _escuchandoVoz.value = valor
+    }
+
+    fun informar(mensaje: String?) {
+        _feedbackVoz.value = mensaje
+        if (mensaje != null) clearFeedbackVoz()
+    }
+
+    fun procesarVoz(texto: String) {
+        viewModelScope.launch {
+            val productos = db.productoDao().getAllDisponibles()
+            val resultado = parsearComanda(texto, productos)
+
+            resultado.lineas.forEach { linea ->
+                repeat(linea.cantidad) { addProducto(linea.producto) }
+            }
+
+            val resumen = resultado.lineas.joinToString(", ") {
+                "${it.cantidad}× ${it.producto.nombre}"
+            }
+            val pendientes = resultado.noEntendido.joinToString(" ")
+            _feedbackVoz.value = when {
+                resumen.isEmpty() && pendientes.isNotEmpty() ->
+                    "«$texto» → No reconocí: $pendientes"
+                resumen.isEmpty() ->
+                    "«$texto» → No entendí la comanda"
+                pendientes.isNotEmpty() ->
+                    "«$texto» → Añadido: $resumen · No reconocido: $pendientes"
+                else ->
+                    "«$texto» → Añadido: $resumen"
+            }
+            clearFeedbackVoz()
+        }
+    }
+
+    private fun clearFeedbackVoz() {
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(5000)
+            _feedbackVoz.value = null
+        }
     }
 
     fun addProducto(producto: Producto) {

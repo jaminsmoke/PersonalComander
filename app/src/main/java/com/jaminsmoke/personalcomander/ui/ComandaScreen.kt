@@ -1,5 +1,9 @@
 package com.jaminsmoke.personalcomander.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,18 +35,26 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.data.LineaPedido
 import com.jaminsmoke.personalcomander.data.MesaEstado
@@ -59,8 +72,54 @@ fun ComandaScreen(
     )
 ) {
     val state by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val context = LocalContext.current
+    var micPermissionGranted by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val recognizer = remember { VozRecognizer(context) }
+    DisposableEffect(Unit) {
+        onDispose { recognizer.destruir() }
+    }
+
+    val iniciarVoz: () -> Unit = {
+        viewModel.setEscuchandoVoz(true)
+        recognizer.onResultado = { texto ->
+            viewModel.setEscuchandoVoz(false)
+            viewModel.procesarVoz(texto)
+        }
+        recognizer.onError = { error ->
+            viewModel.setEscuchandoVoz(false)
+            viewModel.informar(mensajeErrorVoz(error))
+        }
+        recognizer.empezar()
+    }
+
+    val detenerVoz: () -> Unit = {
+        recognizer.detener()
+        viewModel.setEscuchandoVoz(false)
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        micPermissionGranted = granted
+        if (granted) iniciarVoz()
+    }
+
+    LaunchedEffect(state.feedbackVoz) {
+        state.feedbackVoz?.let { snackbarHostState.showSnackbar(it) }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -86,15 +145,74 @@ fun ComandaScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            OutlinedTextField(
-                value = state.busqueda,
-                onValueChange = viewModel::setBusqueda,
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp, vertical = 4.dp),
-                placeholder = { Text("Buscar producto...") },
-                singleLine = true
-            )
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = state.busqueda,
+                    onValueChange = viewModel::setBusqueda,
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Buscar producto...") },
+                    singleLine = true
+                )
+                IconButton(
+                    onClick = {
+                        if (micPermissionGranted) {
+                            iniciarVoz()
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        }
+                    },
+                    enabled = !state.escuchandoVoz
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = "Hablar comanda",
+                        tint = if (state.escuchandoVoz) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        }
+                    )
+                }
+            }
+            if (state.escuchandoVoz) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Mic,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                        Text(
+                            text = "Escuchando… Di la comanda, ej: «dos cafés con leche»",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 8.dp)
+                        )
+                        OutlinedButton(onClick = detenerVoz) {
+                            Text("Cancelar")
+                        }
+                    }
+                }
+            }
 
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 12.dp),
