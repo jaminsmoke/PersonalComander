@@ -1,5 +1,8 @@
 package com.jaminsmoke.personalcomander.ui
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -56,6 +59,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -66,7 +70,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -76,6 +80,9 @@ import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
 import kotlin.math.roundToInt
 
+// Grid system: all positions snap to multiples of CELL
+private val CELL = 40.dp
+private val CELL_F = 40f
 private val CARD_WIDTH = 120.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -97,10 +104,10 @@ fun MesasScreen(
 
     // Drag state
     var draggedMesa by remember { mutableStateOf<Mesa?>(null) }
-    var dragBaseX by remember { mutableStateOf(0f) }  // mesa's original posX in dp
-    var dragBaseY by remember { mutableStateOf(0f) }  // mesa's original posY in dp
-    var dragPxX by remember { mutableStateOf(0f) }    // cumulative drag in px X
-    var dragPxY by remember { mutableStateOf(0f) }    // cumulative drag in px Y
+    var dragBaseX by remember { mutableStateOf(0f) }
+    var dragBaseY by remember { mutableStateOf(0f) }
+    var dragPxX by remember { mutableStateOf(0f) }
+    var dragPxY by remember { mutableStateOf(0f) }
 
     LaunchedEffect(mensaje) {
         mensaje?.let {
@@ -166,11 +173,11 @@ fun MesasScreen(
                     }
                 }
 
-                // Free-form board with scroll
+                // Board
                 val scrollH = rememberScrollState()
                 val scrollV = rememberScrollState()
-                val maxX = ((mesasFiltradas.maxOfOrNull { it.posX } ?: 0f) + 200f).coerceAtLeast(400f)
-                val maxY = ((mesasFiltradas.maxOfOrNull { it.posY } ?: 0f) + 200f).coerceAtLeast(600f)
+                val maxX = ((mesasFiltradas.maxOfOrNull { it.posX } ?: 0f) + CARD_WIDTH.value + CELL_F * 2).coerceAtLeast(400f)
+                val maxY = ((mesasFiltradas.maxOfOrNull { it.posY } ?: 0f) + CARD_WIDTH.value + CELL_F * 2).coerceAtLeast(600f)
 
                 Box(
                     modifier = Modifier
@@ -181,13 +188,28 @@ fun MesasScreen(
                     Box(
                         modifier = Modifier
                             .size(width = maxX.dp, height = maxY.dp)
+                            .drawBehind {
+                                // Subtle dot grid for spatial reference
+                                val spacing = CELL.toPx()
+                                val dotColor = Color(0xFFD0D0D0)
+                                val r = 1.5.dp.toPx()
+                                var x = CELL.toPx()
+                                while (x < size.width) {
+                                    var y = CELL.toPx()
+                                    while (y < size.height) {
+                                        drawCircle(dotColor, r, Offset(x, y))
+                                        y += spacing
+                                    }
+                                    x += spacing
+                                }
+                            }
                     ) {
                         // Shimmer loading
                         if (mesas.isEmpty()) {
                             for (i in 0 until 12) {
                                 ShimmerBox(
                                     modifier = Modifier
-                                        .offset(x = ((i % 4) * 140).dp, y = ((i / 4) * 160).dp)
+                                        .offset(x = (CELL_F + (i % 4) * 160).dp, y = (CELL_F + (i / 4) * 160).dp)
                                         .width(CARD_WIDTH),
                                     height = 0,
                                     radius = 16
@@ -195,23 +217,34 @@ fun MesasScreen(
                             }
                         }
 
-                        // Render each mesa at its saved position
+                        // Render each mesa with animated position
                         mesasFiltradas.forEach { mesa ->
                             val isDragging = draggedMesa?.id == mesa.id
+
+                            // Animate position changes (smoothly interpolate when DB updates posX/posY)
+                            val animX by animateFloatAsState(
+                                targetValue = mesa.posX,
+                                animationSpec = tween(250, easing = FastOutSlowInEasing),
+                                label = "posX"
+                            )
+                            val animY by animateFloatAsState(
+                                targetValue = mesa.posY,
+                                animationSpec = tween(250, easing = FastOutSlowInEasing),
+                                label = "posY"
+                            )
+
                             MesaCard(
                                 mesa = mesa,
                                 isDragging = isDragging,
                                 modifier = Modifier
-                                    .offset(x = mesa.posX.dp, y = mesa.posY.dp)
+                                    .offset(x = animX.dp, y = animY.dp)
                                     .width(CARD_WIDTH),
                                 onClick = {
                                     if (draggedMesa == null) onOpenMesa(mesa.id)
                                 },
                                 onEditClick = { mesaEditando = mesa },
                                 onDeleteClick = { mesaBorrando = mesa },
-                                onDragStart = {
-                                    // Don't create overlay yet — MesaCard defers this
-                                },
+                                onDragStart = { },
                                 onDragStarted = {
                                     draggedMesa = mesa
                                     dragBaseX = mesa.posX
@@ -227,10 +260,15 @@ fun MesasScreen(
                                     draggedMesa?.let { dragged ->
                                         val deltaDpX = with(density) { dragPxX.toDp().value }
                                         val deltaDpY = with(density) { dragPxY.toDp().value }
+                                        val rawX = dragBaseX + deltaDpX
+                                        val rawY = dragBaseY + deltaDpY
+                                        // Snap to grid
+                                        val snappedX = (rawX / CELL_F).roundToInt() * CELL_F
+                                        val snappedY = (rawY / CELL_F).roundToInt() * CELL_F
                                         viewModel.updatePosicion(
                                             dragged,
-                                            (dragBaseX + deltaDpX).coerceAtLeast(0f),
-                                            (dragBaseY + deltaDpY).coerceAtLeast(0f)
+                                            snappedX.coerceAtLeast(0f),
+                                            snappedY.coerceAtLeast(0f)
                                         )
                                     }
                                     draggedMesa = null
@@ -240,18 +278,18 @@ fun MesasScreen(
                             )
                         }
 
-                        // Drag overlay — follows the finger
+                        // Drag overlay
                         draggedMesa?.let { mesa ->
+                            val overlayX = dragBaseX + with(density) { dragPxX.toDp().value }
+                            val overlayY = dragBaseY + with(density) { dragPxY.toDp().value }
                             Box(
                                 modifier = Modifier
-                                    .offset(x = dragBaseX.dp, y = dragBaseY.dp)
+                                    .offset(x = overlayX.dp, y = overlayY.dp)
                                     .graphicsLayer {
-                                        translationX = dragPxX
-                                        translationY = dragPxY
                                         scaleX = 1.08f
                                         scaleY = 1.08f
                                         shadowElevation = 16f
-                                        alpha = 0.9f
+                                        alpha = 0.92f
                                     }
                                     .width(CARD_WIDTH)
                                     .zIndex(10f)
@@ -386,15 +424,12 @@ private fun MesaCard(
             .graphicsLayer {
                 if (isDragging) alpha = 0.4f
             }
-            // 1. Tap: abre la mesa
             .pointerInput(mesa.id, "tap") {
                 detectTapGestures(onTap = { onClick() })
             }
-            // 2. Long-press → menú (sin arrastrar) o drag (si arrastra)
             .pointerInput(mesa.id, "drag") {
                 detectDragGesturesAfterLongPress(
                     onDragStart = { _ ->
-                        // Long-press detectado. Mostrar menú, no drag aún.
                         menuExpanded = true
                         dragArrancado = false
                         onDragStart()
@@ -402,7 +437,6 @@ private fun MesaCard(
                     onDrag = { change, dragAmount ->
                         change.consume()
                         if (!dragArrancado) {
-                            // Primer movimiento → arranca el drag
                             dragArrancado = true
                             menuExpanded = false
                             onDragStarted()

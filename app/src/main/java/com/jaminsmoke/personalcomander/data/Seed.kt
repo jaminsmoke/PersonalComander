@@ -3,8 +3,11 @@ package com.jaminsmoke.personalcomander.data
 object Seed {
 
     // Layout constants for the free-form board (in dp)
-    private const val COL_SPACING = 140f
-    private const val ROW_SPACING = 160f
+    // Cell = 40dp; mesa = 120dp → 40dp gap between cards
+    private const val CELL = 40f
+    private const val COL_SPACING = 160f   // 4 cells per column
+    private const val ROW_SPACING = 160f   // 4 cells per row
+    private const val MARGIN = 40f         // margin from board edge
 
     fun mesas(): List<Mesa> {
         // Arrange mesas in a grid: 4 columns per row, grouped by zone
@@ -16,51 +19,51 @@ object Seed {
 
         val mesas = mutableListOf<Mesa>()
 
-        // Row 0 — Terraza
+        // Row 0 — Terraza (round, 2p)
         for (i in 0..3) {
             mesas.add(Mesa(
                 numero = 1 + i,
                 forma = MesaForma.REDONDA, zona = "Terraza", capacidad = 2,
-                posX = i * COL_SPACING, posY = 0f
+                posX = MARGIN + i * COL_SPACING, posY = MARGIN
             ))
         }
-        // Row 1 — Interior cuadradas
+        // Row 1 — Interior cuadradas (square, 4p)
         for (i in 0..3) {
             mesas.add(Mesa(
                 numero = 5 + i,
                 forma = MesaForma.CUADRADA, zona = "Interior", capacidad = 4,
-                posX = i * COL_SPACING, posY = ROW_SPACING
+                posX = MARGIN + i * COL_SPACING, posY = MARGIN + ROW_SPACING
             ))
         }
-        // Row 2 — Interior rectangulares
+        // Row 2 — Interior rectangulares (rect, 8p)
         for (i in 0..3) {
             mesas.add(Mesa(
                 numero = 9 + i,
                 forma = MesaForma.RECTANGULAR, zona = "Interior", capacidad = 8,
-                posX = i * COL_SPACING, posY = 2 * ROW_SPACING
+                posX = MARGIN + i * COL_SPACING, posY = MARGIN + 2 * ROW_SPACING
             ))
         }
-        // Row 3 — Interior XL (only 2, centered)
+        // Row 3 — Interior XL (only 2)
         mesas.add(Mesa(
             numero = 13,
             forma = MesaForma.RECTANGULAR_XL, zona = "Interior", capacidad = 12,
-            posX = 0f, posY = 3 * ROW_SPACING
+            posX = MARGIN, posY = MARGIN + 3 * ROW_SPACING
         ))
         mesas.add(Mesa(
             numero = 14,
             forma = MesaForma.RECTANGULAR_XL, zona = "Interior", capacidad = 12,
-            posX = COL_SPACING, posY = 3 * ROW_SPACING
+            posX = MARGIN + COL_SPACING, posY = MARGIN + 3 * ROW_SPACING
         ))
-        // Row 4 — Barra (only 2)
+        // Row 4 — Barra (round, 3p)
         mesas.add(Mesa(
             numero = 15,
             forma = MesaForma.REDONDA, zona = "Barra", capacidad = 3,
-            posX = 0f, posY = 4 * ROW_SPACING
+            posX = MARGIN, posY = MARGIN + 4 * ROW_SPACING
         ))
         mesas.add(Mesa(
             numero = 16,
             forma = MesaForma.REDONDA, zona = "Barra", capacidad = 3,
-            posX = COL_SPACING, posY = 4 * ROW_SPACING
+            posX = MARGIN + COL_SPACING, posY = MARGIN + 4 * ROW_SPACING
         ))
 
         return mesas
