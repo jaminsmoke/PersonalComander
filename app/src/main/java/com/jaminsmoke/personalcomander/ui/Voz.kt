@@ -197,8 +197,8 @@ fun coincidenciaBusqueda(query: String, producto: Producto): Int? {
 }
 
 /** Envuelve SpeechRecognizer para capturar una comanda hablada. */
-class VozRecognizer(context: Context) {
-    private val speech: SpeechRecognizer? = SpeechRecognizer.createSpeechRecognizer(context)
+class VozRecognizer(private val appContext: Context) {
+    private val speech: SpeechRecognizer? = SpeechRecognizer.createSpeechRecognizer(appContext)
     private var activo = false
     private val handler = Handler(Looper.getMainLooper())
     private val timeoutRunnable = Runnable {
@@ -245,6 +245,10 @@ class VozRecognizer(context: Context) {
     }
 
     fun empezar(idioma: String = "es-ES") {
+        if (!SpeechRecognizer.isRecognitionAvailable(appContext)) {
+            onError?.invoke(SpeechRecognizer.ERROR_CLIENT)
+            return
+        }
         if (activo || speech == null) {
             if (speech == null) onError?.invoke(SpeechRecognizer.ERROR_CLIENT)
             return

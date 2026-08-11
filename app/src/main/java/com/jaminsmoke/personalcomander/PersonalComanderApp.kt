@@ -7,22 +7,31 @@ import com.jaminsmoke.personalcomander.data.Seed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 class PersonalComanderApp : Application() {
 
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     val db: AppDatabase by lazy {
         Room.databaseBuilder(this, AppDatabase::class.java, "personal_comander.db")
+            .fallbackToDestructiveMigration()
             .build()
             .also { seedIfEmpty(it) }
     }
 
     private fun seedIfEmpty(db: AppDatabase) {
-        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+        applicationScope.launch {
             if (db.mesaDao().count() == 0) {
                 db.mesaDao().insertAll(Seed.mesas())
                 db.productoDao().insertAll(Seed.productos())
             }
         }
+    }
+
+    override fun onTerminate() {
+        super.onTerminate()
+        applicationScope.cancel()
     }
 }

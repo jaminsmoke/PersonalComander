@@ -4,6 +4,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,7 +30,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -98,6 +104,7 @@ private fun MesaCard(mesa: Mesa, onClick: () -> Unit) {
         MesaEstado.OCUPADA -> "Ocupada"
         MesaEstado.EN_COCINA -> "En cocina"
     }
+    val tieneComanda = mesa.comandaActivaId != null
 
     Card(
         modifier = Modifier
@@ -113,11 +120,27 @@ private fun MesaCard(mesa: Mesa, onClick: () -> Unit) {
                 .padding(10.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = mesa.numero.toString(),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = mesa.numero.toString(),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                if (tieneComanda) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .background(
+                                color = Color(0xFFFF7043),
+                                shape = CircleShape
+                            )
+                    )
+                }
+            }
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
