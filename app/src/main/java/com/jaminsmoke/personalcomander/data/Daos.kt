@@ -1,0 +1,71 @@
+package com.jaminsmoke.personalcomander.data
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface MesaDao {
+    @Query("SELECT * FROM mesas ORDER BY numero")
+    fun observeAll(): Flow<List<Mesa>>
+
+    @Query("SELECT * FROM mesas WHERE id = :id")
+    fun observeById(id: Long): Flow<Mesa?>
+
+    @Query("SELECT COUNT(*) FROM mesas")
+    suspend fun count(): Int
+
+    @Insert
+    suspend fun insertAll(mesas: List<Mesa>)
+
+    @Update
+    suspend fun update(mesa: Mesa)
+
+    @Query("UPDATE mesas SET estado = :estado, comandaActivaId = :comandaId WHERE id = :id")
+    suspend fun updateEstado(id: Long, estado: MesaEstado, comandaId: Long?)
+}
+
+@Dao
+interface ProductoDao {
+    @Query("SELECT * FROM productos WHERE disponible = 1 ORDER BY categoria, nombre")
+    fun observeAll(): Flow<List<Producto>>
+
+    @Insert
+    suspend fun insertAll(productos: List<Producto>)
+}
+
+@Dao
+interface PedidoDao {
+    @Query("SELECT * FROM pedidos WHERE mesaId = :mesaId AND estado != 'CERRADA' ORDER BY id DESC LIMIT 1")
+    fun observeActivo(mesaId: Long): Flow<Pedido?>
+
+    @Query("SELECT * FROM pedidos WHERE mesaId = :mesaId AND estado != 'CERRADA' ORDER BY id DESC LIMIT 1")
+    suspend fun getActivo(mesaId: Long): Pedido?
+
+    @Insert
+    suspend fun insert(pedido: Pedido): Long
+
+    @Update
+    suspend fun update(pedido: Pedido)
+}
+
+@Dao
+interface LineaPedidoDao {
+    @Query("SELECT * FROM lineas_pedido WHERE pedidoId = :pedidoId ORDER BY id")
+    fun observeForPedido(pedidoId: Long): Flow<List<LineaPedido>>
+
+    @Query("SELECT * FROM lineas_pedido WHERE pedidoId = :pedidoId ORDER BY id")
+    suspend fun getForPedido(pedidoId: Long): List<LineaPedido>
+
+    @Insert
+    suspend fun insert(linea: LineaPedido): Long
+
+    @Update
+    suspend fun update(linea: LineaPedido)
+
+    @Delete
+    suspend fun delete(linea: LineaPedido)
+}
