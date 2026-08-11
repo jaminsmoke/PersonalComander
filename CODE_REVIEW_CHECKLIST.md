@@ -31,12 +31,12 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
   **Fix:** poner `cerrada = true` solo tras éxito (o resetear en el `catch`).  
   **Archivos:** `ui/ComandaViewModel.kt`
 
-- [ ] **C4 — Voz: feedback antes de persistir líneas**  
+- [x] **C4 — Voz: feedback antes de persistir líneas**  
   `procesarVoz` lanza `addProducto` (cada uno su coroutine) y enseña snackbar al momento; las líneas pueden no estar aún en BD.  
   **Fix:** insert batch dentro del mismo `mutex`/suspend; feedback al terminar.  
   **Archivos:** `ui/ComandaViewModel.kt`
 
-- [ ] **C5 — Borrar mesa con comanda activa**  
+- [x] **C5 — Borrar mesa con comanda activa**  
   `deleteMesa` no comprueba `comandaActivaId` ni pedidos abiertos → huérfanos + renumeración a mitad de servicio.  
   **Fix:** bloquear borrado si hay comanda, o cascada + confirmación fuerte.  
   **Archivos:** `ui/MesasViewModel.kt`, `ui/MesasScreen.kt`, DAOs si hace falta
@@ -208,11 +208,11 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 
 | Bloque | Total | Hechos |
 |--------|------:|-------:|
-| Críticos | 6 | 4 |
+| Críticos | 6 | 6 |
 | Medios | 10 | 0 |
 | Seguridad | 4 | 0 |
 | Optimizaciones | 7 | 0 |
 | Arquitectura | 6 | 0 |
-| **Total** | **33** | **4** |
+| **Total** | **33** | **6** |
 
 Cuando Total hechos = 33 → desechar este documento.
