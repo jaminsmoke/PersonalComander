@@ -17,6 +17,7 @@ import com.jaminsmoke.personalcomander.data.Producto
 import androidx.room.withTransaction
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.SharingStarted
@@ -53,6 +54,10 @@ class ComandaViewModel(
 
     private val mutex = Mutex()
     private var cerrada = false
+
+    /** Emite true cuando la mesa se ha cerrado exitosamente (para auto-navegar back) */
+    private val _mesaCerrada = MutableStateFlow(false)
+    val mesaCerrada: StateFlow<Boolean> = _mesaCerrada.asStateFlow()
 
     companion object {
         private const val FEEDBACK_VOZ_TIMEOUT_MS = 5000L
@@ -259,6 +264,7 @@ class ComandaViewModel(
                         db.pedidoDao().update(p.copy(estado = PedidoEstado.CERRADA, cerradoEn = System.currentTimeMillis()))
                         db.mesaDao().updateEstado(mesaId, MesaEstado.LIBRE, null)
                         cerrada = true  // solo tras éxito: si falla, se puede reintentar
+                        _mesaCerrada.value = true
                     } catch (e: Exception) {
                         _error.value = ctx.getString(R.string.error_close_table, e.message ?: e.javaClass.simpleName)
                     }

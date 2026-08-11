@@ -11,7 +11,11 @@ enum class MesaForma(val capacidadDefecto: Int) { REDONDA(2), CUADRADA(4), RECTA
 
 enum class PedidoEstado { ABIERTA, ENVIADA, CERRADA }
 
-enum class LineaEstado { PENDIENTE, SERVIDA }
+enum class LineaEstado {
+    PENDIENTE,
+    /** Reservado para feature futura: marcar líneas como servidas en el panel de comanda */
+    SERVIDA
+}
 
 @Entity(
     tableName = "mesas",

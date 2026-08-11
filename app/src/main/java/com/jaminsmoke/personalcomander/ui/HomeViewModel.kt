@@ -20,7 +20,7 @@ data class HomeUiState(
     val cargando: Boolean = true,
     val mesasTotales: Int = 0,
     val mesasOcupadas: Int = 0,
-    val pedidosAbiertos: Int = 0,
+    val pedidosActivos: Int = 0,
     val totalHoy: Double = 0.0,
     val error: String? = null
 )
@@ -49,14 +49,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         combine(
             db.mesaDao().observeCount(),
             db.mesaDao().observeOcupadas(),
-            db.pedidoDao().observeAbiertos(),
+            db.pedidoDao().observeActivos(),
             db.pedidoDao().observeTotalHoy(inicio)
         ) { totales, ocupadas, abiertos, total ->
             HomeUiState(
                 cargando = false,
                 mesasTotales = totales,
                 mesasOcupadas = ocupadas,
-                pedidosAbiertos = abiertos,
+                pedidosActivos = abiertos,
                 totalHoy = total
             )
         }

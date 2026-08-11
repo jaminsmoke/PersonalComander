@@ -116,6 +116,9 @@ fun ComandaScreen(
     LaunchedEffect(state.feedbackVoz) { state.feedbackVoz?.let { snackbarHostState.showSnackbar(it) } }
     LaunchedEffect(state.error) { state.error?.let { snackbarHostState.showSnackbar(it); viewModel.limpiarError() } }
 
+    val mesaCerrada by viewModel.mesaCerrada.collectAsState()
+    LaunchedEffect(mesaCerrada) { if (mesaCerrada) onBack() }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {

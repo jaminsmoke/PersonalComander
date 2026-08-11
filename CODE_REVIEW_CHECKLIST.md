@@ -79,21 +79,21 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
   **Fix:** migraciones desde versión mínima soportada o documentar wipe; valorar quitar destructive en release.  
   **Archivos:** `data/AppDatabase.kt`, `PersonalComanderApp.kt`
 
-- [ ] **M7 — Color de mensaje TPV hardcodeado a ES**  
+- [x] **M7 — Color de mensaje TPV hardcodeado a ES**  
   Comprueba prefijos `"Sincronizados"` / `"Se encontraron"` → roto en EN.  
   **Fix:** enum/estado de éxito-error, no parsear el string.  
   **Archivos:** `ui/AjustesScreen.kt`, `ui/AjustesViewModel.kt`
 
-- [ ] **M8 — `observeAbiertos` solo cuenta `ABIERTA`**  
+- [x] **M8 — `observeAbiertos` solo cuenta `ABIERTA`**  
   No incluye `ENVIADA`. Confirmar si es intencional; si no, contar ambos o renombrar métrica.  
   **Archivos:** `data/Daos.kt`, `ui/HomeViewModel.kt`, strings Home
 
-- [ ] **M9 — `LineaEstado.SERVIDA` no se usa en UI**  
+- [x] **M9 — `LineaEstado.SERVIDA` no se usa en UI**  
   Dead code de dominio o feature incompleta.  
   **Fix:** usarlo en panel de comanda (pendiente vs servido) o eliminarlo hasta que se necesite.  
   **Archivos:** `data/Entities.kt`, `ui/ComandaScreen.kt`, `ui/ComandaViewModel.kt`
 
-- [ ] **M10 — Tras cerrar mesa no hay auto-back**  
+- [x] **M10 — Tras cerrar mesa no hay auto-back**  
   Usuario se queda en comanda “muerta” (`cerrada = true`).  
   **Fix:** `popBackStack` o pantalla de resumen al cerrar.  
   **Archivos:** `ui/ComandaScreen.kt`, `ui/ComandaViewModel.kt`
@@ -209,10 +209,10 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 | Bloque | Total | Hechos |
 |--------|------:|-------:|
 | Críticos | 6 | 6 |
-| Medios | 10 | 6 |
+| Medios | 10 | 10 |
 | Seguridad | 4 | 0 |
 | Optimizaciones | 7 | 0 |
 | Arquitectura | 6 | 0 |
-| **Total** | **33** | **12** |
+| **Total** | **33** | **16** |
 
 Cuando Total hechos = 33 → desechar este documento.

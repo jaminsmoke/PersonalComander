@@ -340,11 +340,7 @@ private fun SincronizarCard(
                 Text(
                     text = it,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (it.startsWith("Sincronizados") || it.startsWith("Se encontraron")) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.error
-                    }
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

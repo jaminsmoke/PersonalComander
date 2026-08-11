@@ -5,7 +5,7 @@
     <string name="home_title">Personal Comander</string>
     <string name="home_summary_title">Today\'s Summary</string>
     <string name="home_tables_label">Tables occupied</string>
-    <string name="home_orders_label">Open orders</string>
+    <string name="home_orders_label">Active orders</string>
     <string name="home_revenue_label">Revenue today</string>
     <string name="home_tables_card">Tables</string>
     <string name="home_tables_desc">Manage orders by table</string>

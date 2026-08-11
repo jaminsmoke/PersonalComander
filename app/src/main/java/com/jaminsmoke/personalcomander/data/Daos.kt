@@ -102,8 +102,8 @@ interface PedidoDao {
     @Query("SELECT * FROM pedidos WHERE mesaId = :mesaId AND estado != 'CERRADA' ORDER BY id DESC LIMIT 1")
     suspend fun getActivo(mesaId: Long): Pedido?
 
-    @Query("SELECT COUNT(*) FROM pedidos WHERE estado = 'ABIERTA'")
-    fun observeAbiertos(): Flow<Int>
+    @Query("SELECT COUNT(*) FROM pedidos WHERE estado != 'CERRADA'")
+    fun observeActivos(): Flow<Int>
 
     @Query("SELECT COALESCE(SUM(l.precioUnitario * l.cantidad), 0) FROM lineas_pedido l INNER JOIN pedidos p ON l.pedidoId = p.id WHERE p.creadoEn >= :inicioDelDia")
     fun observeTotalHoy(inicioDelDia: Long): Flow<Double>

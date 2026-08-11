@@ -151,7 +151,7 @@ private fun ResumenDiaCard(state: HomeUiState) {
                 )
                 ResumenStat(
                     icono = Icons.AutoMirrored.Filled.ReceiptLong,
-                    valor = state.pedidosAbiertos.toString(),
+                    valor = state.pedidosActivos.toString(),
                     etiqueta = stringResource(R.string.home_orders_label),
                     modifier = Modifier.weight(1f)
                 )

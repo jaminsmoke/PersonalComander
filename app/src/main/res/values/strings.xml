@@ -5,7 +5,7 @@
     <string name="home_title">Personal Comander</string>
     <string name="home_summary_title">Resumen del día</string>
     <string name="home_tables_label">Mesas ocupadas</string>
-    <string name="home_orders_label">Pedidos abiertos</string>
+    <string name="home_orders_label">Pedidos activos</string>
     <string name="home_revenue_label">Facturado hoy</string>
     <string name="home_tables_card">Mesas</string>
     <string name="home_tables_desc">Gestionar comandas por mesa</string>
