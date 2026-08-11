@@ -126,34 +126,34 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 
 ## Optimizaciones
 
-- [ ] **O1 — Batch insert en voz / addProducto**  
+- [x] **O1 — Batch insert en voz / addProducto**  
   Un solo batch + una lectura de líneas en lugar de N coroutines.  
   **Archivos:** `ui/ComandaViewModel.kt`
 
-- [ ] **O2 — Filtro productos comanda**  
+- [x] **O2 — Filtro productos comanda**  
   El `combine` recalcula categorías/filtro en cada emisión.  
   **Fix:** `distinctUntilChanged` / cachear categorías.  
   **Archivos:** `ui/ComandaViewModel.kt`
 
-- [ ] **O3 — Board mesas: anim + grid de puntos**  
+- [x] **O3 — Board mesas: anim + grid de puntos**  
   `animateFloatAsState` por mesa + redraw del grid en todo el canvas.  
   **Fix:** grid estático / `drawWithCache`; animar solo al soltar.  
   **Archivos:** `ui/MesasScreen.kt`, `ui/MesasBoard.kt`
 
-- [ ] **O4 — Import TPV: updates en batch**  
+- [x] **O4 — Import TPV: updates en batch**  
   `fusion.actualizar.forEach { update }` → `@Update` lista o upsert.  
   **Archivos:** `data/Daos.kt`, `ui/AjustesViewModel.kt`
 
-- [ ] **O5 — `EscaneadorRed` con coroutines**  
+- [x] **O5 — `EscaneadorRed` con coroutines**  
   Sustituir `Executor` + `awaitTermination` por coroutines cancelables.  
   **Archivos:** `data/TpvCliente.kt` (ligado a S3)
 
-- [ ] **O6 — Unificar `normalizar`**  
+- [x] **O6 — Unificar `normalizar`**  
   Duplicado en `Voz.kt` y `Tpv.kt`.  
   **Fix:** util compartido en `data` o `util`.  
   **Archivos:** `ui/Voz.kt`, `data/Tpv.kt`, nuevo util
 
-- [ ] **O7 — Query “total hoy”**  
+- [x] **O7 — Query “total hoy”**  
   Se recalcula en cada cambio de línea; valorar agregación o índice en `creadoEn`.  
   **Archivos:** `data/Daos.kt`, `data/Entities.kt` (+ migración)
 
@@ -211,8 +211,8 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 | Críticos | 6 | 6 |
 | Medios | 10 | 10 |
 | Seguridad | 4 | 4 |
-| Optimizaciones | 7 | 0 |
+| Optimizaciones | 7 | 7 |
 | Arquitectura | 6 | 0 |
-| **Total** | **33** | **20** |
+| **Total** | **33** | **27** |
 
 Cuando Total hechos = 33 → desechar este documento.

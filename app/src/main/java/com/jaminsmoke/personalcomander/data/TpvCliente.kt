@@ -1,6 +1,12 @@
 package com.jaminsmoke.personalcomander.data
 
 import android.database.sqlite.SQLiteDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.InetAddress
@@ -129,32 +135,28 @@ object EscaneadorRed {
         return null
     }
 
-    fun escanear(puertos: List<Int>, timeoutMs: Int = 400): List<ServidorDescubierto> {
-        val ip = ipLocal() ?: return emptyList()
+    suspend fun escanear(puertos: List<Int>, timeoutMs: Int = 400): List<ServidorDescubierto> = coroutineScope {
+        val ip = ipLocal() ?: return@coroutineScope emptyList()
         val partes = ip.split(".")
-        if (partes.size != 4) return emptyList()
+        if (partes.size != 4) return@coroutineScope emptyList()
         val red = "${partes[0]}.${partes[1]}.${partes[2]}"
 
         cancelado = false
-        val encontrados = java.util.concurrent.ConcurrentLinkedQueue<ServidorDescubierto>()
-        val pool = java.util.concurrent.Executors.newFixedThreadPool(40)
-        for (host in 1..254) {
-            if (cancelado) break
-            val destino = "$red.$host"
-            pool.execute {
-                if (cancelado) return@execute
+        val resultados = (1..254).map { host ->
+            async(Dispatchers.IO) {
+                if (cancelado || !isActive) return@async null
+                val destino = "$red.$host"
                 for (puerto in puertos) {
-                    if (cancelado) break
+                    if (cancelado || !isActive) break
                     if (puertoDisponible(destino, puerto, timeoutMs)) {
-                        encontrados.add(ServidorDescubierto(destino, puerto))
-                        break
+                        return@async ServidorDescubierto(destino, puerto)
                     }
                 }
+                null
             }
-        }
-        pool.shutdown()
-        pool.awaitTermination(30, java.util.concurrent.TimeUnit.SECONDS)
-        return encontrados.sortedBy { it.ip }.distinctBy { "${it.ip}:${it.puerto}" }
+        }.awaitAll().filterNotNull()
+
+        resultados.sortedBy { it.ip }.distinctBy { "${it.ip}:${it.puerto}" }
     }
 
     private fun puertoDisponible(host: String, puerto: Int, timeoutMs: Int): Boolean = try {

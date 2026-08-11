@@ -65,7 +65,7 @@ data class Producto(
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["mesaId"])]
+    indices = [Index(value = ["mesaId"]), Index(value = ["creadoEn"])]
 )
 data class Pedido(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

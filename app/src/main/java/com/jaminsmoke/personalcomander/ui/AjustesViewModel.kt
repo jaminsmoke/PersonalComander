@@ -138,7 +138,7 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
                 val existentes = db.productoDao().getAllIncluyendoOcultos()
                 val fusion = fusionarProductos(existentes, importados)
                 if (fusion.insertar.isNotEmpty()) db.productoDao().insertAll(fusion.insertar)
-                fusion.actualizar.forEach { db.productoDao().update(it) }
+                if (fusion.actualizar.isNotEmpty()) db.productoDao().updateAll(fusion.actualizar)
                 _mensaje.value = ctx.getString(R.string.import_success, fusion.insertados, fusion.actualizados, fusion.ignorados)
             } catch (e: Exception) {
                 _mensaje.value = ctx.getString(R.string.import_error_apply, e.message ?: e.javaClass.simpleName)
@@ -203,7 +203,7 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
         val existentes = db.productoDao().getAllIncluyendoOcultos()
         val fusion = fusionarProductos(existentes, importados)
         if (fusion.insertar.isNotEmpty()) db.productoDao().insertAll(fusion.insertar)
-        fusion.actualizar.forEach { db.productoDao().update(it) }
+        if (fusion.actualizar.isNotEmpty()) db.productoDao().updateAll(fusion.actualizar)
         return ctx.getString(R.string.import_success, fusion.insertados, fusion.actualizados, fusion.ignorados)
     }
 }

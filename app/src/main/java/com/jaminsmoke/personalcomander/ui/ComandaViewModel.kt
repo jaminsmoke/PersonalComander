@@ -23,6 +23,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
@@ -84,6 +85,7 @@ class ComandaViewModel(
             lineas,
             db.productoDao().observeAll()
         ) { mesa, p, ls, prods -> ComandaData(mesa, p, ls, prods) }
+            .distinctUntilChanged()  // O2: solo recalcula categorías/filtro si cambian datos reales
 
         // Wrap feedbackVoz + error to keep them separate within 5-flow combine limit
         val _snackState = combine(_feedbackVoz, _error) { f, e -> SnackState(f, e) }

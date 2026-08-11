@@ -113,7 +113,7 @@ data class TpvMapeo(
     val filtro: String? = null
 )
 
-internal fun normalizarNombre(s: String): String =
+fun normalizarNombre(s: String): String =
     s.lowercase().trim()
         .replace('á', 'a').replace('é', 'e').replace('í', 'i')
         .replace('ó', 'o').replace('ú', 'u')

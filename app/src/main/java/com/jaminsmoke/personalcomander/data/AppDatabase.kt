@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Mesa::class, Producto::class, Pedido::class, LineaPedido::class],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,6 +34,11 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS idx_pedidos_mesaId ON pedidos(mesaId)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS idx_lineas_pedido_pedidoId ON lineas_pedido(pedidoId)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS idx_lineas_pedido_productoId ON lineas_pedido(productoId)")
+            }
+        }
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_pedidos_creadoEn ON pedidos(creadoEn)")
             }
         }
     }

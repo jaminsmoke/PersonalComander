@@ -87,6 +87,9 @@ interface ProductoDao {
     @Update
     suspend fun update(producto: Producto)
 
+    @Update
+    suspend fun updateAll(productos: List<Producto>)
+
     @Query("UPDATE productos SET disponible = :disponible WHERE id = :id")
     suspend fun updateDisponible(id: Long, disponible: Boolean)
 

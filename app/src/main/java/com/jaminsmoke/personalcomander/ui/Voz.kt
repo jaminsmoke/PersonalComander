@@ -10,18 +10,10 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Producto
+import com.jaminsmoke.personalcomander.data.normalizarNombre
 
-/** Normaliza texto: minúsculas, sin acentos, sin puntuación, espacios colapsados. */
-fun normalizar(texto: String): String {
-    val sinAcentos = texto.lowercase()
-        .replace('á', 'a').replace('é', 'e').replace('í', 'i')
-        .replace('ó', 'o').replace('ú', 'u')
-        .replace('ü', 'u').replace('ñ', 'n')
-    return sinAcentos
-        .replace(Regex("[^a-z0-9 ]"), " ")
-        .trim()
-        .replace(Regex("\\s+"), " ")
-}
+/** Delegada a [normalizarNombre] en data — unifica la normalización de texto en un solo sitio. */
+fun normalizar(texto: String): String = normalizarNombre(texto)
 
 /** Distancia de Levenshtein (coste mínimo de ediciones) entre dos textos. */
 fun levenshtein(a: String, b: String): Int {

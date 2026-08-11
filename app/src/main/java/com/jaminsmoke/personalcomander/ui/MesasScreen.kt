@@ -65,7 +65,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -226,28 +226,32 @@ fun MesasScreen(
                                     } while (changes.any { it.pressed })
                                 }
                             }
-                            .drawBehind {
-                                // Canvas border — thick frame so you know where the board ends
+                            .drawWithCache {
+                                // O3: cache the grid + border draw commands (only redraw on size change)
                                 val borderW = 4.dp.toPx()
                                 val half = borderW / 2f
-                                drawRect(
-                                    color = Color(0xFFB0B0B0),
-                                    topLeft = Offset(half, half),
-                                    size = Size(size.width - borderW, size.height - borderW),
-                                    style = Stroke(width = borderW)
-                                )
-                                // Subtle dot grid for spatial reference
                                 val spacing = CELL.toPx()
                                 val dotColor = Color(0xFFD0D0D0)
                                 val r = 1.5.dp.toPx()
-                                var x = CELL.toPx()
-                                while (x < size.width) {
-                                    var y = CELL.toPx()
-                                    while (y < size.height) {
-                                        drawCircle(dotColor, r, Offset(x, y))
-                                        y += spacing
+
+                                onDrawBehind {
+                                    // Canvas border
+                                    drawRect(
+                                        color = Color(0xFFB0B0B0),
+                                        topLeft = Offset(half, half),
+                                        size = Size(size.width - borderW, size.height - borderW),
+                                        style = Stroke(width = borderW)
+                                    )
+                                    // Dot grid
+                                    var x = CELL.toPx()
+                                    while (x < size.width) {
+                                        var y = CELL.toPx()
+                                        while (y < size.height) {
+                                            drawCircle(dotColor, r, Offset(x, y))
+                                            y += spacing
+                                        }
+                                        x += spacing
                                     }
-                                    x += spacing
                                 }
                             }
                     ) {
