@@ -12,7 +12,8 @@ enum class TpvPrograma(
     val tipo: TipoFuenteTpv,
     val puertoPorDefecto: Int,
     val rutaPorDefecto: String,
-    val mapeo: TpvMapeo?
+    val mapeo: TpvMapeo?,
+    val categoriaMapeo: Map<String, String> = emptyMap()
 ) {
     AGORA(
         nombre = "Ágora TPV",
@@ -26,6 +27,23 @@ enum class TpvPrograma(
             colCategoria = "FAMILIA",
             colDisponible = "ACTIVO",
             filtro = "ACTIVO = 1"
+        ),
+        categoriaMapeo = mapOf(
+            "CAFES" to "Bebidas", "CAFE" to "Bebidas", "INFUSIONES" to "Bebidas",
+            "REFRESCOS" to "Bebidas", "ZUMOS" to "Bebidas",
+            "CERVEZAS" to "Bebidas", "VINOS" to "Bebidas",
+            "LICORES" to "Bebidas", "BEBIDAS" to "Bebidas",
+            "AGUAS" to "Bebidas",
+            "CARNES" to "Carnes", "CARNE" to "Carnes",
+            "PESCADOS" to "Pescados", "PESCADO" to "Pescados",
+            "ENTRANTES" to "Entrantes", "APERITIVOS" to "Entrantes",
+            "ENSALADAS" to "Ensaladas",
+            "POSTRES" to "Postres", "DULCES" to "Postres",
+            "PIZZAS" to "Pizzas",
+            "BURGERS" to "Burgers", "HAMBURGUESAS" to "Burgers",
+            "PASTAS" to "Entrantes", "ARROCES" to "Entrantes",
+            "SANDWICH" to "Entrantes", "BOCADILLOS" to "Entrantes",
+            "MENU" to "Entrantes", "TAPAS" to "Entrantes", "RACIONES" to "Entrantes"
         )
     ),
     COMANDA_WIN(
@@ -40,6 +58,15 @@ enum class TpvPrograma(
             colCategoria = "familia",
             colDisponible = null,
             filtro = null
+        ),
+        categoriaMapeo = mapOf(
+            "cafes" to "Bebidas", "cafe" to "Bebidas", "bebidas" to "Bebidas",
+            "refrescos" to "Bebidas", "cervezas" to "Bebidas", "vinos" to "Bebidas",
+            "carnes" to "Carnes", "carne" to "Carnes",
+            "pescados" to "Pescados", "pescado" to "Pescados",
+            "entrantes" to "Entrantes", "aperitivos" to "Entrantes",
+            "ensaladas" to "Ensaladas", "postres" to "Postres",
+            "pizzas" to "Pizzas", "burgers" to "Burgers", "hamburguesas" to "Burgers"
         )
     ),
     HOSTEL_SOFT(
@@ -54,6 +81,13 @@ enum class TpvPrograma(
             colCategoria = "GRUPO",
             colDisponible = "BAJA",
             filtro = "BAJA = 0"
+        ),
+        categoriaMapeo = mapOf(
+            "CAFES" to "Bebidas", "REFRESCOS" to "Bebidas", "BEBIDAS" to "Bebidas",
+            "CERVEZAS" to "Bebidas", "VINOS" to "Bebidas",
+            "CARNES" to "Carnes", "PESCADOS" to "Pescados",
+            "ENTRANTES" to "Entrantes", "ENSALADAS" to "Ensaladas",
+            "POSTRES" to "Postres", "PIZZAS" to "Pizzas", "HAMBURGUESAS" to "Burgers"
         )
     ),
     SERVICIO_JSON(
@@ -88,13 +122,20 @@ internal fun normalizarNombre(s: String): String =
         .replace(Regex("\\s+"), " ")
         .trim()
 
-/** Convierte una fila del TPV en un [Producto] según el [TpvMapeo]. null si no se puede mapear. */
-fun mapFilaProducto(fila: Map<String, Any?>, mapeo: TpvMapeo): Producto? {
+/** Mapea una categoria del TPV a la categoria de la app usando el diccionario. */
+fun mapearCategoria(categoriaTpv: String, mapeo: Map<String, String>): String {
+    val clave = categoriaTpv.trim().uppercase()
+    return mapeo[clave] ?: categoriaTpv.trim()
+}
+
+/** Convierte una fila del TPV en un [Producto] segun el [TpvMapeo]. null si no se puede mapear. */
+fun mapFilaProducto(fila: Map<String, Any?>, mapeo: TpvMapeo, categoriaMapeo: Map<String, String> = emptyMap()): Producto? {
     val nombre = fila[mapeo.colNombre].texto() ?: return null
     if (nombre.isBlank()) return null
 
     val precio = fila[mapeo.colPrecio].aPrecio() ?: 0.0
-    val categoria = fila[mapeo.colCategoria].texto() ?: "Sin categoría"
+    val categoriaRaw = fila[mapeo.colCategoria].texto() ?: "Sin categoria"
+    val categoria = mapearCategoria(categoriaRaw, categoriaMapeo)
     val disponible = if (mapeo.colDisponible != null) {
         fila[mapeo.colDisponible].aBooleano()
     } else {

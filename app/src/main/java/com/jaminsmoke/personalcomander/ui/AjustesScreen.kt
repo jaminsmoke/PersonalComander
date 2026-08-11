@@ -91,6 +91,16 @@ fun AjustesScreen(
                     Text("🆕 ${preview.nuevos} productos nuevos", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     Text("🔄 ${preview.actualizados} productos actualizados", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.tertiary)
                     Text("⏭️ ${preview.ignorados} productos ignorados (nombres vacíos)", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (preview.categoriasMapeadas.isNotEmpty()) {
+                        androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+                        Text("🗂️ Categorías detectadas:", fontWeight = FontWeight.Bold, fontSize = MaterialTheme.typography.bodySmall.fontSize)
+                        preview.categoriasMapeadas.take(10).forEach { (origen, destino) ->
+                            Text("  $origen → $destino", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                        }
+                        if (preview.categoriasMapeadas.size > 10) {
+                            Text("  … y ${preview.categoriasMapeadas.size - 10} más", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
                 }
             },
             confirmButton = {

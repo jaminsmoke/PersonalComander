@@ -14,6 +14,7 @@ import com.jaminsmoke.personalcomander.data.TpvCliente
 import com.jaminsmoke.personalcomander.data.TpvPrograma
 import com.jaminsmoke.personalcomander.data.fusionarProductos
 import com.jaminsmoke.personalcomander.data.mapFilaProducto
+import com.jaminsmoke.personalcomander.data.mapearCategoria
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,7 +38,8 @@ data class AjustesSyncState(
 data class ImportPreview(
     val nuevos: Int,
     val actualizados: Int,
-    val ignorados: Int
+    val ignorados: Int,
+    val categoriasMapeadas: List<Pair<String, String>> = emptyList()
 )
 
 class AjustesViewModel(application: Application) : AndroidViewModel(application) {
@@ -88,11 +90,39 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
                 if (importados == null) { _mensaje.value = ctx.getString(R.string.import_invalid_json); return@launch }
                 val existentes = db.productoDao().getAllIncluyendoOcultos()
                 val fusion = fusionarProductos(existentes, importados)
-                _importPreview.value = ImportPreview(fusion.insertados, fusion.actualizados, fusion.ignorados)
+                val catsMapeadas = detectarMapeosCategoria(importados, existentes)
+                _importPreview.value = ImportPreview(fusion.insertados, fusion.actualizados, fusion.ignorados, catsMapeadas)
             } catch (e: Exception) {
                 _mensaje.value = ctx.getString(R.string.import_error_read, e.message ?: e.javaClass.simpleName)
             }
         }
+    }
+
+    /** Detecta categorias del JSON que se mapearian a categorias existentes en la app. */
+    private fun detectarMapeosCategoria(importados: List<com.jaminsmoke.personalcomander.data.Producto>, existentes: List<com.jaminsmoke.personalcomander.data.Producto>): List<Pair<String, String>> {
+        val catsApp = existentes.map { it.categoria }.distinct().toSet()
+        val catsImport = importados.map { it.categoria }.distinct()
+        val mapeos = mutableListOf<Pair<String, String>>()
+        for (cat in catsImport) {
+            if (cat !in catsApp) {
+                // Buscar coincidencia aproximada
+                val match = catsApp.firstOrNull { appCat ->
+                    appCat.equals(cat, ignoreCase = true) ||
+                    mapearCategoria(cat, mapOf(cat.uppercase() to appCat)) != cat
+                }
+                if (match == null) {
+                    // Buscar por palabra clave
+                    val keywords = cat.lowercase().split(" ", "-", "_")
+                    val bestMatch = catsApp.firstOrNull { appCat ->
+                        keywords.any { kw -> appCat.lowercase().contains(kw) || kw.contains(appCat.lowercase()) }
+                    }
+                    if (bestMatch != null) mapeos.add(cat to bestMatch)
+                } else {
+                    mapeos.add(cat to match)
+                }
+            }
+        }
+        return mapeos
     }
 
     fun confirmarImportacion(uri: Uri) {
@@ -138,6 +168,7 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
     private suspend fun ejecutarSincronizacion(estado: AjustesSyncState): String {
         val puerto = estado.puerto.toIntOrNull() ?: estado.programa.puertoPorDefecto
         val url = "http://${estado.host}:$puerto/${estado.ruta.trimStart('/')}"
+        val catMapeo = estado.programa.categoriaMapeo
         return try {
             val productos = when (estado.programa.tipo) {
                 com.jaminsmoke.personalcomander.data.TipoFuenteTpv.JSON ->
@@ -150,7 +181,7 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
                     try {
                         val tablas = provider.tablas()
                         if (mapeo.tabla !in tablas) return ctx.getString(R.string.sync_table_not_found, mapeo.tabla, tablas.take(8).joinToString(", "))
-                        provider.filasDe(mapeo.tabla, mapeo.filtro).mapNotNull { mapFilaProducto(it, mapeo) }
+                        provider.filasDe(mapeo.tabla, mapeo.filtro).mapNotNull { mapFilaProducto(it, mapeo, catMapeo) }
                     } finally { provider.cerrar(); archivo.delete() }
                 }
             }
