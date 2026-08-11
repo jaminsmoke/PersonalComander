@@ -1,6 +1,7 @@
 package com.jaminsmoke.personalcomander.data
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
 enum class MesaEstado { LIBRE, OCUPADA, EN_COCINA }
@@ -9,7 +10,17 @@ enum class PedidoEstado { ABIERTA, ENVIADA, CERRADA }
 
 enum class LineaEstado { PENDIENTE, SERVIDA }
 
-@Entity(tableName = "mesas")
+@Entity(
+    tableName = "mesas",
+    foreignKeys = [
+        ForeignKey(
+            entity = Pedido::class,
+            parentColumns = ["id"],
+            childColumns = ["comandaActivaId"],
+            onDelete = ForeignKey.SET_NULL
+        )
+    ]
+)
 data class Mesa(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val numero: Int,
