@@ -71,8 +71,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import kotlinx.coroutines.delay
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
@@ -124,6 +127,7 @@ fun MesasScreen(
     var dragBaseY by remember { mutableStateOf(0f) }
     var dragPxX by remember { mutableStateOf(0f) }
     var dragPxY by remember { mutableStateOf(0f) }
+    var viewportSize by remember { mutableStateOf(IntSize.Zero) }
 
     LaunchedEffect(mensaje) {
         mensaje?.let {
@@ -198,6 +202,7 @@ fun MesasScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .onSizeChanged { viewportSize = it }
                         .horizontalScroll(scrollH)
                         .verticalScroll(scrollV)
                 ) {
@@ -264,8 +269,8 @@ fun MesasScreen(
                                     onDragStart = { },
                                     onDragStarted = {
                                         draggedMesa = mesa
-                                        dragBaseX = mesa.posX
-                                        dragBaseY = mesa.posY
+                                        dragBaseX = animX
+                                        dragBaseY = animY
                                         dragPxX = 0f
                                         dragPxY = 0f
                                     },
@@ -317,6 +322,30 @@ fun MesasScreen(
                                     .zIndex(10f)
                             ) {
                                 DragOverlayCard(mesa)
+                            }
+                        }
+
+                        // Auto-scroll al arrastrar cerca de los bordes
+                        if (draggedMesa != null && viewportSize != IntSize.Zero) {
+                            val edgePx = with(density) { 60.dp.toPx() }
+                            val stepPx = with(density) { CELL.toPx() }
+                            LaunchedEffect(draggedMesa) {
+                                while (draggedMesa != null) {
+                                    val ox = dragBaseX + with(density) { dragPxX.toDp().value }
+                                    val oy = dragBaseY + with(density) { dragPxY.toDp().value }
+                                    val cx = with(density) { ox.dp.toPx() }
+                                    val cy = with(density) { oy.dp.toPx() }
+                                    val cp = with(density) { CARD_WIDTH.toPx() }
+                                    if (cx + cp > scrollH.value + viewportSize.width - edgePx)
+                                        scrollH.animateScrollTo((scrollH.value + stepPx).toInt())
+                                    if (cx < scrollH.value + edgePx)
+                                        scrollH.animateScrollTo((scrollH.value - stepPx).toInt().coerceAtLeast(0))
+                                    if (cy + cp > scrollV.value + viewportSize.height - edgePx)
+                                        scrollV.animateScrollTo((scrollV.value + stepPx).toInt())
+                                    if (cy < scrollV.value + edgePx)
+                                        scrollV.animateScrollTo((scrollV.value - stepPx).toInt().coerceAtLeast(0))
+                                    delay(50)
+                                }
                             }
                         }
                     }
