@@ -27,6 +27,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.key
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -73,6 +75,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -129,6 +133,8 @@ fun MesasScreen(
 
     // Zoom state (pan is handled by scroll)
     var scale by remember { mutableStateOf(1f) }
+    var viewportSize by remember { mutableStateOf(IntSize.Zero) }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(mensaje) {
         mensaje?.let {
@@ -194,15 +200,17 @@ fun MesasScreen(
                     }
                 }
 
-                // Board
+                // Board — large canvas so dragging never hits a wall
                 val scrollH = rememberScrollState()
                 val scrollV = rememberScrollState()
-                val maxX = ((mesasFiltradas.maxOfOrNull { it.posX } ?: 0f) + CARD_WIDTH.value + CELL_F * 2).coerceAtLeast(400f)
-                val maxY = ((mesasFiltradas.maxOfOrNull { it.posY } ?: 0f) + CARD_WIDTH.value + CELL_F * 2).coerceAtLeast(600f)
+                val PAD = 600f
+                val maxX = ((mesasFiltradas.maxOfOrNull { it.posX } ?: 0f) + CARD_W + PAD).coerceAtLeast(1000f)
+                val maxY = ((mesasFiltradas.maxOfOrNull { it.posY } ?: 0f) + CARD_W + PAD).coerceAtLeast(1500f)
 
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .onSizeChanged { viewportSize = it }
                         .horizontalScroll(scrollH)
                         .verticalScroll(scrollV)
                 ) {
@@ -351,26 +359,60 @@ fun MesasScreen(
                         }
                     }
 
-                    // Zoom indicator badge (bottom-left) — tap to reset
-                    if (scale != 1f) {
-                        val pct = (scale * 100).toInt()
+                    // Zoom + auto-fit badges (bottom-left)
+                    Row(
+                        modifier = Modifier.align(Alignment.BottomStart).padding(12.dp).zIndex(5f),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Auto-fit: center and scale to show all mesas
                         Card(
-                            onClick = { scale = 1f },
-                            modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(12.dp)
-                                .zIndex(5f),
+                            onClick = {
+                                val ms = mesasFiltradas
+                                if (ms.isNotEmpty() && viewportSize.width > 0) {
+                                    val minX = ms.minOf { it.posX }
+                                    val minY = ms.minOf { it.posY }
+                                    val maxXf = ms.maxOf { it.posX } + CARD_W
+                                    val maxYf = ms.maxOf { it.posY } + CARD_W
+                                    val cw = maxXf - minX + 80f
+                                    val ch = maxYf - minY + 80f
+                                    val vw = with(density) { viewportSize.width.toDp().value }
+                                    val vh = with(density) { viewportSize.height.toDp().value }
+                                    scale = minOf(vw / cw, vh / ch, 2f).coerceIn(0.5f, 2f)
+                                    coroutineScope.launch {
+                                        scrollH.animateScrollTo(with(density) { ((minX - 40f) * scale).dp.roundToPx() }.coerceAtLeast(0))
+                                        scrollV.animateScrollTo(with(density) { ((minY - 40f) * scale).dp.roundToPx() }.coerceAtLeast(0))
+                                    }
+                                }
+                            },
                             shape = RoundedCornerShape(20.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
                             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                         ) {
                             Text(
-                                "$pct%",
+                                "\u2316",  // ⌖ fit-to-screen symbol
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
+                        }
+                        // Zoom % badge — tap to reset
+                        if (scale != 1f) {
+                            val pct = (scale * 100).toInt()
+                            Card(
+                                onClick = { scale = 1f },
+                                shape = RoundedCornerShape(20.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                            ) {
+                                Text(
+                                    "$pct%",
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
                         }
                     }
                 }
