@@ -123,7 +123,9 @@ class ComandaViewModel(
             try {
                 val productos = db.productoDao().getAllDisponibles()
                 val resultado = parsearComanda(texto, productos)
-                resultado.lineas.forEach { linea -> addProducto(linea.producto, linea.cantidad) }
+                if (resultado.lineas.isNotEmpty()) {
+                    addProductosBatch(resultado.lineas)
+                }
                 val resumen = resultado.lineas.joinToString(", ") { "${it.cantidad}× ${it.producto.nombre}" }
                 val pendientes = resultado.noEntendido.joinToString(" ")
                 _feedbackVoz.value = when {
@@ -135,6 +137,38 @@ class ComandaViewModel(
                 clearFeedbackVoz()
             } catch (e: Exception) {
                 _error.value = ctx.getString(R.string.error_add_product, e.message ?: e.javaClass.simpleName)
+            }
+        }
+    }
+
+    /** Inserta todas las líneas de voz en una sola transacción atómica. */
+    private suspend fun addProductosBatch(lineasVoz: List<LineaVoz>) {
+        mutex.withLock {
+            db.withTransaction {
+                if (cerrada) return@withTransaction
+                // Ensure active pedido
+                var p = db.pedidoDao().getActivo(mesaId)
+                if (p == null) {
+                    val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
+                    db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, nuevoId)
+                    p = Pedido(id = nuevoId, mesaId = mesaId)
+                } else if (p.estado == PedidoEstado.ENVIADA) {
+                    db.pedidoDao().update(p.copy(estado = PedidoEstado.ABIERTA))
+                    db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, p.id)
+                }
+                // Insert/update all lines
+                val lineas = db.lineaPedidoDao().getForPedido(p.id)
+                for (lv in lineasVoz) {
+                    val existente = lineas.firstOrNull { it.productoId == lv.producto.id }
+                    if (existente != null) {
+                        db.lineaPedidoDao().update(existente.copy(cantidad = existente.cantidad + lv.cantidad))
+                    } else {
+                        db.lineaPedidoDao().insert(LineaPedido(
+                            pedidoId = p.id, productoId = lv.producto.id,
+                            nombreProducto = lv.producto.nombre, precioUnitario = lv.producto.precio, cantidad = lv.cantidad
+                        ))
+                    }
+                }
             }
         }
     }

@@ -21,7 +21,7 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
   **Fix:** quitar `alias` del UPDATE de estado, o no tocarlo si no cambia.  
   **Archivos:** `data/Daos.kt`, `ui/ComandaViewModel.kt`
 
-- [ ] **C2 — Tras “Enviar a cocina” no se puede reenviar**  
+- [x] **C2 — Tras “Enviar a cocina” no se puede reenviar**  
   El botón solo se habilita si `pedidoEstado == ABIERTA`. Si se añaden más productos con mesa `EN_COCINA`/`ENVIADA`, no hay 2ª ronda.  
   **Fix:** al añadir líneas con pedido `ENVIADA`, volver a `ABIERTA` (o permitir reenvío con líneas nuevas).  
   **Archivos:** `ui/ComandaViewModel.kt`, `ui/ComandaScreen.kt`
@@ -208,11 +208,11 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 
 | Bloque | Total | Hechos |
 |--------|------:|-------:|
-| Críticos | 6 | 3 |
+| Críticos | 6 | 4 |
 | Medios | 10 | 0 |
 | Seguridad | 4 | 0 |
 | Optimizaciones | 7 | 0 |
 | Arquitectura | 6 | 0 |
-| **Total** | **33** | **3** |
+| **Total** | **33** | **4** |
 
 Cuando Total hechos = 33 → desechar este documento.
