@@ -42,6 +42,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -461,12 +463,39 @@ fun MesasScreen(
         var createForma by remember { mutableStateOf(MesaForma.CUADRADA) }
         var createCap by remember { mutableStateOf("4") }
         var createAlias by remember { mutableStateOf("") }
+        var zonaExpanded by remember { mutableStateOf(false) }
         AlertDialog(
             onDismissRequest = { crearVisible = false },
             title = { Text(stringResource(R.string.mesas_create_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(createZona, { createZona = it }, label = { Text(stringResource(R.string.mesas_zone_label)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    // Zone: dropdown with existing zones + free text for new ones
+                    ExposedDropdownMenuBox(
+                        expanded = zonaExpanded,
+                        onExpandedChange = { zonaExpanded = it }
+                    ) {
+                        OutlinedTextField(
+                            value = createZona,
+                            onValueChange = { createZona = it; zonaExpanded = true },
+                            label = { Text(stringResource(R.string.mesas_zone_label)) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = zonaExpanded) }
+                        )
+                        val filtered = if (createZona.isBlank()) zonas
+                            else zonas.filter { it.contains(createZona, ignoreCase = true) }
+                        ExposedDropdownMenu(
+                            expanded = zonaExpanded && filtered.isNotEmpty(),
+                            onDismissRequest = { zonaExpanded = false }
+                        ) {
+                            filtered.forEach { zona ->
+                                DropdownMenuItem(
+                                    text = { Text("${zonaEmoji(zona)} $zona") },
+                                    onClick = { createZona = zona; zonaExpanded = false }
+                                )
+                            }
+                        }
+                    }
                     Text(stringResource(R.string.mesas_shape_label), style = MaterialTheme.typography.labelMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         MesaForma.entries.forEach { forma ->
