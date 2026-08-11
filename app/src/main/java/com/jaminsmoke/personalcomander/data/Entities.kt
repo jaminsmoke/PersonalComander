@@ -2,6 +2,7 @@ package com.jaminsmoke.personalcomander.data
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 enum class MesaEstado { LIBRE, OCUPADA, EN_COCINA }
@@ -21,7 +22,8 @@ enum class LineaEstado { PENDIENTE, SERVIDA }
             childColumns = ["comandaActivaId"],
             onDelete = ForeignKey.SET_NULL
         )
-    ]
+    ],
+    indices = [Index(value = ["comandaActivaId"])]
 )
 data class Mesa(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -49,7 +51,18 @@ data class Producto(
     val disponible: Boolean = true
 )
 
-@Entity(tableName = "pedidos")
+@Entity(
+    tableName = "pedidos",
+    foreignKeys = [
+        ForeignKey(
+            entity = Mesa::class,
+            parentColumns = ["id"],
+            childColumns = ["mesaId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index(value = ["mesaId"])]
+)
 data class Pedido(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val mesaId: Long,
@@ -58,7 +71,24 @@ data class Pedido(
     val cerradoEn: Long? = null
 )
 
-@Entity(tableName = "lineas_pedido")
+@Entity(
+    tableName = "lineas_pedido",
+    foreignKeys = [
+        ForeignKey(
+            entity = Pedido::class,
+            parentColumns = ["id"],
+            childColumns = ["pedidoId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = Producto::class,
+            parentColumns = ["id"],
+            childColumns = ["productoId"],
+            onDelete = ForeignKey.NO_ACTION
+        )
+    ],
+    indices = [Index(value = ["pedidoId"]), Index(value = ["productoId"])]
+)
 data class LineaPedido(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val pedidoId: Long,

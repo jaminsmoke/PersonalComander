@@ -16,7 +16,7 @@ class PersonalComanderApp : Application() {
 
     val db: AppDatabase by lazy {
         Room.databaseBuilder(this, AppDatabase::class.java, "personal_comander.db")
-            .addMigrations(AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6)
+            .addMigrations(AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_6_7)
             .fallbackToDestructiveMigration()
             .build()
             .also { seedIfEmpty(it) }
@@ -26,6 +26,8 @@ class PersonalComanderApp : Application() {
         applicationScope.launch {
             if (db.mesaDao().count() == 0) {
                 db.mesaDao().insertAll(Seed.mesas())
+            }
+            if (db.productoDao().count() == 0) {
                 db.productoDao().insertAll(Seed.productos())
             }
         }

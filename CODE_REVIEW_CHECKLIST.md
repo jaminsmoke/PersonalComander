@@ -50,7 +50,7 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 
 ## Bugs medios
 
-- [ ] **M1 — FKs / índices faltantes**  
+- [x] **M1 — FKs / índices faltantes**  
   Sin FK/índice en `Pedido.mesaId`, `LineaPedido.pedidoId` / `productoId`; `comandaActivaId` sin `@Index`.  
   **Archivos:** `data/Entities.kt` (+ migración Room)
 
@@ -69,12 +69,12 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
   **Fix:** estado de carga explícito vs lista vacía.  
   **Archivos:** `ui/MesasScreen.kt`, `ui/MesasViewModel.kt`
 
-- [ ] **M5 — Seed incompleto**  
+- [x] **M5 — Seed incompleto**  
   Solo si `count mesas == 0`; menú vacío si hay mesas sin productos.  
   **Fix:** seed de productos si `productoDao.count() == 0` independientemente.  
   **Archivos:** `PersonalComanderApp.kt`
 
-- [ ] **M6 — `fallbackToDestructiveMigration` + migraciones parciales**  
+- [x] **M6 — `fallbackToDestructiveMigration` + migraciones parciales**  
   Solo 4→5 y 5→6; upgrades viejos pueden destruir datos.  
   **Fix:** migraciones desde versión mínima soportada o documentar wipe; valorar quitar destructive en release.  
   **Archivos:** `data/AppDatabase.kt`, `PersonalComanderApp.kt`
@@ -209,10 +209,10 @@ Documento de trabajo temporal. Marcar cada ítem al completarlo. Cuando todo est
 | Bloque | Total | Hechos |
 |--------|------:|-------:|
 | Críticos | 6 | 6 |
-| Medios | 10 | 0 |
+| Medios | 10 | 3 |
 | Seguridad | 4 | 0 |
 | Optimizaciones | 7 | 0 |
 | Arquitectura | 6 | 0 |
-| **Total** | **33** | **6** |
+| **Total** | **33** | **9** |
 
 Cuando Total hechos = 33 → desechar este documento.
