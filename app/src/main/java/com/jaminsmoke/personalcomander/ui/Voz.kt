@@ -160,6 +160,7 @@ class VozRecognizer(private val appContext: Context) {
     }
 
     fun destruir() {
+        activo = false
         handler.removeCallbacks(timeoutRunnable)
         speech?.destroy()
     }
