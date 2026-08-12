@@ -9,7 +9,6 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,16 +23,12 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.key
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
@@ -68,8 +63,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,8 +75,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChangeIgnoreConsumed
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -120,7 +119,22 @@ fun MesasScreen(
     // Toggle vista: lista de tarjetas (todas las mesas) vs canvas individual por zona
     var vistaLista by remember { mutableStateOf(zonaSeleccionada == null) }
     val mostrarLista = zonaSeleccionada == null || vistaLista
-    LaunchedEffect(zonaSeleccionada) { if (zonaSeleccionada != null) vistaLista = false }
+
+    // Zoom + pan state (cámara libre 2D)
+    var scale by remember { mutableStateOf(1f) }
+    var panX by remember { mutableFloatStateOf(0f) }
+    var panY by remember { mutableFloatStateOf(0f) }
+    var viewportSize by remember { mutableStateOf(IntSize.Zero) }
+    var boardAutoFitado by remember { mutableStateOf(false) }
+
+    LaunchedEffect(zonaSeleccionada) {
+        if (zonaSeleccionada != null) vistaLista = false
+        // Reset de cámara al cambiar de zona (evita zoom/pan heredados)
+        scale = 1f
+        panX = 0f
+        panY = 0f
+        boardAutoFitado = false
+    }
 
     // Drag state + optimistic positions (previene snap-back mientras Room actualiza)
     val optimisticPos = remember { androidx.compose.runtime.mutableStateMapOf<Long, Offset>() }
@@ -129,11 +143,6 @@ fun MesasScreen(
     var dragBaseY by remember { mutableStateOf(0f) }
     var dragPxX by remember { mutableStateOf(0f) }
     var dragPxY by remember { mutableStateOf(0f) }
-
-    // Zoom state (pan is handled by scroll)
-    var scale by remember { mutableStateOf(1f) }
-    var viewportSize by remember { mutableStateOf(IntSize.Zero) }
-    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(mensaje) {
         mensaje?.let {
@@ -209,46 +218,118 @@ fun MesasScreen(
 
                 if (!mostrarLista) {
                 // Board — canvas wraps content tightly with one extra column/row of room
-                val scrollH = rememberScrollState()
-                val scrollV = rememberScrollState()
                 val PAD = CELL_F * 3f  // 120dp — just one card width of extra space
                 val maxX = ((mesasFiltradas.maxOfOrNull { it.posX } ?: 0f) + CARD_W + PAD).coerceAtLeast(800f)
                 val maxY = ((mesasFiltradas.maxOfOrNull { it.posY } ?: 0f) + CARD_W + PAD).coerceAtLeast(1200f)
+
+                // Clampa el pan para que el contenido no se pierda fuera de la vista.
+                // Rango [min(0, viewport-content), 0]: si el contenido es más pequeño
+                // que el viewport queda anclado arriba-izquierda; si es más grande
+                // solo se puede desplazar hasta sus bordes.
+                // Bounds vivos para el gesto (pointerInput no se recrea en recomposición).
+                val boundsState = rememberUpdatedState(maxX to maxY)
+                fun clampPan() {
+                    val (mx, my) = boundsState.value
+                    val contentW = with(density) { mx.dp.toPx() } * scale
+                    val contentH = with(density) { my.dp.toPx() } * scale
+                    panX = panX.coerceIn(minOf(0f, viewportSize.width - contentW), 0f)
+                    panY = panY.coerceIn(minOf(0f, viewportSize.height - contentH), 0f)
+                }
+
+                // Auto-fit: centra y escala para mostrar todas las mesas de la zona
+                val autoFit = {
+                    val ms = mesasFiltradas
+                    if (ms.isNotEmpty() && viewportSize.width > 0) {
+                        val minX = ms.minOf { it.posX }
+                        val minY = ms.minOf { it.posY }
+                        val maxXf = ms.maxOf { it.posX } + CARD_W
+                        val maxYf = ms.maxOf { it.posY } + CARD_W
+                        val cw = maxXf - minX + 80f
+                        val ch = maxYf - minY + 80f
+                        val vw = with(density) { viewportSize.width.toDp().value }
+                        val vh = with(density) { viewportSize.height.toDp().value }
+                        val newScale = minOf(vw / cw, vh / ch, 3f).coerceIn(0.5f, 3f)
+                        scale = newScale
+                        // Centrar el bounding box en el viewport (px)
+                        val cxPx = with(density) { ((minX + maxXf) / 2f).dp.toPx() }
+                        val cyPx = with(density) { ((minY + maxYf) / 2f).dp.toPx() }
+                        panX = viewportSize.width / 2f - cxPx * newScale
+                        panY = viewportSize.height / 2f - cyPx * newScale
+                        clampPan()
+                    }
+                }
+
+                // Auto-fit automático la primera vez que se muestra el board con datos
+                LaunchedEffect(viewportSize, mostrarLista, mesasFiltradas) {
+                    if (!mostrarLista && viewportSize.width > 0 && mesasFiltradas.isNotEmpty() && !boardAutoFitado) {
+                        autoFit()
+                        boardAutoFitado = true
+                    }
+                }
 
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .onSizeChanged { viewportSize = it }
-                        .horizontalScroll(scrollH)
-                        .verticalScroll(scrollV)
+                        .pointerInput(Unit) {
+                            awaitEachGesture {
+                                // Cámara libre: 1 dedo → pan 2D, 2 dedos → pinch zoom centrado en los dedos
+                                val down = awaitFirstDown(requireUnconsumed = false)
+                                var prevDist = 0f
+                                var prevCentroid = Offset.Zero
+                                do {
+                                    val event = awaitPointerEvent()
+                                    val changes = event.changes.filter { it.pressed }
+                                    when {
+                                        changes.size >= 2 -> {
+                                            val p1 = changes[0].position
+                                            val p2 = changes[1].position
+                                            val dist = (p1 - p2).getDistance()
+                                            val centroid = Offset((p1.x + p2.x) / 2f, (p1.y + p2.y) / 2f)
+                                            if (prevDist > 0f) {
+                                                val oldS = scale
+                                                val newS = (oldS * (dist / prevDist)).coerceIn(0.5f, 3f)
+                                                // Zoom manteniendo fijo el punto bajo los dedos
+                                                panX = centroid.x - (centroid.x - panX) * newS / oldS
+                                                panY = centroid.y - (centroid.y - panY) * newS / oldS
+                                                scale = newS
+                                            }
+                                            if (prevCentroid != Offset.Zero) {
+                                                panX += centroid.x - prevCentroid.x
+                                                panY += centroid.y - prevCentroid.y
+                                            }
+                                            prevDist = dist
+                                            prevCentroid = centroid
+                                            changes.forEach { it.consume() }
+                                        }
+                                        changes.size == 1 -> {
+                                            val c = changes[0]
+                                            // Solo pan si el movimiento no lo ha consumido el drag de una mesa
+                                            val delta = c.positionChangeIgnoreConsumed()
+                                            if (delta.x != 0f || delta.y != 0f) {
+                                                panX += delta.x
+                                                panY += delta.y
+                                                c.consume()
+                                            }
+                                            prevDist = 0f
+                                            prevCentroid = Offset.Zero
+                                        }
+                                    }
+                                    // Clamp durante el gesto para evitar saltos al soltar
+                                    clampPan()
+                                } while (changes.any { it.pressed })
+                            }
+                        }
                 ) {
                     Box(
                         modifier = Modifier
                             .size(width = maxX.dp, height = maxY.dp)
                             .graphicsLayer {
+                                transformOrigin = TransformOrigin(0f, 0f)
+                                translationX = panX
+                                translationY = panY
                                 scaleX = scale
                                 scaleY = scale
-                            }
-                            .pointerInput(Unit) {
-                                awaitEachGesture {
-                                    // Wait for two-finger pinch
-                                    val down = awaitFirstDown(requireUnconsumed = false)
-                                    var prevDist = 0f
-                                    do {
-                                        val event = awaitPointerEvent()
-                                        val changes = event.changes.filter { it.pressed }
-                                        if (changes.size >= 2) {
-                                            val p1 = changes[0].position
-                                            val p2 = changes[1].position
-                                            val dist = (p1 - p2).getDistance()
-                                            if (prevDist > 0f) {
-                                                val zoom = dist / prevDist
-                                                scale = (scale * zoom).coerceIn(0.5f, 2f)
-                                            }
-                                            prevDist = dist
-                                        }
-                                    } while (changes.any { it.pressed })
-                                }
                             }
                             .drawWithCache {
                                 // O3: cache the grid + border draw commands (only redraw on size change)
@@ -409,24 +490,7 @@ fun MesasScreen(
                     ) {
                         // Auto-fit: center and scale to show all mesas
                         Card(
-                            onClick = {
-                                val ms = mesasFiltradas
-                                if (ms.isNotEmpty() && viewportSize.width > 0) {
-                                    val minX = ms.minOf { it.posX }
-                                    val minY = ms.minOf { it.posY }
-                                    val maxXf = ms.maxOf { it.posX } + CARD_W
-                                    val maxYf = ms.maxOf { it.posY } + CARD_W
-                                    val cw = maxXf - minX + 80f
-                                    val ch = maxYf - minY + 80f
-                                    val vw = with(density) { viewportSize.width.toDp().value }
-                                    val vh = with(density) { viewportSize.height.toDp().value }
-                                    scale = minOf(vw / cw, vh / ch, 2f).coerceIn(0.5f, 2f)
-                                    coroutineScope.launch {
-                                        scrollH.animateScrollTo(with(density) { ((minX - 40f) * scale).dp.roundToPx() }.coerceAtLeast(0))
-                                        scrollV.animateScrollTo(with(density) { ((minY - 40f) * scale).dp.roundToPx() }.coerceAtLeast(0))
-                                    }
-                                }
-                            },
+                            onClick = { autoFit() },
                             shape = RoundedCornerShape(20.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
                             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -440,10 +504,10 @@ fun MesasScreen(
                             )
                         }
                         // Zoom % badge — tap to reset
-                        if (scale != 1f) {
+                        if (scale != 1f || panX != 0f || panY != 0f) {
                             val pct = (scale * 100).toInt()
                             Card(
-                                onClick = { scale = 1f },
+                                onClick = { scale = 1f; panX = 0f; panY = 0f },
                                 shape = RoundedCornerShape(20.dp),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
