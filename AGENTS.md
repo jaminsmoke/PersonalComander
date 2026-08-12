@@ -97,9 +97,24 @@ El body debe contener una descripción **muy completa** del item y del problema 
 
 **Regla de oro**: NUNCA pasar de Debate a Roadmap sin preguntar al usuario y recibir su aprobación explícita.
 
-- Proponer **varias alternativas** (2-4), cada una con pros/contras claros.
-- Dar una **recomendación argumentada** de cuál es la mejor opción y por qué.
-- Usar `--append` para añadir secciones `Alternativas`, `Trade-offs` y `Recomendación` al body.
+**Formato fijo de alternativas** — siempre presentar exactamente estas 3 opciones:
+
+1. **Opción sólida** 🏗️ — la más correcta y robusta a largo plazo. Aunque suponga más trabajo, es la mejor desde el punto de vista de arquitectura, mantenibilidad y escalabilidad.
+2. **Opción rápida** ⚡ — la más rápida de implementar. Puede coincidir o no con la sólida. Prioriza velocidad sobre perfección.
+3. **Opción intermedia** ⚖️ — equilibrio entre solidez y velocidad. Solo cuando exista un punto medio real; si no hay, indicar "no aplica".
+
+Cada opción debe llevar:
+- Descripción clara de la solución
+- Número estimado de líneas/cambios
+- Pros (✅) y contras (⚠️)
+
+**Recomendación situacional**: al final, recomendar cuál elegir según el contexto:
+- Si es un **bug crítico en producción** → favorecer la opción rápida
+- Si es una **mejora sin urgencia** → favorecer la opción sólida
+- Si es **deuda técnica acumulada** → favorecer la opción intermedia
+
+**Proceso**:
+- Añadir secciones `Análisis`, `Alternativas` (con las 3 opciones) y `Recomendación` al body.
 - **Parar y preguntar** al usuario. Solo cuando él decida, marcar `Decision: Aprobado` y mover a Roadmap.
 - Si `Decision: Cancelado` → documentar motivo, convertir a issue, cerrar, mover a Changelog.
 - Si `Decision: Diferido` → documentar motivo y condición, devolver a Detectado.
