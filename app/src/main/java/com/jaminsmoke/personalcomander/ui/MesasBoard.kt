@@ -1,5 +1,6 @@
 package com.jaminsmoke.personalcomander.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -50,6 +51,9 @@ import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
+import com.jaminsmoke.personalcomander.ui.theme.PcComandaDot
+import com.jaminsmoke.personalcomander.ui.theme.PcMesaFill
+import com.jaminsmoke.personalcomander.ui.theme.mesaAccent
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -126,12 +130,12 @@ internal fun mesaDims(forma: MesaForma, girada: Boolean): Pair<Float, Float> {
     return largo to CARD_W
 }
 
-/** Color de fondo de una carta según su estado */
-internal fun mesaColor(estado: MesaEstado): Color = when (estado) {
-    MesaEstado.LIBRE -> Color(0xFFC8E6C9)
-    MesaEstado.OCUPADA -> Color(0xFFFFE0B2)
-    MesaEstado.EN_COCINA -> Color(0xFFB3E5FC)
-}
+/** Color de relleno de pieza (board). El acento de estado va aparte. */
+internal fun mesaFillColor(): Color = PcMesaFill
+
+@Deprecated("Usar mesaFillColor + ColorScheme.mesaAccent", ReplaceWith("mesaFillColor()"))
+internal fun mesaColor(estado: MesaEstado): Color = mesaFillColor()
+
 
 /** Radio de esquinas de una carta según su forma */
 internal fun mesaShapeRadius(forma: MesaForma): Dp = when (forma) {
@@ -162,7 +166,8 @@ internal fun MesaCard(
     onRotateClick: () -> Unit,
     onPointerActive: (Boolean) -> Unit
 ) {
-    val color = mesaColor(mesa.estado)
+    val fill = mesaFillColor()
+    val accent = MaterialTheme.colorScheme.mesaAccent(mesa.estado)
     val label = when (mesa.estado) {
         MesaEstado.LIBRE -> stringResource(R.string.mesas_free)
         MesaEstado.OCUPADA -> stringResource(R.string.mesas_occupied)
@@ -234,7 +239,8 @@ internal fun MesaCard(
                 )
             },
         shape = RoundedCornerShape(shapeRadius),
-        colors = CardDefaults.cardColors(containerColor = color)
+        colors = CardDefaults.cardColors(containerColor = fill),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.45f)),
     ) {
         val isRound = mesa.forma == MesaForma.REDONDA
         Box(
@@ -252,6 +258,7 @@ internal fun MesaCard(
                     text = mesa.nombreVisible,
                     style = if (isRound) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
+                    color = accent,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -264,8 +271,8 @@ internal fun MesaCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("${mesa.capacidad}p", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        if (tieneComanda) Box(Modifier.size(6.dp).background(Color(0xFFFF7043), CircleShape))
-                        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium)
+                        if (tieneComanda) Box(Modifier.size(6.dp).background(PcComandaDot, CircleShape))
+                        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = accent)
                     }
                 }
             }
@@ -276,8 +283,8 @@ internal fun MesaCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("${mesa.capacidad}p", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (tieneComanda) Box(Modifier.size(8.dp).background(Color(0xFFFF7043), CircleShape))
-                    Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, textAlign = TextAlign.End)
+                    if (tieneComanda) Box(Modifier.size(8.dp).background(PcComandaDot, CircleShape))
+                    Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, textAlign = TextAlign.End, color = accent)
                 }
             }
 
@@ -311,19 +318,22 @@ internal fun DragOverlayCard(mesa: Mesa) {
     val shapeRadius = mesaShapeRadius(mesa.forma)
     val (cardWf, cardHf) = mesaDims(mesa.forma, mesa.girada)
     val cardHeight = cardHf.dp
-    val color = mesaColor(mesa.estado)
+    val fill = mesaFillColor()
+    val accent = MaterialTheme.colorScheme.mesaAccent(mesa.estado)
 
     Card(
         modifier = Modifier.width(cardWf.dp).height(cardHeight),
         shape = RoundedCornerShape(shapeRadius),
-        colors = CardDefaults.cardColors(containerColor = color),
+        colors = CardDefaults.cardColors(containerColor = fill),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.45f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Box(Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {
             Text(
                 text = mesa.nombreVisible,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = accent,
             )
         }
     }

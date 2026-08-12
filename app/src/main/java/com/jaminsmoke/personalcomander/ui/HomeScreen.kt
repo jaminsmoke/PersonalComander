@@ -1,6 +1,7 @@
 package com.jaminsmoke.personalcomander.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,15 +15,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
-import androidx.compose.material.icons.filled.Paid
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TableRestaurant
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,22 +33,23 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.res.stringResource
-import com.jaminsmoke.personalcomander.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jaminsmoke.personalcomander.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,15 +61,39 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scheme = MaterialTheme.colorScheme
 
     LaunchedEffect(state.error) {
         state.error?.let { snackbarHostState.showSnackbar(it) }
     }
 
     Scaffold(
+        containerColor = scheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.home_title)) })
+            TopAppBar(
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Icon(
+                            Icons.Default.RestaurantMenu,
+                            contentDescription = null,
+                            tint = scheme.primary,
+                        )
+                        Text(
+                            stringResource(R.string.home_title),
+                            color = scheme.secondary,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = scheme.surfaceContainerLowest,
+                    titleContentColor = scheme.secondary,
+                ),
+            )
         }
     ) { padding ->
         LazyColumn(
@@ -74,48 +101,45 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(padding),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
                 Text(
                     text = stringResource(R.string.home_summary_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = scheme.onSurface,
                 )
             }
             item {
                 if (state.cargando) {
-                    ShimmerBox(height = 100, radius = 20)
+                    ShimmerBox(height = 160, radius = 12)
                 } else {
                     ResumenDiaCard(state)
                 }
             }
             item {
-                Spacer(Modifier.height(8.dp))
                 Text(
-                    text = stringResource(R.string.lbl_access),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    text = stringResource(R.string.home_quick_access),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = scheme.onSurface,
                 )
             }
             item {
                 HomeAcceso(
                     titulo = stringResource(R.string.home_tables_card),
                     descripcion = stringResource(R.string.home_tables_desc),
-                    icono = Icons.Default.TableRestaurant,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    onContainerColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    onClick = onOpenMesas
+                    icono = Icons.Default.GridView,
+                    accent = scheme.secondary,
+                    onClick = onOpenMesas,
                 )
             }
             item {
                 HomeAcceso(
                     titulo = stringResource(R.string.home_menu_card),
                     descripcion = stringResource(R.string.home_menu_desc),
-                    icono = Icons.Default.RestaurantMenu,
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    onContainerColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    onClick = onOpenMenu
+                    icono = Icons.AutoMirrored.Filled.MenuBook,
+                    accent = scheme.tertiary,
+                    onClick = onOpenMenu,
                 )
             }
             item {
@@ -123,9 +147,8 @@ fun HomeScreen(
                     titulo = stringResource(R.string.home_settings_card),
                     descripcion = stringResource(R.string.home_settings_desc),
                     icono = Icons.Default.Settings,
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    onContainerColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                    onClick = onOpenAjustes
+                    accent = scheme.primary,
+                    onClick = onOpenAjustes,
                 )
             }
         }
@@ -134,37 +157,63 @@ fun HomeScreen(
 
 @Composable
 private fun ResumenDiaCard(state: HomeUiState) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+    val scheme = MaterialTheme.colorScheme
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(scheme.primaryContainer, scheme.surfaceContainerLowest)
+                )
+            )
+            .border(
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    listOf(
+                        scheme.secondary.copy(alpha = 0.35f),
+                        scheme.secondary.copy(alpha = 0.08f),
+                    )
+                ),
+                shape = RoundedCornerShape(12.dp),
+            )
+            .padding(20.dp),
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = stringResource(R.string.home_revenue_label).uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = scheme.onSurfaceVariant,
+                )
+                Text(
+                    text = state.totalHoy.formatoEuro(),
+                    style = MaterialTheme.typography.displayMedium,
+                    color = scheme.secondary,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
                 ResumenStat(
                     icono = Icons.Default.TableRestaurant,
+                    iconTint = scheme.primary,
                     valor = "${state.mesasOcupadas} / ${state.mesasTotales}",
                     etiqueta = stringResource(R.string.home_tables_label),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 ResumenStat(
                     icono = Icons.AutoMirrored.Filled.ReceiptLong,
+                    iconTint = scheme.tertiary,
                     valor = state.pedidosActivos.toString(),
                     etiqueta = stringResource(R.string.home_orders_label),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
             }
-            ResumenStat(
-                icono = Icons.Default.Paid,
-                valor = state.totalHoy.formatoEuro(),
-                etiqueta = stringResource(R.string.home_revenue_label),
-                grande = true
-            )
         }
     }
 }
@@ -172,33 +221,37 @@ private fun ResumenDiaCard(state: HomeUiState) {
 @Composable
 private fun ResumenStat(
     icono: ImageVector,
+    iconTint: Color,
     valor: String,
     etiqueta: String,
     modifier: Modifier = Modifier,
-    grande: Boolean = false
 ) {
+    val scheme = MaterialTheme.colorScheme
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Icon(
-            imageVector = icono,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onPrimaryContainer
-        )
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(scheme.surfaceContainer),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icono, contentDescription = null, tint = iconTint, modifier = Modifier.size(22.dp))
+        }
         Column {
             Text(
-                text = valor,
-                style = if (grande) MaterialTheme.typography.headlineSmall
-                else MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                text = etiqueta,
+                style = MaterialTheme.typography.labelMedium,
+                color = scheme.onSurfaceVariant,
             )
             Text(
-                text = etiqueta,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                text = valor,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = scheme.onSurface,
             )
         }
     }
@@ -209,50 +262,49 @@ private fun HomeAcceso(
     titulo: String,
     descripcion: String,
     icono: ImageVector,
-    containerColor: Color,
-    onContainerColor: Color,
-    onClick: () -> Unit
+    accent: Color,
+    onClick: () -> Unit,
 ) {
-    Card(
+    val scheme = MaterialTheme.colorScheme
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor)
+            .clip(RoundedCornerShape(12.dp))
+            .background(scheme.primaryContainer.copy(alpha = 0.85f))
+            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                .size(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(accent.copy(alpha = 0.15f))
+                .border(1.dp, accent.copy(alpha = 0.25f), RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .background(onContainerColor, RoundedCornerShape(14.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icono,
-                    contentDescription = null,
-                    tint = containerColor,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = titulo,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = onContainerColor
-                )
-                Text(
-                    text = descripcion,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = onContainerColor.copy(alpha = 0.7f)
-                )
-            }
+            Icon(icono, contentDescription = null, tint = accent, modifier = Modifier.size(26.dp))
         }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = scheme.onSurface,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = descripcion,
+                style = MaterialTheme.typography.labelMedium,
+                color = scheme.onSurfaceVariant,
+            )
+        }
+        Icon(
+            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = scheme.onSurfaceVariant.copy(alpha = 0.6f),
+        )
     }
 }

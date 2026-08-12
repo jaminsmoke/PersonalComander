@@ -26,7 +26,8 @@ val PcOutlineVariant = Color(0xFF44474B)
 val PcPrimary = Color(0xFFBAC8D8)
 val PcOnPrimary = Color(0xFF25323E)
 val PcPrimaryContainer = Color(0xFF121F2B)
-val PcOnPrimaryContainer = Color(0xFF7A8796)
+/** Texto/iconos sobre primaryContainer: más claro que la plantilla web para contraste WCAG en móvil. */
+val PcOnPrimaryContainer = Color(0xFFD6E4F5)
 val PcInversePrimary = Color(0xFF53606E)
 
 // Secondary — gold (marca / CTA / tab activo)
@@ -39,7 +40,7 @@ val PcOnSecondaryContainer = Color(0xFF342800)
 val PcTertiary = Color(0xFF80D6C3)
 val PcOnTertiary = Color(0xFF00382F)
 val PcTertiaryContainer = Color(0xFF00231D)
-val PcOnTertiaryContainer = Color(0xFF3B9482)
+val PcOnTertiaryContainer = Color(0xFF9CF3DE)
 
 // Error — ocupada / error
 val PcError = Color(0xFFFFB4AB)

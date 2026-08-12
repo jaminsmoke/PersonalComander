@@ -3,11 +3,12 @@ package com.jaminsmoke.personalcomander.ui
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -102,6 +103,10 @@ import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
+import com.jaminsmoke.personalcomander.ui.components.PcGoldFab
+import com.jaminsmoke.personalcomander.ui.components.StatusChip
+import com.jaminsmoke.personalcomander.ui.theme.PcComandaDot
+import com.jaminsmoke.personalcomander.ui.theme.mesaAccent
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -181,9 +186,7 @@ fun MesasScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(onClick = { crearVisible = true }) {
-                Icon(Icons.Default.Add, stringResource(R.string.btn_add))
-            }
+            PcGoldFab(onClick = { crearVisible = true })
         },
         topBar = {
             TopAppBar(
@@ -305,10 +308,18 @@ fun MesasScreen(
                     }
                 }
 
+                val scheme = MaterialTheme.colorScheme
+                val boardCanvasColor = scheme.surfaceContainerLowest
+                val boardGridColor = Color.White.copy(alpha = 0.06f)
+                val boardMajorColor = Color.White.copy(alpha = 0.10f)
+                val boardGlowColor = scheme.secondary.copy(alpha = 0.12f)
+                val boardBorderColor = scheme.outlineVariant.copy(alpha = 0.8f)
+                val boardCoreColor = scheme.surfaceContainer
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0xFF1E2A35))
+                        .background(MaterialTheme.colorScheme.surfaceContainerLowest)
                         .clipToBounds()
                         .onSizeChanged { viewportSize = it }
                         .pointerInput(Unit) {
@@ -376,17 +387,17 @@ fun MesasScreen(
                             .drawWithCache {
                                 val spacing = CELL.toPx()
                                 val majorSpacing = spacing * 5f
-                                val dotColor = Color(0xFFAEBBC6)
-                                val majorColor = Color(0xFFD3DDE4)
-                                val canvasColor = Color(0xFFF9FCFD)
-                                val glowColor = Color(0xFF35D8E8).copy(alpha = 0.22f)
-                                val accentColor = Color(0xFF35D8E8)
-                                val coreColor = Color(0xFF102C36)
+                                val canvasColor = boardCanvasColor
+                                val gridColor = boardGridColor
+                                val majorColor = boardMajorColor
+                                val glowColor = boardGlowColor
+                                val accentColor = boardBorderColor
+                                val coreColor = boardCoreColor
                                 val dotRadius = (1.15.dp.toPx() / scale).coerceIn(0.7f, 7f)
                                 val majorStroke = (0.65.dp.toPx() / scale).coerceIn(0.5f, 5f)
                                 val glowW = (12.dp.toPx() / scale).coerceIn(4f, 90f)
-                                val accentW = (4.dp.toPx() / scale).coerceIn(2f, 36f)
-                                val coreW = (1.25.dp.toPx() / scale).coerceIn(1f, 12f)
+                                val accentW = (2.dp.toPx() / scale).coerceIn(1f, 24f)
+                                val coreW = (1.dp.toPx() / scale).coerceIn(0.8f, 10f)
 
                                 onDrawBehind {
                                     drawRect(canvasColor)
@@ -408,14 +419,12 @@ fun MesasScreen(
                                     while (x < size.width) {
                                         var y = spacing
                                         while (y < size.height) {
-                                            drawCircle(dotColor, dotRadius, Offset(x, y))
+                                            drawCircle(gridColor, dotRadius, Offset(x, y))
                                             y += spacing
                                         }
                                         x += spacing
                                     }
 
-                                    // Perímetro emisivo en tres capas: halo de
-                                    // aproximación, línea cian y núcleo de contraste.
                                     drawRect(
                                         color = glowColor,
                                         topLeft = Offset(glowW / 2f, glowW / 2f),
@@ -824,31 +833,50 @@ private fun MesaListaCard(
     onEdit: (Mesa) -> Unit,
     onDelete: (Mesa) -> Unit
 ) {
+    val accent = MaterialTheme.colorScheme.mesaAccent(mesa.estado)
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onOpenMesa(mesa.id) },
-        colors = CardDefaults.cardColors(containerColor = mesaColor(mesa.estado)),
-        shape = RoundedCornerShape(14.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.25f)),
     ) {
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Box(
+                Modifier
+                    .width(4.dp)
+                    .height(40.dp)
+                    .background(accent, RoundedCornerShape(2.dp))
+            )
+            Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(mesa.nombreVisible, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    mesa.nombreVisible,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
                 Text(
                     "${formaLabel(mesa.forma)} ${mesa.capacidad}p · ${mesaEstadoLabel(mesa)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            StatusChip(text = mesaEstadoLabel(mesa), accent = accent)
             if (mesa.comandaActivaId != null) {
-                Box(Modifier.size(8.dp).background(Color(0xFFFF7043), CircleShape))
                 Spacer(Modifier.width(8.dp))
+                Box(Modifier.size(8.dp).background(PcComandaDot, CircleShape))
             }
-            IconButton(onClick = { onEdit(mesa) }) { Icon(Icons.Default.Edit, stringResource(R.string.mesas_menu_edit)) }
-            IconButton(onClick = { onDelete(mesa) }) { Icon(Icons.Default.Delete, stringResource(R.string.mesas_menu_delete), tint = MaterialTheme.colorScheme.error) }
+            IconButton(onClick = { onEdit(mesa) }) {
+                Icon(Icons.Default.Edit, stringResource(R.string.mesas_menu_edit))
+            }
+            IconButton(onClick = { onDelete(mesa) }) {
+                Icon(Icons.Default.Delete, stringResource(R.string.mesas_menu_delete), tint = MaterialTheme.colorScheme.error)
+            }
         }
     }
 }

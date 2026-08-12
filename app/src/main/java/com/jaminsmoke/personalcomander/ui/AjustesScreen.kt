@@ -59,6 +59,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.data.ServidorDescubierto
 import com.jaminsmoke.personalcomander.data.TpvPrograma
+import com.jaminsmoke.personalcomander.ui.components.GlassCard
+import com.jaminsmoke.personalcomander.ui.components.PcPrimaryButton
+import com.jaminsmoke.personalcomander.ui.components.PcSecondaryButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -207,11 +210,7 @@ private fun SincronizarCard(
     onBuscar: () -> Unit,
     onSincronizar: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -257,37 +256,20 @@ private fun SincronizarCard(
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(
+                PcSecondaryButton(
+                    text = stringResource(R.string.ajustes_search_network),
                     onClick = onBuscar,
                     enabled = !state.escaneando,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    if (state.escaneando) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.height(18.dp),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Icon(Icons.Default.Search, contentDescription = null)
-                    }
-                    Text(stringResource(R.string.ajustes_search_network))
-                }
-                Button(
+                    icon = if (state.escaneando) null else Icons.Default.Search,
+                    modifier = Modifier.weight(1f),
+                )
+                PcPrimaryButton(
+                    text = stringResource(R.string.btn_sync),
                     onClick = onSincronizar,
                     enabled = !state.sincronizando,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    if (state.sincronizando) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.height(18.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
-                        Icon(Icons.Default.CloudDownload, contentDescription = null)
-                    }
-                    Text(stringResource(R.string.btn_sync))
-                }
+                    icon = if (state.sincronizando) null else Icons.Default.CloudDownload,
+                    modifier = Modifier.weight(1f),
+                )
             }
             if (state.escaneando) {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -351,25 +333,25 @@ private fun SincronizarCard(
 
 @Composable
 private fun BackupCard(onExportar: () -> Unit, onImportar: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            OutlinedButton(onClick = onExportar, modifier = Modifier.weight(1f)) {
-                Icon(Icons.Default.FileDownload, contentDescription = null)
-                Text(stringResource(R.string.btn_export))
-            }
-            OutlinedButton(onClick = onImportar, modifier = Modifier.weight(1f)) {
-                Icon(Icons.Default.CloudUpload, contentDescription = null)
-                Text(stringResource(R.string.btn_import))
-            }
+            PcSecondaryButton(
+                text = stringResource(R.string.btn_export),
+                onClick = onExportar,
+                icon = Icons.Default.FileDownload,
+                modifier = Modifier.weight(1f),
+            )
+            PcSecondaryButton(
+                text = stringResource(R.string.btn_import),
+                onClick = onImportar,
+                icon = Icons.Default.CloudUpload,
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
