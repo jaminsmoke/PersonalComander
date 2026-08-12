@@ -410,9 +410,9 @@ fun ComandaScreen(
                     // Phone: tabs at top
                     Column(Modifier.fillMaxSize()) {
                         PrimaryScrollableTabRow(
-                            selectedTabIndex = state.categorias.indexOf(state.categoria).coerceAtLeast(0),
+                            selectedTabIndex = if (state.categoria != null) state.categorias.indexOf(state.categoria) + 1 else 0,
                             modifier = Modifier.fillMaxWidth(),
-                            edgePadding = 12.dp, divider = {}, indicator = {}
+                            edgePadding = 12.dp
                         ) {
                             Tab(selected = state.categoria == null, onClick = { viewModel.setCategoria(null) }) {
                                 Text(stringResource(R.string.comanda_all_categories), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),

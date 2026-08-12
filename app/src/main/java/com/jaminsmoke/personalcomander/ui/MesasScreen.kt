@@ -201,9 +201,9 @@ fun MesasScreen(
                 // Zone tabs
                 if (zonas.size > 1) {
                     PrimaryScrollableTabRow(
-                        selectedTabIndex = zonas.indexOf(zonaSeleccionada).coerceAtLeast(0),
+                        selectedTabIndex = if (zonaSeleccionada != null) zonas.indexOf(zonaSeleccionada) + 1 else 0,
                         modifier = Modifier.fillMaxWidth(),
-                        edgePadding = 12.dp, divider = {}, indicator = {}
+                        edgePadding = 12.dp
                     ) {
                         val allLabel = stringResource(R.string.mesas_all_zones)
                         Tab(selected = zonaSeleccionada == null, onClick = { viewModel.setZona(null) }) {
