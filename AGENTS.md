@@ -6,7 +6,7 @@
 
 - Package: `com.jaminsmoke.personalcomander`
 - Min SDK: 24 · Target SDK: 36 · Compile SDK: 37
-- Version: 1.4 (versionCode 5)
+- Version: 1.5 (versionCode 6)
 - Repo: `jaminsmoke/PersonalComander`
 
 ## Stack
@@ -83,7 +83,7 @@ Detectado → Debate → Roadmap → Ejecutando → Verificando → Changelog
 
 **No skipping**: every item advances in order. Exception: `Cancelado` → Changelog.
 
-**Version always > latest release**: consult `gh release list`, pick the next one (currently v1.5).
+**Version always > latest release**: consult `gh release list`, pick the next one (currently v1.6).
 
 #### 1. Detectado — Describir el problema a fondo
 
@@ -205,7 +205,7 @@ Con la decisión ya tomada y acordada en la fase anterior, detallar **mucho más
 KANBAN="bun run devartifacts/jarvis-skills/packages/kanban-cli/cli.ts"
 
 # Create item
-$KANBAN create --title "..." --tipo Bug --area UI/UX --priority Alta --version "v1.5"
+$KANBAN create --title "..." --tipo Bug --area UI/UX --priority Alta --version "v1.6"
 
 # List
 $KANBAN list
