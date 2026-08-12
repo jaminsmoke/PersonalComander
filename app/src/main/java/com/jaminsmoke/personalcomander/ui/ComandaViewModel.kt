@@ -136,6 +136,11 @@ class ComandaViewModel(
 
     fun limpiarError() { _error.value = null }
 
+    fun limpiarFeedback() {
+        feedbackJob?.cancel()
+        _feedbackVoz.value = null
+    }
+
     fun procesarVoz(texto: String, vozCercana: Boolean = true) {
         viewModelScope.launch {
             _procesandoVoz.value = true
@@ -271,8 +276,14 @@ class ComandaViewModel(
         }
     }
 
+    private var feedbackJob: kotlinx.coroutines.Job? = null
+
     private fun clearFeedbackVoz() {
-        viewModelScope.launch { kotlinx.coroutines.delay(FEEDBACK_VOZ_TIMEOUT_MS); _feedbackVoz.value = null }
+        feedbackJob?.cancel()
+        feedbackJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(FEEDBACK_VOZ_TIMEOUT_MS)
+            _feedbackVoz.value = null
+        }
     }
 
     fun addProducto(producto: Producto, cantidad: Int = 1) {

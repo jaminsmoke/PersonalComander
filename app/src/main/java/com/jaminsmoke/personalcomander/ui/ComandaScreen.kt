@@ -203,7 +203,7 @@ fun ComandaScreen(
         micPermissionGranted = granted; if (granted) iniciarVoz()
     }
 
-    LaunchedEffect(state.feedbackVoz) { state.feedbackVoz?.let { feedbackHaptico(it); snackbarHostState.showSnackbar(it) } }
+    LaunchedEffect(state.feedbackVoz) { state.feedbackVoz?.let { feedbackHaptico(it) } }
     LaunchedEffect(state.error) { state.error?.let { snackbarHostState.showSnackbar(it); viewModel.limpiarError() } }
 
     val mesaCerrada by viewModel.mesaCerrada.collectAsState()
@@ -357,6 +357,16 @@ fun ComandaScreen(
                         }
                     }
                 }
+            }
+
+            // Voice feedback card
+            state.feedbackVoz?.let { feedback ->
+                VoiceFeedbackCard(
+                    message = feedback,
+                    type = parseFeedbackType(feedback),
+                    visible = true,
+                    onDismiss = { viewModel.limpiarFeedback() }
+                )
             }
 
             // Category + Products area — adapts to screen width

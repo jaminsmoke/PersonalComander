@@ -180,4 +180,11 @@
     <string name="empty_comanda_no_products_subtitle">Añade productos desde la gestión del menú</string>
     <string name="empty_comanda_no_results">Sin resultados</string>
     <string name="empty_comanda_no_results_subtitle">Prueba con otro término de búsqueda o categoría</string>
+
+    <!-- Voice Feedback -->
+    <string name="voice_feedback_added">Añadido: %s</string>
+    <string name="voice_feedback_removed">Quitado: %s</string>
+    <string name="voice_feedback_partial">Añadido: %1$s · No entendido: %2$s</string>
+    <string name="voice_feedback_error">Error: %s</string>
+    <string name="voice_feedback_dismiss">Descartar</string>
 </resources>

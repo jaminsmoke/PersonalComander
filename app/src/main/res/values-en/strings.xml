@@ -180,4 +180,11 @@
     <string name="empty_comanda_no_products_subtitle">Add products from menu management</string>
     <string name="empty_comanda_no_results">No results</string>
     <string name="empty_comanda_no_results_subtitle">Try a different search term or category</string>
+
+    <!-- Voice Feedback -->
+    <string name="voice_feedback_added">Added: %s</string>
+    <string name="voice_feedback_removed">Removed: %s</string>
+    <string name="voice_feedback_partial">Added: %1$s · Not recognized: %2$s</string>
+    <string name="voice_feedback_error">Error: %s</string>
+    <string name="voice_feedback_dismiss">Dismiss</string>
 </resources>
