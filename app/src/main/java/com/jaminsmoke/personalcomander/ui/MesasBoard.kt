@@ -133,9 +133,6 @@ internal fun mesaDims(forma: MesaForma, girada: Boolean): Pair<Float, Float> {
 /** Color de relleno de pieza (board). El acento de estado va aparte. */
 internal fun mesaFillColor(): Color = PcMesaFill
 
-@Deprecated("Usar mesaFillColor + ColorScheme.mesaAccent", ReplaceWith("mesaFillColor()"))
-internal fun mesaColor(estado: MesaEstado): Color = mesaFillColor()
-
 
 /** Radio de esquinas de una carta según su forma */
 internal fun mesaShapeRadius(forma: MesaForma): Dp = when (forma) {

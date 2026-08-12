@@ -4,6 +4,12 @@
     <string name="mesas_fit_grid">Fit entire grid</string>
     <string name="app_name">Personal Comander</string>
 
+    <!-- Bottom navigation -->
+    <string name="nav_resumen">Summary</string>
+    <string name="nav_mesas">Tables</string>
+    <string name="nav_gestion">Menu</string>
+    <string name="nav_ajustes">Settings</string>
+
     <!-- Home Screen -->
     <string name="home_title">Personal Comander</string>
     <string name="home_summary_title">Today\'s Summary</string>
@@ -168,6 +174,7 @@
     <string name="lbl_route">Path</string>
     <string name="lbl_ip_server">POS server IP</string>
     <string name="lbl_access">Shortcuts</string>
+    <string name="home_quick_access">Quick access</string>
 
     <!-- Empty States -->
     <string name="empty_mesas_title">No tables</string>
