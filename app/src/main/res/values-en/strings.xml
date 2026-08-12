@@ -79,14 +79,13 @@
     <string name="comanda_close_confirm_button">Close table</string>
     <string name="comanda_close_undo">Reopen table</string>
     <string name="comanda_close_undo_snackbar">Table closed. Tap Reopen to undo.</string>
-    <string name="comanda_close_reopened">Table reopened successfully</string>
+
     <string name="comanda_all_categories">📋 All</string>
     <string name="comanda_voice_added">«%1$s» → Added: %2$s</string>
     <string name="comanda_voice_partial">«%1$s» → Added: %2$s · Unrecognized: %3$s</string>
     <string name="comanda_voice_unrecognized">«%1$s» → Could not recognize: %2$s</string>
     <string name="comanda_voice_not_understood">«%s» → Could not understand the order</string>
-    <string name="comanda_voice_detected">Voice detected 🟢</string>
-    <string name="comanda_bluetooth_active">Headset connected 🎧</string>
+
     <string name="comanda_processing">Processing…</string>
     <string name="comanda_voice_removed">«%1$s» → Removed: %2$s</string>
     <string name="comanda_voice_remove_partial">«%1$s» → Removed: %2$s · Unrecognized: %3$s</string>

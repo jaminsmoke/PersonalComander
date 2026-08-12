@@ -79,14 +79,13 @@
     <string name="comanda_close_confirm_button">Cerrar mesa</string>
     <string name="comanda_close_undo">Reabrir mesa</string>
     <string name="comanda_close_undo_snackbar">Mesa cerrada. Toca Reabrir para deshacer.</string>
-    <string name="comanda_close_reopened">Mesa reabierta correctamente</string>
+
     <string name="comanda_all_categories">📋 Todas</string>
     <string name="comanda_voice_added">«%1$s» → Añadido: %2$s</string>
     <string name="comanda_voice_partial">«%1$s» → Añadido: %2$s · No reconocido: %3$s</string>
     <string name="comanda_voice_unrecognized">«%1$s» → No reconocí: %2$s</string>
     <string name="comanda_voice_not_understood">«%s» → No entendí la comanda</string>
-    <string name="comanda_voice_detected">Voz detectada 🟢</string>
-    <string name="comanda_bluetooth_active">Manos libres 🎧</string>
+
     <string name="comanda_processing">Procesando…</string>
     <string name="comanda_voice_removed">«%1$s» → Quitado: %2$s</string>
     <string name="comanda_voice_remove_partial">«%1$s» → Quitado: %2$s · No reconocido: %3$s</string>

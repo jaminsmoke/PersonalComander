@@ -125,6 +125,9 @@ fun MesasScreen(
     var aisladaFinalY by remember { mutableStateOf(0f) }
     var crearVisible by remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
+    val undoMsg = stringResource(R.string.mesas_undo_snackbar)
+    val undoAct = stringResource(R.string.mesas_undo_move)
+    val occupiedMsg = stringResource(R.string.mesas_undo_cell_occupied)
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
 
@@ -538,8 +541,8 @@ fun MesasScreen(
                                         // Mostrar Snackbar con undo
                                         scope.launch {
                                             val result = snackbarHostState.showSnackbar(
-                                                message = context.getString(R.string.mesas_undo_snackbar),
-                                                actionLabel = context.getString(R.string.mesas_undo_move),
+                                                message = undoMsg,
+                                                actionLabel = undoAct,
                                                 duration = SnackbarDuration.Short
                                             )
                                             if (result == SnackbarResult.ActionPerformed && undoMesaId == dragged.id) {
@@ -557,7 +560,7 @@ fun MesasScreen(
                                                     optimisticPos[dragged.id] = Offset(undoPrevX, undoPrevY)
                                                     viewModel.updatePosicion(dragged, undoPrevX, undoPrevY)
                                                 } else {
-                                                    snackbarHostState.showSnackbar(context.getString(R.string.mesas_undo_cell_occupied))
+                                                    snackbarHostState.showSnackbar(occupiedMsg)
                                                 }
                                                 undoMesaId = null
                                             }

@@ -215,11 +215,13 @@ fun ComandaScreen(
     LaunchedEffect(mesaCerrada) { if (mesaCerrada) onBack() }
 
     // Snackbar con undo cuando se cierra la mesa
+    val undoMessage = stringResource(R.string.comanda_close_undo_snackbar)
+    val undoLabel = stringResource(R.string.comanda_close_undo)
     LaunchedEffect(mostrarUndo) {
         if (mostrarUndo) {
             val result = snackbarHostState.showSnackbar(
-                message = context.getString(R.string.comanda_close_undo_snackbar),
-                actionLabel = context.getString(R.string.comanda_close_undo),
+                message = undoMessage,
+                actionLabel = undoLabel,
                 duration = SnackbarDuration.Indefinite
             )
             if (result == SnackbarResult.ActionPerformed) {

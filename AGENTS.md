@@ -135,18 +135,41 @@ Con la decisión ya tomada y acordada en la fase anterior, detallar **mucho más
 - Si algo difiere del plan original, **documentarlo** en el body (sección `Implementación`) explicando el porqué del cambio.
 - Hacer commits locales con mensajes descriptivos.
 
-#### 5. Verificando — Tests y comprobaciones exhaustivas
+#### 5. Verificando — Tests, lint y comprobaciones exhaustivas
 
-**No es solo compilar.** Es verificar que el cambio funciona y no rompe nada.
+**No es solo compilar.** Es verificar que el cambio funciona, no rompe nada y cumple estándares de calidad.
 
-- Ejecutar validaciones **según el tipo de item**:
-  - UI/UX → `assembleDebug`, tests de UI, revisar visualmente si aplica.
-  - Datos → tests de Room, migraciones, integridad de datos.
-  - Voz → probar reconocimiento, timeouts, Bluetooth.
-  - Sync → probar import/export, conectividad.
-- Si se encuentran **errores preexistentes** relacionados, arreglarlos o documentarlos como nuevo item.
-- Documentar TODO en el body: sección `Verificación` con checklist de lo ejecutado y resultados.
-- Solo cuando todo esté verificado, commitear y pasar a Changelog.
+**Checklist obligatorio** (siempre ejecutar TODO):
+1. **Typecheck**: `./gradlew assembleDebug` — debe ser BUILD SUCCESSFUL
+2. **Tests unitarios**: `./gradlew test` — todos deben pasar
+3. **Lint**: `./gradlew lint` — debe pasar sin errores
+   - Si hay **errores que introdujimos**, corregirlos obligatoriamente
+   - Si hay **warnings preexistentes** relacionados con nuestro cambio, corregirlos si es posible
+   - Si hay **warnings no relacionados**, documentarlos pero no es bloqueante
+4. **Tests nuevos**: crear tests unitarios para la lógica nueva si no existen
+   - ViewModel: test de funciones principales (cierre, reapertura, undo, etc.)
+   - Parser: test de parseo si se modificó
+   - Funciones puras: test de utilidades nuevas
+   - NO crear tests de UI (Compose) salvo que sea crítico
+5. **Revisión visual**: si hay cambios UI, verificar en emulador que se ve correcto
+
+**Ejecutar validaciones adicionales según el tipo de item**:
+- UI/UX → `assembleDebug`, tests de UI, revisar visualmente si aplica.
+- Datos → tests de Room, migraciones, integridad de datos.
+- Voz → probar reconocimiento, timeouts, Bluetooth.
+- Sync → probar import/export, conectividad.
+
+**Reglas de lint**:
+- `LocalContextGetResourceValueCall`: usar `stringResource()` en composables, no `context.getString()`
+- `EmptySuperCall`: eliminar `super.onCleared()` si el método está vacío
+- `UnusedResources`: eliminar strings no usados o usar `@SuppressLint("UnusedResources")` si es temporal
+- `OldTargetApi` / `NotShrinkingResources`: no corregir sin autorización (son decisiones de build)
+
+**Antes de pasar a Changelog**:
+- Documentar TODO en el body: sección `Verificación` con checklist de lo ejecutado y resultados
+- Si se encontraron y corrigieron errores preexistentes, documentarlos
+- Hacer commit con los fixes de verificación
+- Solo cuando todo esté verificado, pasar a Changelog
 
 #### 6. Changelog — Cerrar, fechar y publicar
 
@@ -183,9 +206,12 @@ $KANBAN set-field <itemId> --field "Status" --option "Debate"
 $KANBAN convert-draft <itemId>
 gh issue edit <N> --add-label "tipo:bug,area:ui-ux"
 
-# Verificando: ejecutar validaciones según el tipo de item
-./gradlew assembleDebug              # typecheck
-./gradlew test                       # unit tests
+# Verificando: checklist obligatorio
+./gradlew assembleDebug              # 1. typecheck
+./gradlew test                       # 2. unit tests
+./gradlew lint                       # 3. lint (corregir errores introducidos)
+# 4. Crear tests nuevos si no existen para la lógica modificada
+# 5. Revisión visual en emulador si hay cambios UI
 # Añadir comprobaciones específicas según área (UI, Datos, Voz, Sync...)
 
 # Changelog: commit con SHA referenciable, cerrar, push
