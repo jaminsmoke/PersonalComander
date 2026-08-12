@@ -113,6 +113,8 @@ fun MesasScreen(
     var mesaAislada by remember { mutableStateOf<Mesa?>(null) }
     var aisladaFinalX by remember { mutableStateOf(0f) }
     var aisladaFinalY by remember { mutableStateOf(0f) }
+    // true = se salió de los límites del grid; false = quedó aislada dentro
+    var aisladaFueraLimites by remember { mutableStateOf(false) }
     var crearVisible by remember { mutableStateOf(false) }
     val density = LocalDensity.current
 
@@ -217,10 +219,17 @@ fun MesasScreen(
                 }
 
                 if (!mostrarLista) {
-                // Board — canvas wraps content tightly with one extra column/row of room
-                val PAD = CELL_F * 3f  // 120dp — just one card width of extra space
-                val maxX = ((mesasFiltradas.maxOfOrNull { it.posX } ?: 0f) + CARD_W + PAD).coerceAtLeast(800f)
-                val maxY = ((mesasFiltradas.maxOfOrNull { it.posY } ?: 0f) + CARD_W + PAD).coerceAtLeast(1200f)
+                // Board — grid estándar compartido por todas las zonas. La cámara
+                // se extiende si alguna mesa legacy quedó fuera (no se pierde nada).
+                val PAD = CELL_F * 3f
+                val maxX = maxOf(
+                    ZONA_ANCHO,
+                    (mesasFiltradas.maxOfOrNull { it.posX } ?: 0f) + CARD_W + PAD
+                )
+                val maxY = maxOf(
+                    ZONA_ALTO,
+                    (mesasFiltradas.maxOfOrNull { it.posY } ?: 0f) + CARD_W + PAD
+                )
 
                 // Clampa el pan para que el contenido no se pierda fuera de la vista.
                 // Rango [min(0, viewport-content), 0]: si el contenido es más pequeño
@@ -236,23 +245,16 @@ fun MesasScreen(
                     panY = panY.coerceIn(minOf(0f, viewportSize.height - contentH), 0f)
                 }
 
-                // Auto-fit: centra y escala para mostrar todas las mesas de la zona
+                // Auto-fit: encuadra el grid completo de la zona en el viewport
                 val autoFit = {
-                    val ms = mesasFiltradas
-                    if (ms.isNotEmpty() && viewportSize.width > 0) {
-                        val minX = ms.minOf { it.posX }
-                        val minY = ms.minOf { it.posY }
-                        val maxXf = ms.maxOf { it.posX } + CARD_W
-                        val maxYf = ms.maxOf { it.posY } + CARD_W
-                        val cw = maxXf - minX + 80f
-                        val ch = maxYf - minY + 80f
+                    if (viewportSize.width > 0) {
                         val vw = with(density) { viewportSize.width.toDp().value }
                         val vh = with(density) { viewportSize.height.toDp().value }
-                        val newScale = minOf(vw / cw, vh / ch, 3f).coerceIn(0.5f, 3f)
+                        val newScale = minOf(vw / ZONA_ANCHO, vh / ZONA_ALTO, 3f).coerceIn(0.2f, 3f)
                         scale = newScale
-                        // Centrar el bounding box en el viewport (px)
-                        val cxPx = with(density) { ((minX + maxXf) / 2f).dp.toPx() }
-                        val cyPx = with(density) { ((minY + maxYf) / 2f).dp.toPx() }
+                        // Centrar el grid completo en el viewport (px)
+                        val cxPx = with(density) { (ZONA_ANCHO / 2f).dp.toPx() }
+                        val cyPx = with(density) { (ZONA_ALTO / 2f).dp.toPx() }
                         panX = viewportSize.width / 2f - cxPx * newScale
                         panY = viewportSize.height / 2f - cyPx * newScale
                         clampPan()
@@ -288,7 +290,7 @@ fun MesasScreen(
                                             val centroid = Offset((p1.x + p2.x) / 2f, (p1.y + p2.y) / 2f)
                                             if (prevDist > 0f) {
                                                 val oldS = scale
-                                                val newS = (oldS * (dist / prevDist)).coerceIn(0.5f, 3f)
+                                                val newS = (oldS * (dist / prevDist)).coerceIn(0.2f, 3f)
                                                 // Zoom manteniendo fijo el punto bajo los dedos
                                                 panX = centroid.x - (centroid.x - panX) * newS / oldS
                                                 panY = centroid.y - (centroid.y - panY) * newS / oldS
@@ -440,17 +442,26 @@ fun MesasScreen(
                                                 val (ow, oh) = mesaDims(it.forma, it.girada)
                                                 listOf(it.posX, it.posY, ow, oh)
                                             }
-                                            val (rawFinalX, rawFinalY) = findNearestFreeCell(
-                                                snappedX, snappedY, draggedW, draggedH, occupied
-                                            )
-                                            // Warning: mesa muy alejada del cluster (solo contra su zona visible)
-                                            if (isIsolated(rawFinalX, rawFinalY, dragged.id, mesasFiltradas)) {
+                                            // ¿Soltada fuera de los límites del grid? → modal de confirmación
+                                            if (estaFueraDeLimites(snappedX, snappedY, draggedW, draggedH)) {
                                                 mesaAislada = dragged
-                                                aisladaFinalX = rawFinalX
-                                                aisladaFinalY = rawFinalY
+                                                aisladaFinalX = snappedX
+                                                aisladaFinalY = snappedY
+                                                aisladaFueraLimites = true
                                             } else {
-                                                optimisticPos[dragged.id] = Offset(rawFinalX, rawFinalY)
-                                                viewModel.updatePosicion(dragged, rawFinalX, rawFinalY)
+                                                val (rawFinalX, rawFinalY) = findNearestFreeCell(
+                                                    snappedX, snappedY, draggedW, draggedH, occupied
+                                                )
+                                                // Warning: mesa muy alejada del cluster (solo contra su zona visible)
+                                                if (isIsolated(rawFinalX, rawFinalY, dragged.id, mesasFiltradas)) {
+                                                    mesaAislada = dragged
+                                                    aisladaFinalX = rawFinalX
+                                                    aisladaFinalY = rawFinalY
+                                                    aisladaFueraLimites = false
+                                                } else {
+                                                    optimisticPos[dragged.id] = Offset(rawFinalX, rawFinalY)
+                                                    viewModel.updatePosicion(dragged, rawFinalX, rawFinalY)
+                                                }
                                             }
                                         }
                                         draggedMesa = null
@@ -503,11 +514,11 @@ fun MesasScreen(
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
                         }
-                        // Zoom % badge — tap to reset
+                        // Zoom % badge — tap para re-encuadrar (auto-fit)
                         if (scale != 1f || panX != 0f || panY != 0f) {
                             val pct = (scale * 100).toInt()
                             Card(
-                                onClick = { scale = 1f; panX = 0f; panY = 0f },
+                                onClick = { autoFit() },
                                 shape = RoundedCornerShape(20.dp),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -629,8 +640,9 @@ fun MesasScreen(
         )
     }
 
-    // Isolated mesa rescue dialog
+    // Mesa fuera de límites / aislada — modal de confirmación
     mesaAislada?.let { mesa ->
+        val (mw, mh) = mesaDims(mesa.forma, mesa.girada)
         AlertDialog(
             onDismissRequest = { mesaAislada = null },
             title = { Text(stringResource(R.string.mesas_isolated_title, mesa.nombreVisible)) },
@@ -647,11 +659,21 @@ fun MesasScreen(
                         viewModel.deleteMesa(mesa)
                         mesaAislada = null
                     }) { Text(stringResource(R.string.btn_delete), color = MaterialTheme.colorScheme.error) }
-                    TextButton(onClick = {
-                        val safe = safePosition(mesas.filter { it.id != mesa.id })
-                        viewModel.updatePosicion(mesa, safe.first, safe.second)
-                        mesaAislada = null
-                    }) { Text(stringResource(R.string.mesas_isolated_bring)) }
+                    if (aisladaFueraLimites) {
+                        // Se salió del grid → clamp duro al borde válido más cercano
+                        TextButton(onClick = {
+                            val (bx, by) = clampAlBorde(aisladaFinalX, aisladaFinalY, mw, mh)
+                            viewModel.updatePosicion(mesa, bx, by)
+                            mesaAislada = null
+                        }) { Text(stringResource(R.string.mesas_isolated_bring)) }
+                    } else {
+                        // Aislada dentro del grid → traer cerca del cluster
+                        TextButton(onClick = {
+                            val (tx, ty) = traerCerca(mesas.filter { it.id != mesa.id })
+                            viewModel.updatePosicion(mesa, tx, ty)
+                            mesaAislada = null
+                        }) { Text(stringResource(R.string.mesas_isolated_bring)) }
+                    }
                 }
             }
         )

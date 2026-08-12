@@ -35,10 +35,10 @@
     <string name="mesas_menu_edit">Editar</string>
     <string name="mesas_menu_delete">Eliminar</string>
     <string name="mesas_menu_rotate">Girar 90°</string>
-    <string name="mesas_isolated_title">¿Mantener %s alejada?</string>
-    <string name="mesas_isolated_body">Está muy lejos del resto de mesas. Puede ser difícil de encontrar.</string>
-    <string name="mesas_isolated_keep">Mantener</string>
-    <string name="mesas_isolated_bring">Traer cerca</string>
+    <string name="mesas_isolated_title">¿Qué hago con %s?</string>
+    <string name="mesas_isolated_body">Se salió de los límites del plano o quedó muy lejos de las demás mesas.</string>
+    <string name="mesas_isolated_keep">Mantener aquí</string>
+    <string name="mesas_isolated_bring">Llevar al borde</string>
 
     <!-- Menu Screen -->
     <string name="menu_title">Gestión del menú</string>

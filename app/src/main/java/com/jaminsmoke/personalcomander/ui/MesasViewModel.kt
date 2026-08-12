@@ -97,11 +97,20 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
                     val a = alias?.trim()?.ifBlank { null }
                     // Siguiente índice secuencial dentro de la zona (B3 si ya hay B1, B2)
                     val siguienteIndice = db.mesaDao().getMaxIndiceZona(zona) + 1
-                    // Colocar la mesa al lado de la última de SU zona (no por count global)
-                    val (px, py) = db.mesaDao().getPorZona(zona)
-                        .maxByOrNull { it.posX }
+                    // Colocar la mesa al lado de la última de SU zona (no por count
+                    // global), pero siempre dentro de los límites del grid estándar.
+                    val mesasZona = db.mesaDao().getPorZona(zona)
+                    val candidata = mesasZona.maxByOrNull { it.posX }
                         ?.let { it.posX + CARD_W + CELL_F to it.posY }
                         ?: ((maxNum % 4) * 160f to (maxNum / 4) * 160f + CELL_F)
+                    val ocupadas = mesasZona.map {
+                        val (ow, oh) = mesaDims(it.forma, it.girada)
+                        listOf(it.posX, it.posY, ow, oh)
+                    }
+                    val (px, py) = findNearestFreeCell(
+                        candidata.first, candidata.second,
+                        CARD_W, mesaAltura(forma), ocupadas
+                    )
                     db.mesaDao().insertMesa(
                         Mesa(
                             numero = maxNum + 1, alias = a, forma = forma,

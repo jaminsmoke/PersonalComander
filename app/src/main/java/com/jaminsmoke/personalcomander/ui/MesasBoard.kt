@@ -56,6 +56,12 @@ internal val CELL_F = 40f
 internal val CARD_WIDTH = 120.dp
 internal val CARD_W = 120f
 
+// Área estándar del plano de cada zona (dp): todas las zonas comparten el
+// mismo grid fijo. 50×65 celdas de 40dp — suficiente para cualquier
+// distribución sin quedar corto, y encaja en pantalla con auto-fit.
+internal const val ZONA_ANCHO = 2000f
+internal const val ZONA_ALTO = 2600f
+
 /** Altura en dp de una carta según su forma */
 internal fun mesaAltura(forma: MesaForma): Float = when (forma) {
     MesaForma.REDONDA -> CARD_W
@@ -259,17 +265,23 @@ internal fun DragOverlayCard(mesa: Mesa) {
 /**
  * Busca la posición libre más cercana con búsqueda en espiral.
  * Comprueba colisión de bounding boxes completos (no solo centros).
+ * Respeta los límites del grid de la zona: nunca devuelve una posición
+ * que saque la mesa fuera de los bordes (x+w > limiteX, y+h > limiteY).
  */
 internal fun findNearestFreeCell(
     targetX: Float,
     targetY: Float,
     draggedW: Float,
     draggedH: Float,
-    occupied: List<List<Float>>
+    occupied: List<List<Float>>,
+    limiteX: Float = ZONA_ANCHO,
+    limiteY: Float = ZONA_ALTO
 ): Pair<Float, Float> {
-    // Proteger borde superior/izquierdo: no permitir posiciones negativas ni < CELL_F
-    val safeX = maxOf(CELL_F, targetX)
-    val safeY = maxOf(CELL_F, targetY)
+    // Rango permitido: [CELL_F, limite - tamaño - margen]
+    val maxX = limiteX - draggedW - CELL_F
+    val maxY = limiteY - draggedH - CELL_F
+    val safeX = targetX.coerceIn(CELL_F, maxOf(CELL_F, maxX))
+    val safeY = targetY.coerceIn(CELL_F, maxOf(CELL_F, maxY))
 
     fun hayColision(x: Float, y: Float): Boolean = occupied.any { o ->
         colisionan(x, y, draggedW, draggedH, o[0], o[1], o[2], o[3])
@@ -284,7 +296,7 @@ internal fun findNearestFreeCell(
                 if (maxOf(abs(dx), abs(dy)) != ring) continue
                 val cx = safeX + dx * CELL_F
                 val cy = safeY + dy * CELL_F
-                if (cx >= CELL_F && cy >= CELL_F && !hayColision(cx, cy)) {
+                if (cx in CELL_F..maxX && cy in CELL_F..maxY && !hayColision(cx, cy)) {
                     return cx to cy
                 }
             }
@@ -294,6 +306,36 @@ internal fun findNearestFreeCell(
     return safeX to safeY
 }
 
+/** True si el rectángulo (x,y,w,h) se sale de los límites del grid de la zona */
+internal fun estaFueraDeLimites(
+    x: Float,
+    y: Float,
+    w: Float,
+    h: Float,
+    limiteX: Float = ZONA_ANCHO,
+    limiteY: Float = ZONA_ALTO
+): Boolean =
+    x < CELL_F || y < CELL_F || x + w > limiteX - CELL_F || y + h > limiteY - CELL_F
+
+/**
+ * Clamp duro: devuelve la posición alineada al grid más cercana DENTRO de los
+ * límites de la zona. No busca celda libre — solo recorta al borde válido.
+ */
+internal fun clampAlBorde(
+    x: Float,
+    y: Float,
+    w: Float,
+    h: Float,
+    limiteX: Float = ZONA_ANCHO,
+    limiteY: Float = ZONA_ALTO
+): Pair<Float, Float> {
+    val maxX = maxOf(CELL_F, limiteX - w - CELL_F)
+    val maxY = maxOf(CELL_F, limiteY - h - CELL_F)
+    val cX = x.coerceIn(CELL_F, maxX)
+    val cY = y.coerceIn(CELL_F, maxY)
+    return (cX / CELL_F).roundToInt() * CELL_F to (cY / CELL_F).roundToInt() * CELL_F
+}
+
 /** Detecta si una mesa está demasiado lejos del cluster (Manhattan > 500dp) */
 internal fun isIsolated(x: Float, y: Float, draggedId: Long, allMesas: List<Mesa>): Boolean {
     val others = allMesas.filter { it.id != draggedId }
@@ -301,12 +343,21 @@ internal fun isIsolated(x: Float, y: Float, draggedId: Long, allMesas: List<Mesa
     return others.minOf { abs(x - it.posX) + abs(y - it.posY) } > 500f
 }
 
-/** Posición segura: al borde inferior-derecho del cluster */
-internal fun safePosition(allMesas: List<Mesa>): Pair<Float, Float> {
+/**
+ * Posición segura cerca del cluster (borde inferior-derecho de las demás
+ * mesas), buscando celda libre dentro de los límites del grid.
+ */
+internal fun traerCerca(allMesas: List<Mesa>): Pair<Float, Float> {
     if (allMesas.isEmpty()) return CELL_F to CELL_F
     val maxX = allMesas.maxOf { it.posX } + CARD_W + CELL_F
     val avgY = allMesas.map { it.posY }.average().toFloat()
-    return ((maxX / CELL_F).roundToInt() * CELL_F) to ((avgY / CELL_F).roundToInt() * CELL_F)
+    val targetX = (maxX / CELL_F).roundToInt() * CELL_F
+    val targetY = (avgY / CELL_F).roundToInt() * CELL_F
+    val ocupadas = allMesas.map {
+        val (ow, oh) = mesaDims(it.forma, it.girada)
+        listOf(it.posX, it.posY, ow, oh)
+    }
+    return findNearestFreeCell(targetX, targetY, CARD_W, CARD_W, ocupadas)
 }
 
 internal fun formaLabel(forma: MesaForma): String = when (forma) {
