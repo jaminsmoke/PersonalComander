@@ -181,7 +181,7 @@ $KANBAN set-field <itemId> --field "Status" --option "Debate"
 
 # Convert draft → issue (only at Ejecutando)
 $KANBAN convert-draft <itemId>
-gh issue edit <N> --add-label "bug,UI/UX"
+gh issue edit <N> --add-label "tipo:bug,area:ui-ux"
 
 # Verificando: ejecutar validaciones según el tipo de item
 ./gradlew assembleDebug              # typecheck
@@ -222,7 +222,7 @@ Each item's body evolves through the lifecycle. The CLI generates a template at 
 | Status | SingleSelect | Detectado → ... → Changelog |
 | Prioridad | SingleSelect | Alta, Media, Baja |
 | Tipo | SingleSelect | Bug, Feature, Mejora, Tarea |
-| Área principal | SingleSelect | UI/UX, Datos, Voz, Sync, Build/CI, Docs |
+| Área principal | SingleSelect | UI/UX, Datos, Voz, Sync, Android, Build/CI, Docs |
 | Versión | SingleSelect | v1.4, v1.5, v1.6... |
 | Decision | SingleSelect | Pendiente, Aprobado, Diferido, Cancelado |
 | HighLighted | SingleSelect | Yes, No (for changelog highlights) |
@@ -231,7 +231,52 @@ Each item's body evolves through the lifecycle. The CLI generates a template at 
 | Completado exacto | Text | ISO-8601 UTC (set on Changelog) |
 | Completado | Date | YYYY-MM-DD (set on Changelog) |
 
-Config lives in `.kanbanrc.json` (gitignored, template at root for reference).
+### Labels canónicas
+
+Cada Issue debe tener exactamente **1 label de Tipo + 1 label de Área**. Status,
+Prioridad y Versión viven exclusivamente en campos del Project y no se duplican
+como labels.
+
+| Campo Tipo | Label | Uso |
+|---|---|---|
+| Bug | `tipo:bug` | Comportamiento incorrecto o regresión verificable |
+| Feature | `tipo:feature` | Capacidad nueva observable para usuario o producto |
+| Mejora | `tipo:mejora` | Calidad, UX, rendimiento o mantenibilidad |
+| Tarea | `tipo:tarea` | Trabajo operativo o técnico acotado |
+
+| Área principal | Label | Incluye |
+|---|---|---|
+| UI/UX | `area:ui-ux` | Compose, interacción, accesibilidad, diseño y navegación |
+| Datos | `area:datos` | Room, DAOs, migraciones, backup e integridad |
+| Voz | `area:voz` | SpeechRecognizer, parser, audio, RMS y Bluetooth de voz |
+| Sync | `area:sync` | TPV, red local, importación y exportación |
+| Android | `area:android` | Ciclo de vida, permisos, SDK, dispositivos y APIs Android |
+| Build/CI | `area:build-ci` | Gradle, KSP, tests, firma, CI y releases |
+| Docs | `area:docs` | Documentación, guías y contratos para agentes |
+
+Labels auxiliares permitidas cuando correspondan: `security`, `dependencies`,
+`duplicate`, `invalid`, `wontfix`, `question`, `good first issue` y `help wanted`.
+No usar los aliases antiguos `bug`, `enhancement` o `documentation`.
+
+### Configuración local del Kanban
+
+`.kanbanrc.json` contiene IDs específicos del Project y permanece gitignored.
+`.kanbanrc.json.template` se versiona como referencia reproducible.
+
+Tras crear, borrar o modificar opciones de un campo SingleSelect, todos sus IDs
+pueden cambiar. Regenerar y validar inmediatamente:
+
+```bash
+$KANBAN config generate --project PVT_kwHOBM87Yc4BgJWO
+# El generador deja estos valores como REPLACE_ME; restaurarlos antes de continuar:
+# repoId: R_kgDOT09T4w
+# repo: jaminsmoke/PersonalComander
+$KANBAN config validate
+```
+
+Después, comprobar que ningún ítem perdió el valor del campo modificado, reponerlo
+por nombre si fuera necesario y actualizar `.kanbanrc.json.template` con los IDs
+nuevos. Nunca ejecutar `convert-draft` mientras `repoId` sea `REPLACE_ME`.
 
 ## Code conventions
 
@@ -283,7 +328,8 @@ devartifacts/                 # gitignored
     └── packages/kanban-cli/  # bun install'd
 
 emulador.bat                  # launches Pixel_9a AVD
-.kanbanrc.json.template       # reference for kanban config
+.kanbanrc.json                # local Project IDs (gitignored)
+.kanbanrc.json.template       # versioned reproducible reference
 ```
 
 `.agents/skills/` contains installed skills (via `npx skills`). `.claude/`, `skills-lock.json` are agent-specific — all gitignored.

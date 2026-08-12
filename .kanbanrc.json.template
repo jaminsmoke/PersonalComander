@@ -1,0 +1,67 @@
+{
+  "projectId": "PVT_kwHOBM87Yc4BgJWO",
+  "repoId": "R_kgDOT09T4w",
+  "repo": "jaminsmoke/PersonalComander",
+  "fields": {
+    "Status": "PVTSSF_lAHOBM87Yc4BgJWOzhaXImE",
+    "Created": "PVTF_lAHOBM87Yc4BgJWOzhaXImk",
+    "Updated": "PVTF_lAHOBM87Yc4BgJWOzhaXImo",
+    "Closed": "PVTF_lAHOBM87Yc4BgJWOzhaXIms",
+    "Prioridad": "PVTSSF_lAHOBM87Yc4BgJWOzhaXJVM",
+    "Tipo": "PVTSSF_lAHOBM87Yc4BgJWOzhaXJVY",
+    "Área principal": "PVTSSF_lAHOBM87Yc4BgJWOzhaXJWI",
+    "Versión": "PVTSSF_lAHOBM87Yc4BgJWOzhaXJWM",
+    "Decision": "PVTSSF_lAHOBM87Yc4BgJWOzhaXJqs",
+    "HighLighted": "PVTSSF_lAHOBM87Yc4BgJWOzhaXJ4g",
+    "Completado exacto": "PVTF_lAHOBM87Yc4BgJWOzhaXKms",
+    "Inicio": "PVTF_lAHOBM87Yc4BgJWOzhaXKmw",
+    "Completado": "PVTF_lAHOBM87Yc4BgJWOzhaXKm0",
+    "Inicio exacto": "PVTF_lAHOBM87Yc4BgJWOzhaXK-s"
+  },
+  "options": {
+    "status": {
+      "Detectado": "dbd01839",
+      "Debate": "3d53e4c1",
+      "Roadmap": "bf03a250",
+      "Ejecutando": "bb29a79d",
+      "Verificando": "85b37d2b",
+      "Changelog": "71ad8ba8"
+    },
+    "version": {
+      "Sin asignar": "86258fa0",
+      "v1.4": "14f38d65",
+      "v1.5": "f3f27e3e",
+      "v1.6": "72102cb8"
+    },
+    "priority": {
+      "Alta": "9482f6c3",
+      "Media": "175bd449",
+      "Baja": "93788977"
+    },
+    "decision": {
+      "Pendiente": "20c8239e",
+      "Aprobado": "039af285",
+      "Diferido": "e169844c",
+      "Cancelado": "b1500331"
+    },
+    "tipo": {
+      "Bug": "10c5e6f3",
+      "Feature": "5febbd80",
+      "Mejora": "b90ec06c",
+      "Tarea": "1bce5c18"
+    },
+    "area": {
+      "UI/UX": "641e654b",
+      "Datos": "e3ea98ee",
+      "Voz": "57561d61",
+      "Sync": "e059616a",
+      "Build/CI": "1fdf2baf",
+      "Docs": "b7a95e39",
+      "Android": "ba9bce6f"
+    },
+    "highlighted": {
+      "Yes": "4dad8905",
+      "No": "945723fe"
+    }
+  }
+}

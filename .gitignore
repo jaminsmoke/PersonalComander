@@ -24,6 +24,5 @@ KeyStore
 emulador.bat
 .agents/
 .kanbanrc.json
-.kanbanrc.json.template
 .claude/
 skills-lock.json
