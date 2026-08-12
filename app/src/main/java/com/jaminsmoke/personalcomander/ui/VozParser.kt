@@ -119,11 +119,7 @@ data class ResultadoQuitar(
 
 // ── Keywords ──
 
-private val keywordsAnadir = setOf(
-    "anade", "anadir", "comanda", "apunta", "apuntame",
-    "agrega", "agregame", "pon", "ponme", "pongame", "dame"
-)
-
+/** Palabras clave para quitar productos (única acción que requiere keyword explícita). */
 private val keywordsQuitar = setOf(
     "quita", "borra", "elimina", "saca", "quitar", "borrar", "eliminar",
     "retira", "retirar", "tacha", "anula", "anular"
@@ -132,20 +128,19 @@ private val keywordsQuitar = setOf(
 // ── Funciones públicas del parser ──
 
 /**
- * Extrae la acción (añadir o quitar) del inicio del texto.
- * null si no se detecta ninguna keyword al inicio.
+ * Extrae la acción del texto.
+ * - Si empieza con keyword de quitar → Quitar
+ * - En cualquier otro caso → Anadir (sin requerir keyword)
+ * - Nunca devuelve null: siempre se intenta añadir por defecto
  */
-fun extraerAccion(texto: String): AccionVoz? {
+fun extraerAccion(texto: String): AccionVoz {
     val norm = normalizar(texto).trim()
     for (kw in keywordsQuitar) {
         if (norm.startsWith("$kw ")) return AccionVoz.Quitar(norm.removePrefix("$kw ").trim())
         if (norm == kw) return AccionVoz.Quitar("")
     }
-    for (kw in keywordsAnadir) {
-        if (norm.startsWith("$kw ")) return AccionVoz.Anadir(norm.removePrefix("$kw ").trim())
-        if (norm == kw) return AccionVoz.Anadir("")
-    }
-    return null
+    // Sin keyword de quitar → siempre intentar añadir
+    return AccionVoz.Anadir(norm)
 }
 
 /**

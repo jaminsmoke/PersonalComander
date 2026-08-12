@@ -137,12 +137,6 @@ class ComandaViewModel(
                 }
 
                 val accion = extraerAccion(texto)
-                if (accion == null) {
-                    _feedbackVoz.value = ctx.getString(R.string.comanda_voice_no_keyword, texto)
-                    clearFeedbackVoz()
-                    _procesandoVoz.value = false
-                    return@launch
-                }
 
                 when (accion) {
                     is AccionVoz.Anadir -> procesarAnadir(accion.texto, texto)

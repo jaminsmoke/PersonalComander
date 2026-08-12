@@ -217,7 +217,7 @@ class VozParserTest {
     fun extraer_accion_anade() {
         val a = extraerAccion("añade dos cafés con leche")
         assertTrue(a is AccionVoz.Anadir)
-        assertEquals("dos cafes con leche", (a as AccionVoz.Anadir).texto)
+        assertEquals("anade dos cafes con leche", (a as AccionVoz.Anadir).texto)
     }
 
     @Test
@@ -245,12 +245,14 @@ class VozParserTest {
     fun extraer_accion_comanda() {
         val a = extraerAccion("comanda tres aguas")
         assertTrue(a is AccionVoz.Anadir)
-        assertEquals("tres aguas", (a as AccionVoz.Anadir).texto)
+        assertEquals("comanda tres aguas", (a as AccionVoz.Anadir).texto)
     }
 
     @Test
-    fun extraer_accion_sin_keyword_devuelve_null() {
-        assertNull(extraerAccion("dos cafés con leche"))
+    fun extraer_accion_sin_keyword_es_anadir() {
+        val a = extraerAccion("dos cafés con leche")
+        assertTrue(a is AccionVoz.Anadir)
+        assertEquals("dos cafes con leche", (a as AccionVoz.Anadir).texto)
     }
 
     @Test

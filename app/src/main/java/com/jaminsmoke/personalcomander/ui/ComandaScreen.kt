@@ -182,39 +182,64 @@ fun ComandaScreen(
             // Listening card
             if (state.escuchandoVoz && !state.procesandoVoz) {
                 val rmsAnim by animateFloatAsState(rmsActual, animationSpec = tween(150), label = "rms")
+                val esCercana = rmsActual >= RMS_UMBRAL_CERCANIA
+                val esLejana = !btConectado && rmsActual > 0f && rmsActual < RMS_UMBRAL_CERCANIA
                 val cercaniaColor = when {
                     btConectado -> MaterialTheme.colorScheme.tertiaryContainer
-                    rmsActual >= RMS_UMBRAL_CERCANIA -> MaterialTheme.colorScheme.errorContainer
+                    esCercana -> MaterialTheme.colorScheme.primaryContainer
+                    esLejana -> MaterialTheme.colorScheme.errorContainer
                     else -> MaterialTheme.colorScheme.surfaceVariant
+                }
+                val onCercaniaColor = when {
+                    btConectado -> MaterialTheme.colorScheme.onTertiaryContainer
+                    esCercana -> MaterialTheme.colorScheme.onPrimaryContainer
+                    esLejana -> MaterialTheme.colorScheme.onErrorContainer
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
+                val micTint = when {
+                    esCercana || btConectado -> MaterialTheme.colorScheme.primary
+                    esLejana -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
                 }
                 Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = cercaniaColor)) {
                     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Mic, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(Icons.Default.Mic, null, tint = micTint)
                         Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(stringResource(R.string.comanda_listening), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                                Text(
+                                    when {
+                                        esCercana -> stringResource(R.string.comanda_voice_detected)
+                                        btConectado -> stringResource(R.string.comanda_bluetooth_active)
+                                        else -> stringResource(R.string.comanda_listening)
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = onCercaniaColor
+                                )
                                 if (btConectado) {
                                     Icon(Icons.Default.Bluetooth, null, Modifier.size(16.dp).padding(start = 4.dp), tint = MaterialTheme.colorScheme.tertiary)
                                 }
                             }
                             val parcial = textoParcial
                             if (parcial != null) {
-                                Text(parcial, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                Text(parcial, style = MaterialTheme.typography.bodySmall, color = onCercaniaColor.copy(alpha = 0.8f), maxLines = 2, overflow = TextOverflow.Ellipsis)
                             } else {
-                                Text(stringResource(R.string.comanda_voice_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                                Text(stringResource(R.string.comanda_voice_hint), style = MaterialTheme.typography.bodySmall, color = onCercaniaColor.copy(alpha = 0.6f))
                             }
-                            // Barras de RMS
+                            // Barras de RMS animadas
                             Spacer(Modifier.height(4.dp))
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.Bottom) {
                                 for (i in 0 until 5) {
                                     val altura = ((rmsAnim / 15f).coerceIn(0.1f, 1f) * (12 + i * 8).dp.value).dp
-                                    Box(Modifier.width(3.dp).height(altura).clip(RoundedCornerShape(2.dp)).background(
-                                        if (rmsActual >= RMS_UMBRAL_CERCANIA || btConectado) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.outline
-                                    ))
+                                    val barColor = when {
+                                        esCercana || btConectado -> MaterialTheme.colorScheme.primary
+                                        esLejana -> MaterialTheme.colorScheme.error
+                                        else -> MaterialTheme.colorScheme.outline
+                                    }
+                                    Box(Modifier.width(3.dp).height(altura).clip(RoundedCornerShape(2.dp)).background(barColor))
                                 }
                             }
-                            if (!btConectado && rmsActual > 0f && rmsActual < RMS_UMBRAL_CERCANIA) {
+                            if (esLejana) {
                                 Text(stringResource(R.string.comanda_rms_low), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 2.dp))
                             }
                         }

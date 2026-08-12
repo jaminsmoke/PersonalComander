@@ -60,8 +60,8 @@
     <string name="comanda_search_placeholder">Buscar producto…</string>
     <string name="comanda_voice_talk">Hablar comanda</string>
     <string name="comanda_listening">Escuchando…</string>
-    <string name="comanda_voice_hint">Di «añade» + tu comanda, ej: «añade dos cafés»</string>
-    <string name="comanda_rms_low">Acerca el dispositivo para mejorar la captura</string>
+    <string name="comanda_voice_hint">Di tu comanda, ej: «dos cafés con leche». Para quitar: «quita un café»</string>
+    <string name="comanda_rms_low">Demasiado lejos — acerca el dispositivo al hablar</string>
     <string name="comanda_cancel">Cancelar</string>
     <string name="comanda_panel_title">Comanda</string>
     <string name="comanda_empty">Sin artículos. Toca un producto para añadirlo.</string>
@@ -74,7 +74,8 @@
     <string name="comanda_voice_partial">«%1$s» → Añadido: %2$s · No reconocido: %3$s</string>
     <string name="comanda_voice_unrecognized">«%1$s» → No reconocí: %2$s</string>
     <string name="comanda_voice_not_understood">«%s» → No entendí la comanda</string>
-    <string name="comanda_voice_no_keyword">«%s» → Di «añade» antes de la comanda para que te reconozca</string>
+    <string name="comanda_voice_detected">Voz detectada 🟢</string>
+    <string name="comanda_bluetooth_active">Manos libres 🎧</string>
     <string name="comanda_processing">Procesando…</string>
     <string name="comanda_voice_removed">«%1$s» → Quitado: %2$s</string>
     <string name="comanda_voice_remove_partial">«%1$s» → Quitado: %2$s · No reconocido: %3$s</string>

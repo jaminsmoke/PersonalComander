@@ -60,8 +60,8 @@
     <string name="comanda_search_placeholder">Search product…</string>
     <string name="comanda_voice_talk">Voice order</string>
     <string name="comanda_listening">Listening…</string>
-    <string name="comanda_voice_hint">Say \"add\" + your order, e.g. \"add two lattes\"</string>
-    <string name="comanda_rms_low">Move closer to the device for better capture</string>
+    <string name="comanda_voice_hint">Say your order, e.g. \"two lattes\". To remove: \"remove one latte\"</string>
+    <string name="comanda_rms_low">Too far — move closer to the device</string>
     <string name="comanda_cancel">Cancel</string>
     <string name="comanda_panel_title">Order</string>
     <string name="comanda_empty">No items. Tap a product to add it.</string>
@@ -74,7 +74,8 @@
     <string name="comanda_voice_partial">«%1$s» → Added: %2$s · Unrecognized: %3$s</string>
     <string name="comanda_voice_unrecognized">«%1$s» → Could not recognize: %2$s</string>
     <string name="comanda_voice_not_understood">«%s» → Could not understand the order</string>
-    <string name="comanda_voice_no_keyword">«%s» → Say \"add\" before the order so I can recognize it</string>
+    <string name="comanda_voice_detected">Voice detected 🟢</string>
+    <string name="comanda_bluetooth_active">Headset connected 🎧</string>
     <string name="comanda_processing">Processing…</string>
     <string name="comanda_voice_removed">«%1$s» → Removed: %2$s</string>
     <string name="comanda_voice_remove_partial">«%1$s» → Removed: %2$s · Unrecognized: %3$s</string>
