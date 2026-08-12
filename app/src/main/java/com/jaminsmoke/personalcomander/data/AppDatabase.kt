@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Mesa::class, Producto::class, Pedido::class, LineaPedido::class],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -52,6 +52,22 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.asegurarEsquemaConFKsEIndices()
+            }
+        }
+
+        /**
+         * v8→v9: añade `indiceZona` a mesas (ID secuencial dentro de cada zona: B1, T2…).
+         * Se rellena con el orden actual: 1,2,3… por zona según id. Idempotente.
+         */
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE mesas ADD COLUMN indiceZona INTEGER NOT NULL DEFAULT 0")
+                db.execSQL(
+                    """UPDATE mesas SET indiceZona = (
+                        SELECT COUNT(*) FROM mesas m2
+                        WHERE m2.zona = mesas.zona AND m2.id <= mesas.id
+                    )""".trimIndent()
+                )
             }
         }
 

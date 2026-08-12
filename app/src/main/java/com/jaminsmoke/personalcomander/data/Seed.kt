@@ -18,53 +18,35 @@ object Seed {
         // Row 4: Barra (round, 3p) — 2 mesas
 
         val mesas = mutableListOf<Mesa>()
+        val indicePorZona = mutableMapOf<String, Int>()
 
-        // Row 0 — Terraza (round, 2p)
-        for (i in 0..3) {
+        fun add(numero: Int, forma: MesaForma, zona: String, capacidad: Int, posX: Float, posY: Float) {
+            val indice = (indicePorZona[zona] ?: 0) + 1
+            indicePorZona[zona] = indice
             mesas.add(Mesa(
-                numero = 1 + i,
-                forma = MesaForma.REDONDA, zona = "Terraza", capacidad = 2,
-                posX = MARGIN + i * COL_SPACING, posY = MARGIN
+                numero = numero, forma = forma, zona = zona, capacidad = capacidad,
+                posX = posX, posY = posY, indiceZona = indice
             ))
         }
-        // Row 1 — Interior cuadradas (square, 4p)
+
+        // Row 0 — Terraza (round, 2p): T1–T4
         for (i in 0..3) {
-            mesas.add(Mesa(
-                numero = 5 + i,
-                forma = MesaForma.CUADRADA, zona = "Interior", capacidad = 4,
-                posX = MARGIN + i * COL_SPACING, posY = MARGIN + ROW_SPACING
-            ))
+            add(1 + i, MesaForma.REDONDA, "Terraza", 2, MARGIN + i * COL_SPACING, MARGIN)
         }
-        // Row 2 — Interior rectangulares (rect, 8p)
+        // Row 1 — Interior cuadradas (square, 4p): I1–I4
         for (i in 0..3) {
-            mesas.add(Mesa(
-                numero = 9 + i,
-                forma = MesaForma.RECTANGULAR, zona = "Interior", capacidad = 8,
-                posX = MARGIN + i * COL_SPACING, posY = MARGIN + 2 * ROW_SPACING
-            ))
+            add(5 + i, MesaForma.CUADRADA, "Interior", 4, MARGIN + i * COL_SPACING, MARGIN + ROW_SPACING)
         }
-        // Row 3 — Interior XL (only 2)
-        mesas.add(Mesa(
-            numero = 13,
-            forma = MesaForma.RECTANGULAR_XL, zona = "Interior", capacidad = 12,
-            posX = MARGIN, posY = MARGIN + 3 * ROW_SPACING
-        ))
-        mesas.add(Mesa(
-            numero = 14,
-            forma = MesaForma.RECTANGULAR_XL, zona = "Interior", capacidad = 12,
-            posX = MARGIN + COL_SPACING, posY = MARGIN + 3 * ROW_SPACING
-        ))
-        // Row 4 — Barra (round, 3p)
-        mesas.add(Mesa(
-            numero = 15,
-            forma = MesaForma.REDONDA, zona = "Barra", capacidad = 3,
-            posX = MARGIN, posY = MARGIN + 4 * ROW_SPACING
-        ))
-        mesas.add(Mesa(
-            numero = 16,
-            forma = MesaForma.REDONDA, zona = "Barra", capacidad = 3,
-            posX = MARGIN + COL_SPACING, posY = MARGIN + 4 * ROW_SPACING
-        ))
+        // Row 2 — Interior rectangulares (rect, 8p): I5–I8
+        for (i in 0..3) {
+            add(9 + i, MesaForma.RECTANGULAR, "Interior", 8, MARGIN + i * COL_SPACING, MARGIN + 2 * ROW_SPACING)
+        }
+        // Row 3 — Interior XL (only 2): I9–I10
+        add(13, MesaForma.RECTANGULAR_XL, "Interior", 12, MARGIN, MARGIN + 3 * ROW_SPACING)
+        add(14, MesaForma.RECTANGULAR_XL, "Interior", 12, MARGIN + COL_SPACING, MARGIN + 3 * ROW_SPACING)
+        // Row 4 — Barra (round, 3p): B1–B2
+        add(15, MesaForma.REDONDA, "Barra", 3, MARGIN, MARGIN + 4 * ROW_SPACING)
+        add(16, MesaForma.REDONDA, "Barra", 3, MARGIN + COL_SPACING, MARGIN + 4 * ROW_SPACING)
 
         return mesas
     }

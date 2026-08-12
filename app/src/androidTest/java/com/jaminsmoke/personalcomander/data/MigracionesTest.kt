@@ -80,6 +80,22 @@ class MigracionesTest {
             .build()
             .also { it.openHelper.writableDatabase }
 
+    /** Convierte pedidos/líneas al esquema canónico con FKs + índices (v7+). */
+    private fun SQLiteDatabase.promoverConFKs() {
+        execSQL("ALTER TABLE `pedidos` RENAME TO `pedidos_old`")
+        execSQL("CREATE TABLE IF NOT EXISTS `pedidos` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `mesaId` INTEGER NOT NULL, `estado` TEXT NOT NULL, `creadoEn` INTEGER NOT NULL, `cerradoEn` INTEGER, FOREIGN KEY(`mesaId`) REFERENCES `mesas`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        execSQL("INSERT INTO `pedidos` (`id`, `mesaId`, `estado`, `creadoEn`, `cerradoEn`) SELECT `id`, `mesaId`, `estado`, `creadoEn`, `cerradoEn` FROM `pedidos_old`")
+        execSQL("DROP TABLE `pedidos_old`")
+        execSQL("CREATE INDEX IF NOT EXISTS `index_pedidos_mesaId` ON `pedidos` (`mesaId`)")
+        execSQL("CREATE INDEX IF NOT EXISTS `index_pedidos_creadoEn` ON `pedidos` (`creadoEn`)")
+        execSQL("ALTER TABLE `lineas_pedido` RENAME TO `lineas_pedido_old`")
+        execSQL("CREATE TABLE IF NOT EXISTS `lineas_pedido` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `pedidoId` INTEGER NOT NULL, `productoId` INTEGER NOT NULL, `nombreProducto` TEXT NOT NULL, `precioUnitario` REAL NOT NULL, `cantidad` INTEGER NOT NULL, `creadoEn` INTEGER NOT NULL, `estado` TEXT NOT NULL, FOREIGN KEY(`pedidoId`) REFERENCES `pedidos`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`productoId`) REFERENCES `productos`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )")
+        execSQL("INSERT INTO `lineas_pedido` (`id`, `pedidoId`, `productoId`, `nombreProducto`, `precioUnitario`, `cantidad`, `creadoEn`, `estado`) SELECT `id`, `pedidoId`, `productoId`, `nombreProducto`, `precioUnitario`, `cantidad`, `creadoEn`, `estado` FROM `lineas_pedido_old`")
+        execSQL("DROP TABLE `lineas_pedido_old`")
+        execSQL("CREATE INDEX IF NOT EXISTS `index_lineas_pedido_pedidoId` ON `lineas_pedido` (`pedidoId`)")
+        execSQL("CREATE INDEX IF NOT EXISTS `index_lineas_pedido_productoId` ON `lineas_pedido` (`productoId`)")
+    }
+
     private fun AppDatabase.verificarDatosYEsquema() {
         val db = openHelper.writableDatabase
         // Datos conservados tras la migración
@@ -94,14 +110,22 @@ class MigracionesTest {
         // FKs presentes tras la migración
         assertTrue("pedidos debe tener FK", db.query("PRAGMA foreign_key_list(`pedidos`)").use { it.count > 0 })
         assertTrue("lineas_pedido debe tener 2 FKs", db.query("PRAGMA foreign_key_list(`lineas_pedido`)").use { it.count == 2 })
+        // v9: columna indiceZona presente
+        val tieneIndiceZona = db.query("PRAGMA table_info(`mesas`)").use { cursor ->
+            var found = false
+            while (cursor.moveToNext()) if (cursor.getString(1) == "indiceZona") found = true
+            found
+        }
+        assertTrue("debe existir columna indiceZona (v9)", tieneIndiceZona)
     }
 
     @Test
-    fun migrarV4aV8_conservaDatos() {
+    fun migrarV4aV9_conservaDatos() {
         crearBD("migracion-v4.db", 4)
         abrirConRoom("migracion-v4.db",
             AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6,
-            AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8
+            AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8,
+            AppDatabase.MIGRATION_8_9
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -109,11 +133,12 @@ class MigracionesTest {
     }
 
     @Test
-    fun migrarV6aV8_conservaDatos() {
+    fun migrarV6aV9_conservaDatos() {
         // Caso real: los usuarios del release 1.2 tenían la BD en v6
         crearBD("migracion-v6.db", 6)
         abrirConRoom("migracion-v6.db",
-            AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8
+            AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8,
+            AppDatabase.MIGRATION_8_9
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -121,37 +146,51 @@ class MigracionesTest {
     }
 
     @Test
-    fun migrarV7RotaA_v8_reparaEsquema() {
+    fun migrarV7RotaA_v9_reparaEsquema() {
         // BD v7 dejada por la migración antigua (índices idx_* y sin FKs en pedidos/líneas)
         crearBD("migracion-v7rota.db", 7, rota = true)
-        abrirConRoom("migracion-v7rota.db", AppDatabase.MIGRATION_7_8).apply {
+        abrirConRoom("migracion-v7rota.db",
+            AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9
+        ).apply {
             verificarDatosYEsquema()
             close()
         }
     }
 
     @Test
-    fun migrarV7LimpiaA_v8_conservaDatos() {
+    fun migrarV7LimpiaA_v9_conservaDatos() {
         // BD v7 creada directamente por Room (esquema correcto con FKs e índices)
         crearBD("migracion-v7limpia.db", 6)
-        // Reconstruir pedidos y líneas con sus FKs/índices (esquema canónico v7)
         SQLiteDatabase.openOrCreateDatabase(ctx.getDatabasePath("migracion-v7limpia.db"), null).apply {
-            execSQL("ALTER TABLE `pedidos` RENAME TO `pedidos_old`")
-            execSQL("CREATE TABLE IF NOT EXISTS `pedidos` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `mesaId` INTEGER NOT NULL, `estado` TEXT NOT NULL, `creadoEn` INTEGER NOT NULL, `cerradoEn` INTEGER, FOREIGN KEY(`mesaId`) REFERENCES `mesas`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
-            execSQL("INSERT INTO `pedidos` (`id`, `mesaId`, `estado`, `creadoEn`, `cerradoEn`) SELECT `id`, `mesaId`, `estado`, `creadoEn`, `cerradoEn` FROM `pedidos_old`")
-            execSQL("DROP TABLE `pedidos_old`")
-            execSQL("CREATE INDEX IF NOT EXISTS `index_pedidos_mesaId` ON `pedidos` (`mesaId`)")
-            execSQL("ALTER TABLE `lineas_pedido` RENAME TO `lineas_pedido_old`")
-            execSQL("CREATE TABLE IF NOT EXISTS `lineas_pedido` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `pedidoId` INTEGER NOT NULL, `productoId` INTEGER NOT NULL, `nombreProducto` TEXT NOT NULL, `precioUnitario` REAL NOT NULL, `cantidad` INTEGER NOT NULL, `creadoEn` INTEGER NOT NULL, `estado` TEXT NOT NULL, FOREIGN KEY(`pedidoId`) REFERENCES `pedidos`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`productoId`) REFERENCES `productos`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )")
-            execSQL("INSERT INTO `lineas_pedido` (`id`, `pedidoId`, `productoId`, `nombreProducto`, `precioUnitario`, `cantidad`, `creadoEn`, `estado`) SELECT `id`, `pedidoId`, `productoId`, `nombreProducto`, `precioUnitario`, `cantidad`, `creadoEn`, `estado` FROM `lineas_pedido_old`")
-            execSQL("DROP TABLE `lineas_pedido_old`")
-            execSQL("CREATE INDEX IF NOT EXISTS `index_lineas_pedido_pedidoId` ON `lineas_pedido` (`pedidoId`)")
-            execSQL("CREATE INDEX IF NOT EXISTS `index_lineas_pedido_productoId` ON `lineas_pedido` (`productoId`)")
+            promoverConFKs()
             version = 7
             close()
         }
-        abrirConRoom("migracion-v7limpia.db", AppDatabase.MIGRATION_7_8).apply {
+        abrirConRoom("migracion-v7limpia.db",
+            AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9
+        ).apply {
             verificarDatosYEsquema()
+            close()
+        }
+    }
+
+    @Test
+    fun migrarV8aV9_anadeIndiceZonaPorZona() {
+        // BD canónica v8 (con FKs e índices pero sin indiceZona)
+        crearBD("migracion-v8.db", 6)
+        SQLiteDatabase.openOrCreateDatabase(ctx.getDatabasePath("migracion-v8.db"), null).apply {
+            promoverConFKs()
+            version = 8
+            close()
+        }
+        abrirConRoom("migracion-v8.db", AppDatabase.MIGRATION_8_9).apply {
+            verificarDatosYEsquema()
+            val db = openHelper.writableDatabase
+            // indiceZona relleno por zona según id (ambas mesas son de zonas distintas → índice 1)
+            assertEquals("mesa 1 (zona vacía) debe tener indiceZona 1", 1L,
+                db.query("SELECT `indiceZona` FROM `mesas` WHERE `id` = 1").use { it.moveToFirst(); it.getLong(0) })
+            assertEquals("mesa 2 (zona Bar) debe tener indiceZona 1", 1L,
+                db.query("SELECT `indiceZona` FROM `mesas` WHERE `id` = 2").use { it.moveToFirst(); it.getLong(0) })
             close()
         }
     }

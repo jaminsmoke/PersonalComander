@@ -40,10 +40,25 @@ data class Mesa(
     val comandaActivaId: Long? = null,
     val posX: Float = 0f,
     val posY: Float = 0f,
-    val girada: Boolean = false
+    val girada: Boolean = false,
+    /** Índice secuencial dentro de su zona (1,2,3…). Con [zonaPrefijo] forma el ID visible (B1, T2…). */
+    val indiceZona: Int = 0
 ) {
-    /** Nombre visible: alias si existe, sino el número */
-    val nombreVisible: String get() = alias ?: numero.toString()
+    /** ID dentro de la zona, p.ej. "B1" para Barra 1. */
+    val idZona: String get() = "${zonaPrefijo(zona)}$indiceZona"
+
+    /** Nombre visible: alias del usuario si existe; si no, el ID de zona (B1, T2…) */
+    val nombreVisible: String get() = alias ?: idZona
+}
+
+/** Prefijo corto de zona para IDs tipo B1, T1, I1… */
+fun zonaPrefijo(zona: String): String = when {
+    zona.contains("Bar", ignoreCase = true) -> "B"
+    zona.contains("Terraza", ignoreCase = true) -> "T"
+    zona.contains("Interior", ignoreCase = true) || zona.contains("Salon", ignoreCase = true) || zona.contains("Salón", ignoreCase = true) -> "I"
+    zona.contains("VIP", ignoreCase = true) || zona.contains("Reservado", ignoreCase = true) -> "V"
+    zona.isBlank() -> "M"
+    else -> zona.trim().firstOrNull()?.uppercase() ?: "M"
 }
 
 @Entity(tableName = "productos")

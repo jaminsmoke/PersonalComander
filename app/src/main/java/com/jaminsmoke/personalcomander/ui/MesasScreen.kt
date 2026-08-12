@@ -10,10 +10,13 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,15 +28,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.key
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -84,6 +91,7 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
+import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -108,6 +116,11 @@ fun MesasScreen(
     var aisladaFinalY by remember { mutableStateOf(0f) }
     var crearVisible by remember { mutableStateOf(false) }
     val density = LocalDensity.current
+
+    // Toggle vista: lista de tarjetas (todas las mesas) vs canvas individual por zona
+    var vistaLista by remember { mutableStateOf(zonaSeleccionada == null) }
+    val mostrarLista = zonaSeleccionada == null || vistaLista
+    LaunchedEffect(zonaSeleccionada) { if (zonaSeleccionada != null) vistaLista = false }
 
     // Drag state + optimistic positions (previene snap-back mientras Room actualiza)
     val optimisticPos = remember { androidx.compose.runtime.mutableStateMapOf<Long, Offset>() }
@@ -153,6 +166,14 @@ fun MesasScreen(
                     }
                 },
                 actions = {
+                    if (zonaSeleccionada != null) {
+                        IconButton(onClick = { vistaLista = !vistaLista }) {
+                            Icon(
+                                if (vistaLista) Icons.Default.GridView else Icons.AutoMirrored.Filled.List,
+                                if (vistaLista) stringResource(R.string.mesas_view_board) else stringResource(R.string.mesas_view_list)
+                            )
+                        }
+                    }
                     IconButton(onClick = onOpenMenu) {
                         Icon(Icons.Default.RestaurantMenu, stringResource(R.string.mesas_manage_menu))
                     }
@@ -186,6 +207,7 @@ fun MesasScreen(
                     }
                 }
 
+                if (!mostrarLista) {
                 // Board — canvas wraps content tightly with one extra column/row of room
                 val scrollH = rememberScrollState()
                 val scrollV = rememberScrollState()
@@ -333,15 +355,15 @@ fun MesasScreen(
                                             val snappedX = (rawX / CELL_F).roundToInt() * CELL_F
                                             val snappedY = (rawY / CELL_F).roundToInt() * CELL_F
                                             val (draggedW, draggedH) = mesaDims(dragged.forma, dragged.girada)
-                                            val occupied = mesas.filter { it.id != dragged.id }.map {
+                                            val occupied = mesasFiltradas.filter { it.id != dragged.id }.map {
                                                 val (ow, oh) = mesaDims(it.forma, it.girada)
                                                 listOf(it.posX, it.posY, ow, oh)
                                             }
                                             val (rawFinalX, rawFinalY) = findNearestFreeCell(
                                                 snappedX, snappedY, draggedW, draggedH, occupied
                                             )
-                                            // Warning: mesa muy alejada del cluster
-                                            if (isIsolated(rawFinalX, rawFinalY, dragged.id, mesas)) {
+                                            // Warning: mesa muy alejada del cluster (solo contra su zona visible)
+                                            if (isIsolated(rawFinalX, rawFinalY, dragged.id, mesasFiltradas)) {
                                                 mesaAislada = dragged
                                                 aisladaFinalX = rawFinalX
                                                 aisladaFinalY = rawFinalY
@@ -436,6 +458,14 @@ fun MesasScreen(
                             }
                         }
                     }
+                }
+                } else {
+                    MesasListaView(
+                        mesas = mesasFiltradas,
+                        onOpenMesa = onOpenMesa,
+                        onEdit = { mesaEditando = it },
+                        onDelete = { mesaBorrando = it }
+                    )
                 }
             }
         }
@@ -578,4 +608,80 @@ fun MesasScreen(
             dismissButton = { TextButton(onClick = { mesaBorrando = null }) { Text(stringResource(R.string.menu_cancel)) } }
         )
     }
+}
+
+/**
+ * Vista de lista: todas las mesas organizadas por zona en tarjetas.
+ * Muestra el ID de zona (B1, T2…) o el alias del usuario si existe.
+ */
+@Composable
+private fun MesasListaView(
+    mesas: List<Mesa>,
+    onOpenMesa: (Long) -> Unit,
+    onEdit: (Mesa) -> Unit,
+    onDelete: (Mesa) -> Unit
+) {
+    val porZona = mesas.groupBy { it.zona }
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        porZona.forEach { (zona, mesasZona) ->
+            item(key = "zona_$zona") {
+                Text(
+                    "${zonaEmoji(zona)} $zona",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 6.dp, bottom = 2.dp)
+                )
+            }
+            items(mesasZona, key = { it.id }) { mesa ->
+                MesaListaCard(mesa, onOpenMesa, onEdit, onDelete)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MesaListaCard(
+    mesa: Mesa,
+    onOpenMesa: (Long) -> Unit,
+    onEdit: (Mesa) -> Unit,
+    onDelete: (Mesa) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onOpenMesa(mesa.id) },
+        colors = CardDefaults.cardColors(containerColor = mesaColor(mesa.estado)),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(mesa.nombreVisible, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    "${formaLabel(mesa.forma)} ${mesa.capacidad}p · ${mesaEstadoLabel(mesa)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (mesa.comandaActivaId != null) {
+                Box(Modifier.size(8.dp).background(Color(0xFFFF7043), CircleShape))
+                Spacer(Modifier.width(8.dp))
+            }
+            IconButton(onClick = { onEdit(mesa) }) { Icon(Icons.Default.Edit, stringResource(R.string.mesas_menu_edit)) }
+            IconButton(onClick = { onDelete(mesa) }) { Icon(Icons.Default.Delete, stringResource(R.string.mesas_menu_delete), tint = MaterialTheme.colorScheme.error) }
+        }
+    }
+}
+
+@Composable
+private fun mesaEstadoLabel(mesa: Mesa): String = when (mesa.estado) {
+    MesaEstado.LIBRE -> stringResource(R.string.mesas_free)
+    MesaEstado.OCUPADA -> stringResource(R.string.mesas_occupied)
+    MesaEstado.EN_COCINA -> stringResource(R.string.mesas_in_kitchen)
 }

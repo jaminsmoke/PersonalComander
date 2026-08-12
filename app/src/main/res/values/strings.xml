@@ -21,6 +21,8 @@
     <string name="mesas_occupied">Ocupada</string>
     <string name="mesas_in_kitchen">En cocina</string>
     <string name="mesas_all_zones">📍 Todas</string>
+    <string name="mesas_view_list">Vista lista</string>
+    <string name="mesas_view_board">Vista plano</string>
     <string name="mesas_alias_title">Alias de %s</string>
     <string name="mesas_alias_label">Nombre (opcional)</string>
     <string name="mesas_capacidad_label">Capacidad (personas)</string>

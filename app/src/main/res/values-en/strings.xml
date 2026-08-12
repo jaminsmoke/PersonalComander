@@ -21,6 +21,8 @@
     <string name="mesas_occupied">Occupied</string>
     <string name="mesas_in_kitchen">In kitchen</string>
     <string name="mesas_all_zones">📍 All</string>
+    <string name="mesas_view_list">List view</string>
+    <string name="mesas_view_board">Board view</string>
     <string name="mesas_alias_title">Alias for %s</string>
     <string name="mesas_alias_label">Name (optional)</string>
     <string name="mesas_capacidad_label">Capacity (people)</string>
