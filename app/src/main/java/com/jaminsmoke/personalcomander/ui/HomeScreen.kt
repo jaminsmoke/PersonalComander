@@ -103,7 +103,8 @@ fun HomeScreen(
                     titulo = stringResource(R.string.home_tables_card),
                     descripcion = stringResource(R.string.home_tables_desc),
                     icono = Icons.Default.TableRestaurant,
-                    color = Color(0xFF7E57C2),
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    onContainerColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     onClick = onOpenMesas
                 )
             }
@@ -112,7 +113,8 @@ fun HomeScreen(
                     titulo = stringResource(R.string.home_menu_card),
                     descripcion = stringResource(R.string.home_menu_desc),
                     icono = Icons.Default.RestaurantMenu,
-                    color = Color(0xFF26A69A),
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    onContainerColor = MaterialTheme.colorScheme.onSecondaryContainer,
                     onClick = onOpenMenu
                 )
             }
@@ -121,7 +123,8 @@ fun HomeScreen(
                     titulo = stringResource(R.string.home_settings_card),
                     descripcion = stringResource(R.string.home_settings_desc),
                     icono = Icons.Default.Settings,
-                    color = Color(0xFF5C6BC0),
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    onContainerColor = MaterialTheme.colorScheme.onTertiaryContainer,
                     onClick = onOpenAjustes
                 )
             }
@@ -206,7 +209,8 @@ private fun HomeAcceso(
     titulo: String,
     descripcion: String,
     icono: ImageVector,
-    color: Color,
+    containerColor: Color,
+    onContainerColor: Color,
     onClick: () -> Unit
 ) {
     Card(
@@ -214,16 +218,11 @@ private fun HomeAcceso(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(color.copy(alpha = 0.25f), Color.Transparent)
-                    )
-                )
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -231,13 +230,13 @@ private fun HomeAcceso(
             Box(
                 modifier = Modifier
                     .size(52.dp)
-                    .background(color, RoundedCornerShape(14.dp)),
+                    .background(onContainerColor, RoundedCornerShape(14.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icono,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = containerColor,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -245,12 +244,13 @@ private fun HomeAcceso(
                 Text(
                     text = titulo,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = onContainerColor
                 )
                 Text(
                     text = descripcion,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = onContainerColor.copy(alpha = 0.7f)
                 )
             }
         }
