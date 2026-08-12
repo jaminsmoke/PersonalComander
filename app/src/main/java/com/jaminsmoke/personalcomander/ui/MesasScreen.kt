@@ -163,13 +163,6 @@ fun MesasScreen(
         else mesas.filter { it.zona == zonaSeleccionada }
     }
 
-    // Migra visualmente cualquier posición antigua al grid fijo de su zona.
-    LaunchedEffect(zonaSeleccionada, mesasFiltradas) {
-        if (zonaSeleccionada != null && mesasFiltradas.isNotEmpty()) {
-            viewModel.normalizarPosiciones(mesasFiltradas)
-        }
-    }
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {

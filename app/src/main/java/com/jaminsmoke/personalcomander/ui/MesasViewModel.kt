@@ -9,6 +9,8 @@ import androidx.room.withTransaction
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaForma
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,6 +35,23 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _mensaje = MutableStateFlow<String?>(null)
     val mensaje: StateFlow<String?> = _mensaje.asStateFlow()
+
+    init {
+        // Normalizar posiciones de mesas legacy una sola vez por zona.
+        // distinctUntilChanged por zona evita re-ejecuciones al añadir/mover mesas.
+        viewModelScope.launch {
+            combine(mesas, zona) { mesas, zona -> mesas to zona }
+                .distinctUntilChanged { old, new -> old.second == new.second }
+                .collect { (todasLasMesas, zonaActual) ->
+                    if (zonaActual != null) {
+                        val mesasZona = todasLasMesas.filter { it.zona == zonaActual }
+                        if (mesasZona.isNotEmpty()) {
+                            normalizarPosiciones(mesasZona)
+                        }
+                    }
+                }
+        }
+    }
 
     fun setZona(z: String?) { _zona.value = z }
     fun limpiarMensaje() { _mensaje.value = null }
