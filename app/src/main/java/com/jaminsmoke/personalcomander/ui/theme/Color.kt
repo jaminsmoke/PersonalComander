@@ -55,6 +55,14 @@ val PcInverseOnSurface = Color(0xFF2D3133)
 val PcMesaFill = Color(0xFF1B2D3E)
 val PcMesaFillHover = Color(0xFF243B51)
 
+/**
+ * Plano del board: sepia/crema claro para contraste con mesas oscuras y borde gold.
+ * El viewport exterior (fuera del plano) sigue en surface oscura.
+ */
+val PcBoardCanvas = Color(0xFFF2E8D5)
+val PcBoardGrid = Color(0xFF3D3428).copy(alpha = 0.14f)
+val PcBoardGridMajor = Color(0xFF3D3428).copy(alpha = 0.22f)
+
 /** Gradiente FAB / botón primario (gold). */
 val PcGoldGradientTop = Color(0xFFE9C349)
 val PcGoldGradientBottom = Color(0xFFAF8D11)

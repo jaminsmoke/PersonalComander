@@ -105,6 +105,9 @@ import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
 import com.jaminsmoke.personalcomander.ui.components.PcGoldFab
 import com.jaminsmoke.personalcomander.ui.components.StatusChip
+import com.jaminsmoke.personalcomander.ui.theme.PcBoardCanvas
+import com.jaminsmoke.personalcomander.ui.theme.PcBoardGrid
+import com.jaminsmoke.personalcomander.ui.theme.PcBoardGridMajor
 import com.jaminsmoke.personalcomander.ui.theme.PcComandaDot
 import com.jaminsmoke.personalcomander.ui.theme.mesaAccent
 import kotlin.math.abs
@@ -309,17 +312,18 @@ fun MesasScreen(
                 }
 
                 val scheme = MaterialTheme.colorScheme
-                val boardCanvasColor = scheme.surfaceContainerLowest
-                val boardGridColor = Color.White.copy(alpha = 0.06f)
-                val boardMajorColor = Color.White.copy(alpha = 0.10f)
-                val boardGlowColor = scheme.secondary.copy(alpha = 0.12f)
-                val boardBorderColor = scheme.outlineVariant.copy(alpha = 0.8f)
-                val boardCoreColor = scheme.surfaceContainer
+                // Plano claro (sepia); viewport exterior oscuro — contraste con mesas PcMesaFill.
+                val boardCanvasColor = PcBoardCanvas
+                val boardGridColor = PcBoardGrid
+                val boardMajorColor = PcBoardGridMajor
+                val boardGlowColor = scheme.secondary.copy(alpha = 0.18f)
+                val boardBorderColor = scheme.secondary.copy(alpha = 0.55f)
+                val boardCoreColor = scheme.secondary.copy(alpha = 0.85f)
 
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                        .background(scheme.surfaceContainerLowest)
                         .clipToBounds()
                         .onSizeChanged { viewportSize = it }
                         .pointerInput(Unit) {
