@@ -267,27 +267,31 @@ internal fun findNearestFreeCell(
     draggedH: Float,
     occupied: List<List<Float>>
 ): Pair<Float, Float> {
+    // Proteger borde superior/izquierdo: no permitir posiciones negativas ni < CELL_F
+    val safeX = maxOf(CELL_F, targetX)
+    val safeY = maxOf(CELL_F, targetY)
+
     fun hayColision(x: Float, y: Float): Boolean = occupied.any { o ->
         colisionan(x, y, draggedW, draggedH, o[0], o[1], o[2], o[3])
     }
 
-    if (!hayColision(targetX, targetY)) return targetX to targetY
+    if (!hayColision(safeX, safeY)) return safeX to safeY
 
     var ring = 1
     while (ring < 50) {
         for (dx in -ring..ring) {
             for (dy in -ring..ring) {
                 if (maxOf(abs(dx), abs(dy)) != ring) continue
-                val cx = targetX + dx * CELL_F
-                val cy = targetY + dy * CELL_F
-                if (cx >= 0 && cy >= 0 && !hayColision(cx, cy)) {
+                val cx = safeX + dx * CELL_F
+                val cy = safeY + dy * CELL_F
+                if (cx >= CELL_F && cy >= CELL_F && !hayColision(cx, cy)) {
                     return cx to cy
                 }
             }
         }
         ring++
     }
-    return targetX to targetY
+    return safeX to safeY
 }
 
 /** Detecta si una mesa está demasiado lejos del cluster (Manhattan > 500dp) */

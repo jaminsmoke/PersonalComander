@@ -92,8 +92,8 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
                     Mesa(
                         numero = maxNum + 1, alias = a, forma = forma,
                         zona = zona, capacidad = capacidad,
-                        posX = (maxNum % 4) * 140f,
-                        posY = (maxNum / 4) * 160f + 50f
+                        posX = (maxNum % 4) * 160f,
+                        posY = (maxNum / 4) * 160f + CELL_F
                     )
                 )
             } catch (e: Exception) {

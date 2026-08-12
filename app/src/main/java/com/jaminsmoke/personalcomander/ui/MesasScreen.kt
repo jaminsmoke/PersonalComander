@@ -109,7 +109,8 @@ fun MesasScreen(
     var crearVisible by remember { mutableStateOf(false) }
     val density = LocalDensity.current
 
-    // Drag state
+    // Drag state + optimistic positions (previene snap-back mientras Room actualiza)
+    val optimisticPos = remember { androidx.compose.runtime.mutableStateMapOf<Long, Offset>() }
     var draggedMesa by remember { mutableStateOf<Mesa?>(null) }
     var dragBaseX by remember { mutableStateOf(0f) }
     var dragBaseY by remember { mutableStateOf(0f) }
@@ -274,14 +275,27 @@ fun MesasScreen(
                             key(mesa.id) {
                                 val isDragging = draggedMesa?.id == mesa.id
 
+                                // Limpiar posición optimista cuando la BD confirme el cambio
+                                LaunchedEffect(mesa.posX, mesa.posY) {
+                                    optimisticPos[mesa.id]?.let { opt ->
+                                        if (abs(opt.x - mesa.posX) < 1f && abs(opt.y - mesa.posY) < 1f) {
+                                            optimisticPos.remove(mesa.id)
+                                        }
+                                    }
+                                }
+
+                                // Usar posición optimista mientras la BD actualiza, si no la real
+                                val targetX = optimisticPos[mesa.id]?.x ?: mesa.posX
+                                val targetY = optimisticPos[mesa.id]?.y ?: mesa.posY
+
                                 // Animate position changes (smoothly interpolate when DB updates posX/posY)
                                 val animX by animateFloatAsState(
-                                    targetValue = mesa.posX,
+                                    targetValue = targetX,
                                     animationSpec = tween(250, easing = FastOutSlowInEasing),
                                     label = "posX"
                                 )
                                 val animY by animateFloatAsState(
-                                    targetValue = mesa.posY,
+                                    targetValue = targetY,
                                     animationSpec = tween(250, easing = FastOutSlowInEasing),
                                     label = "posY"
                                 )
@@ -301,8 +315,8 @@ fun MesasScreen(
                                     onRotateClick = { viewModel.toggleGiro(mesa) },
                                     onDragStarted = {
                                         draggedMesa = mesa
-                                        dragBaseX = animX
-                                        dragBaseY = animY
+                                        dragBaseX = targetX
+                                        dragBaseY = targetY
                                         dragPxX = 0f
                                         dragPxY = 0f
                                     },
@@ -326,16 +340,14 @@ fun MesasScreen(
                                             val (rawFinalX, rawFinalY) = findNearestFreeCell(
                                                 snappedX, snappedY, draggedW, draggedH, occupied
                                             )
-                                            // Clamp to board boundaries (keep mesa inside the bordered area)
-                                            val clampX = rawFinalX.coerceIn(CELL_F, (maxX - CELL_F - draggedW).coerceAtLeast(CELL_F))
-                                            val clampY = rawFinalY.coerceIn(CELL_F, (maxY - CELL_F - draggedH).coerceAtLeast(CELL_F))
                                             // Warning: mesa muy alejada del cluster
-                                            if (isIsolated(clampX, clampY, dragged.id, mesas)) {
+                                            if (isIsolated(rawFinalX, rawFinalY, dragged.id, mesas)) {
                                                 mesaAislada = dragged
-                                                aisladaFinalX = clampX
-                                                aisladaFinalY = clampY
+                                                aisladaFinalX = rawFinalX
+                                                aisladaFinalY = rawFinalY
                                             } else {
-                                                viewModel.updatePosicion(dragged, clampX, clampY)
+                                                optimisticPos[dragged.id] = Offset(rawFinalX, rawFinalY)
+                                                viewModel.updatePosicion(dragged, rawFinalX, rawFinalY)
                                             }
                                         }
                                         draggedMesa = null
