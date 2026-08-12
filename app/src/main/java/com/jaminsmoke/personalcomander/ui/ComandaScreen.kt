@@ -208,7 +208,7 @@ fun ComandaScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(stringResource(R.string.comanda_table_prefix, state.mesa?.numero ?: mesaId))
+                        Text(stringResource(R.string.comanda_table_prefix, state.mesa?.nombreVisible ?: "#$mesaId"))
                         Text(estadoLabel(state.mesa?.estado), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },

@@ -48,6 +48,9 @@ interface MesaDao {
     @Query("SELECT COALESCE(MAX(indiceZona), 0) FROM mesas WHERE zona = :zona")
     suspend fun getMaxIndiceZona(zona: String): Int
 
+    @Query("SELECT * FROM mesas WHERE zona = :zona ORDER BY indiceZona")
+    suspend fun getPorZona(zona: String): List<Mesa>
+
     @Query("UPDATE mesas SET indiceZona = indiceZona - 1 WHERE zona = :zona AND indiceZona > :indice")
     suspend fun decrementarIndicesZona(zona: String, indice: Int)
 

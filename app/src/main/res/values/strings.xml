@@ -58,7 +58,7 @@
     <string name="menu_validation_negative_price">El precio no puede ser negativo</string>
 
     <!-- Comanda Screen -->
-    <string name="comanda_table_prefix">Mesa %d</string>
+    <string name="comanda_table_prefix">Mesa %s</string>
     <string name="comanda_search_placeholder">Buscar producto…</string>
     <string name="comanda_voice_talk">Hablar comanda</string>
     <string name="comanda_listening">Escuchando…</string>

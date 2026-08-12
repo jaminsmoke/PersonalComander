@@ -183,7 +183,7 @@ internal fun MesaCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 if (mesa.alias != null) {
-                    Text("Nº ${mesa.numero}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(mesa.idZona, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (isRound) {
                     Row(

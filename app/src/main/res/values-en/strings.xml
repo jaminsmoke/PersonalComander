@@ -58,7 +58,7 @@
     <string name="menu_validation_negative_price">Price cannot be negative</string>
 
     <!-- Comanda Screen -->
-    <string name="comanda_table_prefix">Table %d</string>
+    <string name="comanda_table_prefix">Table %s</string>
     <string name="comanda_search_placeholder">Search product…</string>
     <string name="comanda_voice_talk">Voice order</string>
     <string name="comanda_listening">Listening…</string>

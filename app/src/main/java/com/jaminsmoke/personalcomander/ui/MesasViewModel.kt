@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaminsmoke.personalcomander.PersonalComanderApp
 import com.jaminsmoke.personalcomander.R
+import androidx.room.withTransaction
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaForma
 import kotlinx.coroutines.flow.Flow
@@ -54,11 +55,13 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
         }
         viewModelScope.launch {
             try {
-                db.mesaDao().deleteById(mesa.id)
-                db.mesaDao().renumberAfter(mesa.numero)
-                // Correr índices posteriores de la misma zona (B3→B2) para mantener coherencia
-                if (mesa.indiceZona > 0) {
-                    db.mesaDao().decrementarIndicesZona(mesa.zona, mesa.indiceZona)
+                db.withTransaction {
+                    db.mesaDao().deleteById(mesa.id)
+                    db.mesaDao().renumberAfter(mesa.numero)
+                    // Correr índices posteriores de la misma zona (B3→B2) para mantener coherencia
+                    if (mesa.indiceZona > 0) {
+                        db.mesaDao().decrementarIndicesZona(mesa.zona, mesa.indiceZona)
+                    }
                 }
             } catch (e: Exception) {
                 _mensaje.value = ctx.getString(R.string.error_delete_table, e.message ?: e.javaClass.simpleName)
@@ -89,18 +92,24 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
     fun createMesa(zona: String, forma: MesaForma, capacidad: Int, alias: String?) {
         viewModelScope.launch {
             try {
-                val maxNum = db.mesaDao().getMaxNumero()
-                val a = alias?.trim()?.ifBlank { null }
-                // Siguiente índice secuencial dentro de la zona (B3 si ya hay B1, B2)
-                val siguienteIndice = db.mesaDao().getMaxIndiceZona(zona) + 1
-                db.mesaDao().insertMesa(
-                    Mesa(
-                        numero = maxNum + 1, alias = a, forma = forma,
-                        zona = zona, capacidad = capacidad, indiceZona = siguienteIndice,
-                        posX = (maxNum % 4) * 160f,
-                        posY = (maxNum / 4) * 160f + CELL_F
+                db.withTransaction {
+                    val maxNum = db.mesaDao().getMaxNumero()
+                    val a = alias?.trim()?.ifBlank { null }
+                    // Siguiente índice secuencial dentro de la zona (B3 si ya hay B1, B2)
+                    val siguienteIndice = db.mesaDao().getMaxIndiceZona(zona) + 1
+                    // Colocar la mesa al lado de la última de SU zona (no por count global)
+                    val (px, py) = db.mesaDao().getPorZona(zona)
+                        .maxByOrNull { it.posX }
+                        ?.let { it.posX + CARD_W + CELL_F to it.posY }
+                        ?: ((maxNum % 4) * 160f to (maxNum / 4) * 160f + CELL_F)
+                    db.mesaDao().insertMesa(
+                        Mesa(
+                            numero = maxNum + 1, alias = a, forma = forma,
+                            zona = zona, capacidad = capacidad, indiceZona = siguienteIndice,
+                            posX = px, posY = py
+                        )
                     )
-                )
+                }
             } catch (e: Exception) {
                 _mensaje.value = ctx.getString(R.string.error_create_table, e.message ?: e.javaClass.simpleName)
             }
