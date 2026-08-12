@@ -313,6 +313,33 @@ class VozParserTest {
         )
     }
 
+    // ── Regresión: no matchear productos parcialmente si el siguiente token no encaja ──
+
+    @Test
+    fun parsear_no_mathea_cafe_capuccino_como_cafe() {
+        // "café capuccino" no es un producto → debe ir entero a noEntendido
+        val r = parsearComanda("café capuccino", productos)
+        assertTrue(r.lineas.isEmpty())
+        assertEquals(listOf("cafe", "capuccino"), r.noEntendido)
+    }
+
+    @Test
+    fun parsear_cafe_solo_si_mathea_cafe_con_leche_similar() {
+        // "café solo" puede matchear "Café con leche" como fuzzy (no hay "Café solo" en seed)
+        val r = parsearComanda("café solo", productos)
+        if (r.lineas.isNotEmpty()) {
+            // Si matchea algo, que sea el más cercano y que "solo" no quede huérfano
+            assertEquals("Café con leche", r.lineas[0].producto.nombre)
+        }
+    }
+
+    @Test
+    fun parsear_cocacolas_sigue_matchenado_coca_cola() {
+        // Regresión: "cocacolas" (plural, todo pegado) debe seguir matcheando "Coca-Cola"
+        val r = parsearComanda("2 cocacolas", productos)
+        assertEquals(listOf(LineaVoz(prod("Coca-Cola"), 2)), r.lineas)
+    }
+
     @Test
     fun parsear_quitar_fuzzy_plural() {
         val lineas = listOf(

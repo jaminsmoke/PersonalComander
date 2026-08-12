@@ -6,9 +6,17 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothProfile
+import android.content.Context
 import android.content.pm.PackageManager
+import android.media.AudioManager
+import android.media.ToneGenerator
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -122,6 +130,50 @@ fun ComandaScreen(
         } else false
     }
 
+    // Feedback háptico + sonoro para resultados de voz
+    val toneGen = remember { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 50) }
+    DisposableEffect(Unit) { onDispose { toneGen.release() } }
+
+    val feedbackHaptico: (String) -> Unit = remember(context) { { msg ->
+        val vibrator: Vibrator = if (Build.VERSION.SDK_INT >= 31) {
+            val manager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            manager.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+        fun vibrar(ms: Long) {
+            if (Build.VERSION.SDK_INT >= 26) {
+                vibrator.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(ms)
+            }
+        }
+        fun vibrarDoble() {
+            if (Build.VERSION.SDK_INT >= 26) {
+                vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 50, 50, 50), -1))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(200)
+            }
+        }
+        when {
+            msg.contains("Añadido") || msg.contains("Added") -> {
+                toneGen.startTone(ToneGenerator.TONE_PROP_ACK, 150)
+                vibrar(80)
+            }
+            msg.contains("Quitado") || msg.contains("Removed") || msg.contains("vaciada") || msg.contains("cleared") -> {
+                toneGen.startTone(ToneGenerator.TONE_PROP_NACK, 100)
+                vibrar(40)
+            }
+            else -> {
+                toneGen.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200)
+                vibrarDoble()
+            }
+        }
+    } }
+
     val iniciarVoz: () -> Unit = {
         textoParcial = null; rmsActual = 0f; viewModel.setEscuchandoVoz(true)
         recognizer.onRms = { rmsActual = it }
@@ -140,7 +192,7 @@ fun ComandaScreen(
         micPermissionGranted = granted; if (granted) iniciarVoz()
     }
 
-    LaunchedEffect(state.feedbackVoz) { state.feedbackVoz?.let { snackbarHostState.showSnackbar(it) } }
+    LaunchedEffect(state.feedbackVoz) { state.feedbackVoz?.let { feedbackHaptico(it); snackbarHostState.showSnackbar(it) } }
     LaunchedEffect(state.error) { state.error?.let { snackbarHostState.showSnackbar(it); viewModel.limpiarError() } }
 
     val mesaCerrada by viewModel.mesaCerrada.collectAsState()
@@ -179,71 +231,98 @@ fun ComandaScreen(
                 }
             }
 
-            // Listening card
+            // Listening card — layout estable con animaciones suaves de color
             if (state.escuchandoVoz && !state.procesandoVoz) {
                 val rmsAnim by animateFloatAsState(rmsActual, animationSpec = tween(150), label = "rms")
                 val esCercana = rmsActual >= RMS_UMBRAL_CERCANIA
                 val esLejana = !btConectado && rmsActual > 0f && rmsActual < RMS_UMBRAL_CERCANIA
-                val cercaniaColor = when {
+
+                val targetColor = when {
                     btConectado -> MaterialTheme.colorScheme.tertiaryContainer
                     esCercana -> MaterialTheme.colorScheme.primaryContainer
                     esLejana -> MaterialTheme.colorScheme.errorContainer
                     else -> MaterialTheme.colorScheme.surfaceVariant
                 }
-                val onCercaniaColor = when {
-                    btConectado -> MaterialTheme.colorScheme.onTertiaryContainer
-                    esCercana -> MaterialTheme.colorScheme.onPrimaryContainer
-                    esLejana -> MaterialTheme.colorScheme.onErrorContainer
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                val cardColor by animateColorAsState(targetColor, tween(300), label = "cardColor")
+
+                val statusDot = when {
+                    esCercana -> MaterialTheme.colorScheme.primary
+                    esLejana -> MaterialTheme.colorScheme.error
+                    btConectado -> MaterialTheme.colorScheme.tertiary
+                    else -> MaterialTheme.colorScheme.outline
                 }
                 val micTint = when {
                     esCercana || btConectado -> MaterialTheme.colorScheme.primary
                     esLejana -> MaterialTheme.colorScheme.error
                     else -> MaterialTheme.colorScheme.onSurfaceVariant
                 }
-                Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = cercaniaColor)) {
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Mic, null, tint = micTint)
-                        Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    when {
-                                        esCercana -> stringResource(R.string.comanda_voice_detected)
-                                        btConectado -> stringResource(R.string.comanda_bluetooth_active)
-                                        else -> stringResource(R.string.comanda_listening)
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = onCercaniaColor
-                                )
-                                if (btConectado) {
-                                    Icon(Icons.Default.Bluetooth, null, Modifier.size(16.dp).padding(start = 4.dp), tint = MaterialTheme.colorScheme.tertiary)
-                                }
+
+                Card(
+                    Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = cardColor)
+                ) {
+                    Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp)) {
+                        // Fila superior: icono, título, estado, cancelar
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Mic, null, tint = micTint, modifier = Modifier.size(22.dp))
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                stringResource(R.string.comanda_listening),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            // Indicador sutil de estado
+                            Box(Modifier.size(8.dp).clip(RoundedCornerShape(4.dp)).background(statusDot))
+                            Spacer(Modifier.width(8.dp))
+                            if (btConectado) {
+                                Icon(Icons.Default.Bluetooth, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.tertiary)
+                                Spacer(Modifier.width(8.dp))
                             }
-                            val parcial = textoParcial
-                            if (parcial != null) {
-                                Text(parcial, style = MaterialTheme.typography.bodySmall, color = onCercaniaColor.copy(alpha = 0.8f), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            } else {
-                                Text(stringResource(R.string.comanda_voice_hint), style = MaterialTheme.typography.bodySmall, color = onCercaniaColor.copy(alpha = 0.6f))
-                            }
-                            // Barras de RMS animadas
-                            Spacer(Modifier.height(4.dp))
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.Bottom) {
-                                for (i in 0 until 5) {
-                                    val altura = ((rmsAnim / 15f).coerceIn(0.1f, 1f) * (12 + i * 8).dp.value).dp
-                                    val barColor = when {
-                                        esCercana || btConectado -> MaterialTheme.colorScheme.primary
-                                        esLejana -> MaterialTheme.colorScheme.error
-                                        else -> MaterialTheme.colorScheme.outline
-                                    }
-                                    Box(Modifier.width(3.dp).height(altura).clip(RoundedCornerShape(2.dp)).background(barColor))
-                                }
-                            }
-                            if (esLejana) {
-                                Text(stringResource(R.string.comanda_rms_low), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 2.dp))
+                            OutlinedButton(onClick = detenerVoz, contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)) {
+                                Text(stringResource(R.string.comanda_cancel), style = MaterialTheme.typography.labelMedium)
                             }
                         }
-                        OutlinedButton(onClick = detenerVoz) { Text(stringResource(R.string.comanda_cancel)) }
+
+                        // Texto parcial o hint
+                        val parcial = textoParcial
+                        Text(
+                            parcial ?: stringResource(R.string.comanda_voice_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (parcial != null) 0.85f else 0.55f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
+
+                        // Barras de RMS con altura fija para evitar saltos de layout
+                        Spacer(Modifier.height(4.dp))
+                        Row(
+                            Modifier.fillMaxWidth().height(28.dp),
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            verticalAlignment = Alignment.Bottom
+                        ) {
+                            for (i in 0 until 5) {
+                                val altura = ((rmsAnim / 15f).coerceIn(0.08f, 1f) * 28.dp.value).dp
+                                val barColor = when {
+                                    esCercana || btConectado -> MaterialTheme.colorScheme.primary
+                                    esLejana -> MaterialTheme.colorScheme.error
+                                    else -> MaterialTheme.colorScheme.outline
+                                }
+                                Box(Modifier.width(3.dp).height(altura).clip(RoundedCornerShape(2.dp)).background(barColor))
+                            }
+                        }
+
+                        // Alerta de lejanía (altura fija, visibilidad condicional)
+                        Box(Modifier.height(18.dp).padding(top = 2.dp)) {
+                            if (esLejana) {
+                                Text(
+                                    stringResource(R.string.comanda_rms_low),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
                     }
                 }
             }

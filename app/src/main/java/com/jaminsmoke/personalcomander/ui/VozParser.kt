@@ -276,7 +276,9 @@ internal fun <T> buscarExactoGen(
 
 /**
  * Empareja desde i permitiendo errores de voz (plurales, palabras pegadas, erratas).
- * Tolerancia: estricta para 1 token, más permisiva para nombres compuestos.
+ * Rechaza matches parciales espurios: si el producto tiene más tokens y quedan tokens
+ * en el input, el siguiente token debe continuar plausiblemente el nombre del producto.
+ * Esto evita que "café capuccino" matchee "Café solo".
  */
 internal fun <T> buscarDifusoGen(
     tokens: List<String>, i: Int,
@@ -286,21 +288,30 @@ internal fun <T> buscarDifusoGen(
     var mejorDist = Int.MAX_VALUE
     var mejorLen = 0
     for ((tokensItem, item) in items) {
-        val maxLen = minOf(tokensItem.size, tokens.size - i)
-        val objetivoFull = tokensItem.joinToString(" ")
-        for (len in 1..maxLen) {
-            val sub = tokens.subList(i, i + len).joinToString(" ")
-            val subSingular = if (sub.length > 1 && sub.endsWith("s")) sub.dropLast(1) else sub
-            val objetivo = tokensItem.take(len).joinToString(" ")
-            val d = minOf(
-                levenshtein(sub, objetivo),
-                levenshtein(sub, objetivoFull),
-                levenshtein(subSingular, objetivoFull)
-            )
-            val tolerancia = if (len == 1) 1 else len + 1
-            if (d <= tolerancia && (d < mejorDist || (d == mejorDist && len > mejorLen))) {
-                mejorDist = d; mejorLen = len; mejor = len to item
+        // Consumir todos los tokens del producto (o los que queden si son menos)
+        val len = minOf(tokensItem.size, tokens.size - i)
+
+        // Si el match es parcial y quedan más tokens, verificar que continúen el producto
+        if (len < tokensItem.size && i + len < tokens.size) {
+            val nextInput = tokens[i + len]
+            val nextProduct = tokensItem[len]
+            if (levenshtein(nextInput, nextProduct) > 2) {
+                continue // Match parcial espurio: el siguiente token no pertenece a este producto
             }
+        }
+
+        val sub = tokens.subList(i, i + len).joinToString(" ")
+        val subSingular = if (sub.length > 1 && sub.endsWith("s")) sub.dropLast(1) else sub
+        val objetivoFull = tokensItem.joinToString(" ")
+        val objetivo = tokensItem.take(len).joinToString(" ")
+        val d = minOf(
+            levenshtein(sub, objetivo),
+            levenshtein(sub, objetivoFull),
+            levenshtein(subSingular, objetivoFull)
+        )
+        val tolerancia = if (len == 1) 1 else len + 1
+        if (d <= tolerancia && (d < mejorDist || (d == mejorDist && len > mejorLen))) {
+            mejorDist = d; mejorLen = len; mejor = len to item
         }
     }
     return mejor
