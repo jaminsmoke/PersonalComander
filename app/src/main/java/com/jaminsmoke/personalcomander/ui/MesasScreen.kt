@@ -56,8 +56,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.PrimaryScrollableTabRow
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -69,8 +71,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -119,7 +123,14 @@ fun MesasScreen(
     var aisladaFinalX by remember { mutableStateOf(0f) }
     var aisladaFinalY by remember { mutableStateOf(0f) }
     var crearVisible by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
     val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
+
+    // Undo state: guarda la posición anterior del último movimiento
+    var undoMesaId by remember { mutableStateOf<Long?>(null) }
+    var undoPrevX by remember { mutableFloatStateOf(0f) }
+    var undoPrevY by remember { mutableFloatStateOf(0f) }
 
     // Toggle vista: lista de tarjetas (todas las mesas) vs canvas individual por zona
     var vistaLista by remember { mutableStateOf(zonaSeleccionada == null) }
@@ -501,15 +512,46 @@ fun MesasScreen(
                                             val (rawFinalX, rawFinalY) = findNearestFreeCell(
                                                 boundedX, boundedY, draggedW, draggedH, occupied
                                             )
-                                            // Warning: mesa muy alejada del cluster (solo contra su zona visible)
-                                            if (isIsolated(rawFinalX, rawFinalY, dragged.id, mesasFiltradas)) {
-                                                mesaAislada = dragged
-                                                aisladaFinalX = rawFinalX
-                                                aisladaFinalY = rawFinalY
-                                            } else {
-                                                optimisticPos[dragged.id] = Offset(rawFinalX, rawFinalY)
-                                                viewModel.updatePosicion(dragged, rawFinalX, rawFinalY)
+                                    // Warning: mesa muy alejada del cluster (solo contra su zona visible)
+                                    if (isIsolated(rawFinalX, rawFinalY, dragged.id, mesasFiltradas)) {
+                                        mesaAislada = dragged
+                                        aisladaFinalX = rawFinalX
+                                        aisladaFinalY = rawFinalY
+                                    } else if (rawFinalX != targetX || rawFinalY != targetY) {
+                                        // Guardar posición anterior para undo
+                                        undoMesaId = dragged.id
+                                        undoPrevX = targetX
+                                        undoPrevY = targetY
+                                        optimisticPos[dragged.id] = Offset(rawFinalX, rawFinalY)
+                                        viewModel.updatePosicion(dragged, rawFinalX, rawFinalY)
+                                        // Mostrar Snackbar con undo
+                                        scope.launch {
+                                            val result = snackbarHostState.showSnackbar(
+                                                message = context.getString(R.string.mesas_undo_snackbar),
+                                                actionLabel = context.getString(R.string.mesas_undo_move),
+                                                duration = SnackbarDuration.Short
+                                            )
+                                            if (result == SnackbarResult.ActionPerformed && undoMesaId == dragged.id) {
+                                                // Verificar si la celda anterior está ocupada
+                                                val ocupadas = mesasFiltradas.filter { it.id != dragged.id }.map {
+                                                    val (ow, oh) = mesaDims(it.forma, it.girada)
+                                                    listOf(it.posX, it.posY, ow, oh)
+                                                }
+                                                val (mw, mh) = mesaDims(dragged.forma, dragged.girada)
+                                                val libre = !ocupadas.any { (ox, oy, ow, oh) ->
+                                                    rawFinalX < ox + ow && rawFinalX + mw > ox &&
+                                                    rawFinalY < oy + oh && rawFinalY + mh > oy
+                                                }
+                                                if (libre) {
+                                                    optimisticPos[dragged.id] = Offset(undoPrevX, undoPrevY)
+                                                    viewModel.updatePosicion(dragged, undoPrevX, undoPrevY)
+                                                } else {
+                                                    snackbarHostState.showSnackbar(context.getString(R.string.mesas_undo_cell_occupied))
+                                                }
+                                                undoMesaId = null
                                             }
+                                        }
+                                    }
                                         }
                                         draggedMesa = null
                                         dragPxX = 0f

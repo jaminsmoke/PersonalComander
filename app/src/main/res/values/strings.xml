@@ -140,6 +140,9 @@
     <string name="error_delete_table">Error al eliminar mesa: %s</string>
     <string name="error_delete_table_active">No se puede eliminar una mesa con comanda activa. Ciérrala primero.</string>
     <string name="error_move_table">Error al mover mesa: %s</string>
+    <string name="mesas_undo_move">Deshacer</string>
+    <string name="mesas_undo_snackbar">Mesa movida. Toca Deshacer para revertir.</string>
+    <string name="mesas_undo_cell_occupied">La posición anterior está ocupada por otra mesa</string>
     <string name="error_rotate_table">Error al girar mesa: %s</string>
     <string name="error_create_table">Error al crear mesa: %s</string>
     <string name="error_add_product">Error al añadir producto: %s</string>

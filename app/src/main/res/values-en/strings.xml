@@ -140,6 +140,9 @@
     <string name="error_delete_table">Error deleting table: %s</string>
     <string name="error_delete_table_active">Cannot delete a table with an active order. Close it first.</string>
     <string name="error_move_table">Error moving table: %s</string>
+    <string name="mesas_undo_move">Undo</string>
+    <string name="mesas_undo_snackbar">Table moved. Tap Undo to revert.</string>
+    <string name="mesas_undo_cell_occupied">The previous position is occupied by another table</string>
     <string name="error_rotate_table">Error rotating table: %s</string>
     <string name="error_create_table">Error creating table: %s</string>
     <string name="error_add_product">Error adding product: %s</string>
