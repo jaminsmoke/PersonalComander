@@ -234,7 +234,7 @@ private fun SincronizarCard(
                 label = { Text(stringResource(R.string.lbl_ip_server)) },
                 placeholder = { Text("192.168.1.50") },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                 modifier = Modifier.fillMaxWidth()
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
