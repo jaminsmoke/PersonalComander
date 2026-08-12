@@ -57,7 +57,7 @@ import com.jaminsmoke.personalcomander.data.Producto
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MenuScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     viewModel: MenuViewModel = viewModel()
 ) {
     val productos by viewModel.productos.collectAsState(initial = emptyList())
@@ -81,8 +81,10 @@ fun MenuScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.menu_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back))
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back))
+                        }
                     }
                 },
                 actions = {

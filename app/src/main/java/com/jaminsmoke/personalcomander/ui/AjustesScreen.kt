@@ -63,7 +63,7 @@ import com.jaminsmoke.personalcomander.data.TpvPrograma
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AjustesScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     viewModel: AjustesViewModel = viewModel()
 ) {
     val sync by viewModel.sync.collectAsState()
@@ -128,8 +128,10 @@ fun AjustesScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.ajustes_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back))
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back))
+                        }
                     }
                 }
             )

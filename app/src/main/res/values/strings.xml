@@ -4,6 +4,12 @@
     <string name="mesas_fit_grid">Ver todo el grid</string>
     <string name="app_name">Personal Comander</string>
 
+    <!-- Bottom navigation -->
+    <string name="nav_resumen">Resumen</string>
+    <string name="nav_mesas">Mesas</string>
+    <string name="nav_gestion">Gestión</string>
+    <string name="nav_ajustes">Ajustes</string>
+
     <!-- Home Screen -->
     <string name="home_title">Personal Comander</string>
     <string name="home_summary_title">Resumen del día</string>
