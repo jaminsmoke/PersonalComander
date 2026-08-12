@@ -143,20 +143,24 @@ fun ComandaScreen(
             context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
         fun vibrar(ms: Long) {
-            if (Build.VERSION.SDK_INT >= 26) {
-                vibrator.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(ms)
-            }
+            try {
+                if (Build.VERSION.SDK_INT >= 26) {
+                    vibrator.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(ms)
+                }
+            } catch (_: SecurityException) { }
         }
         fun vibrarDoble() {
-            if (Build.VERSION.SDK_INT >= 26) {
-                vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 50, 50, 50), -1))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(200)
-            }
+            try {
+                if (Build.VERSION.SDK_INT >= 26) {
+                    vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 50, 50, 50), -1))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(200)
+                }
+            } catch (_: SecurityException) { }
         }
         when {
             msg.contains("Añadido") || msg.contains("Added") -> {
