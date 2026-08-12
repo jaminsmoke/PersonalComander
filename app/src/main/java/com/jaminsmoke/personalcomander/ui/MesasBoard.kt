@@ -49,8 +49,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
-import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
+import com.jaminsmoke.personalcomander.data.MesaVisualStatus
+import com.jaminsmoke.personalcomander.data.mesaVisualStatus
 import com.jaminsmoke.personalcomander.ui.theme.PcComandaDot
 import com.jaminsmoke.personalcomander.ui.theme.mesaStatusAccent
 import com.jaminsmoke.personalcomander.ui.theme.mesaStatusFill
@@ -131,8 +132,8 @@ internal fun mesaDims(forma: MesaForma, girada: Boolean): Pair<Float, Float> {
     return largo to CARD_W
 }
 
-/** Relleno de pieza según estado (colores intuitivos, no theme). */
-internal fun mesaFillColor(estado: MesaEstado): Color = mesaStatusFill(estado)
+/** Relleno de pieza según estado visual de sala. */
+internal fun mesaFillColor(status: MesaVisualStatus): Color = mesaStatusFill(status)
 
 
 /** Radio de esquinas de una carta según su forma */
@@ -162,15 +163,22 @@ internal fun MesaCard(
     onDrag: (Offset) -> Unit,
     onDragEnd: () -> Unit,
     onRotateClick: () -> Unit,
+    onReservarClick: () -> Unit,
+    onCancelarReservaClick: () -> Unit,
+    onBloquearClick: () -> Unit,
+    onDesbloquearClick: () -> Unit,
     onPointerActive: (Boolean) -> Unit
 ) {
-    val fill = mesaFillColor(mesa.estado)
-    val accent = mesaStatusAccent(mesa.estado)
+    val visual = mesaVisualStatus(mesa)
+    val fill = mesaFillColor(visual)
+    val accent = mesaStatusAccent(visual)
     val onFill = mesaStatusOnFill()
-    val label = when (mesa.estado) {
-        MesaEstado.LIBRE -> stringResource(R.string.mesas_free)
-        MesaEstado.OCUPADA -> stringResource(R.string.mesas_occupied)
-        MesaEstado.EN_COCINA -> stringResource(R.string.mesas_in_kitchen)
+    val label = when (visual) {
+        MesaVisualStatus.LIBRE -> stringResource(R.string.mesas_free)
+        MesaVisualStatus.OCUPADA -> stringResource(R.string.mesas_occupied)
+        MesaVisualStatus.EN_COCINA -> stringResource(R.string.mesas_in_kitchen)
+        MesaVisualStatus.RESERVADA -> stringResource(R.string.mesas_reserved)
+        MesaVisualStatus.BLOQUEADA -> stringResource(R.string.mesas_blocked)
     }
     val tieneComanda = mesa.comandaActivaId != null
 
@@ -306,6 +314,35 @@ internal fun MesaCard(
                             leadingIcon = { Icon(Icons.Default.Refresh, null) }
                         )
                     }
+                    when (visual) {
+                        MesaVisualStatus.LIBRE -> {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.mesas_menu_reserve)) },
+                                onClick = { menuExpanded = false; onReservarClick() }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.mesas_menu_block)) },
+                                onClick = { menuExpanded = false; onBloquearClick() }
+                            )
+                        }
+                        MesaVisualStatus.RESERVADA -> {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.mesas_menu_cancel_reserve)) },
+                                onClick = { menuExpanded = false; onCancelarReservaClick() }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.mesas_menu_block)) },
+                                onClick = { menuExpanded = false; onBloquearClick() }
+                            )
+                        }
+                        MesaVisualStatus.BLOQUEADA -> {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.mesas_menu_unblock)) },
+                                onClick = { menuExpanded = false; onDesbloquearClick() }
+                            )
+                        }
+                        MesaVisualStatus.OCUPADA, MesaVisualStatus.EN_COCINA -> Unit
+                    }
                 }
             }
         }
@@ -317,8 +354,9 @@ internal fun DragOverlayCard(mesa: Mesa) {
     val shapeRadius = mesaShapeRadius(mesa.forma)
     val (cardWf, cardHf) = mesaDims(mesa.forma, mesa.girada)
     val cardHeight = cardHf.dp
-    val fill = mesaFillColor(mesa.estado)
-    val accent = mesaStatusAccent(mesa.estado)
+    val visual = mesaVisualStatus(mesa)
+    val fill = mesaFillColor(visual)
+    val accent = mesaStatusAccent(visual)
     val onFill = mesaStatusOnFill()
 
     Card(

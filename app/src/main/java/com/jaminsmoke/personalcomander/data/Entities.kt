@@ -5,7 +5,14 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
+/** Estado operativo de mesa: reflejo del ciclo de comanda/pedido. */
 enum class MesaEstado { LIBRE, OCUPADA, EN_COCINA }
+
+/**
+ * Estado visual de sala (board/lista): combina operativo + hold comercial.
+ * No sustituye [MesaEstado]; se deriva con [mesaVisualStatus].
+ */
+enum class MesaVisualStatus { LIBRE, OCUPADA, EN_COCINA, RESERVADA, BLOQUEADA }
 
 enum class MesaForma(val capacidadDefecto: Int) { REDONDA(2), CUADRADA(4), RECTANGULAR(8), RECTANGULAR_XL(12) }
 
@@ -27,7 +34,8 @@ enum class LineaEstado {
             onDelete = ForeignKey.SET_NULL
         )
     ],
-    indices = [Index(value = ["comandaActivaId"])]
+    // reservaActivaId sin FK Room (ALTER no añade FK; integridad en transacciones + Reserva.mesaId CASCADE)
+    indices = [Index(value = ["comandaActivaId"]), Index(value = ["reservaActivaId"])]
 )
 data class Mesa(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -42,7 +50,11 @@ data class Mesa(
     val posY: Float = 0f,
     val girada: Boolean = false,
     /** Índice secuencial dentro de su zona (1,2,3…). Con [zonaPrefijo] forma el ID visible (B1, T2…). */
-    val indiceZona: Int = 0
+    val indiceZona: Int = 0,
+    /** Hold de sala: mesa no disponible (rojo). Independiente del ciclo de comanda. */
+    val bloqueada: Boolean = false,
+    /** Puntero a [Reserva] activa; null = sin reserva. */
+    val reservaActivaId: Long? = null
 ) {
     /** ID dentro de la zona, p.ej. "B1" para Barra 1. */
     val idZona: String get() = "${zonaPrefijo(zona)}$indiceZona"
@@ -50,6 +62,44 @@ data class Mesa(
     /** Nombre visible: alias del usuario si existe; si no, el ID de zona (B1, T2…) */
     val nombreVisible: String get() = alias ?: idZona
 }
+
+/**
+ * Prioridad: comanda activa (OCUPADA/EN_COCINA) > bloqueo > reserva > libre.
+ */
+fun mesaVisualStatus(mesa: Mesa): MesaVisualStatus = when (mesa.estado) {
+    MesaEstado.OCUPADA -> MesaVisualStatus.OCUPADA
+    MesaEstado.EN_COCINA -> MesaVisualStatus.EN_COCINA
+    MesaEstado.LIBRE -> when {
+        mesa.bloqueada -> MesaVisualStatus.BLOQUEADA
+        mesa.reservaActivaId != null -> MesaVisualStatus.RESERVADA
+        else -> MesaVisualStatus.LIBRE
+    }
+}
+
+@Entity(
+    tableName = "reservas",
+    foreignKeys = [
+        ForeignKey(
+            entity = Mesa::class,
+            parentColumns = ["id"],
+            childColumns = ["mesaId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index(value = ["mesaId"])]
+)
+data class Reserva(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val mesaId: Long,
+    /** Nombre del cliente o nota corta. */
+    val nombre: String,
+    /** Momento previsto (epoch ms); null si no se indicó. */
+    val paraEpoch: Long? = null,
+    val creadaEn: Long = 0L,
+    val canceladaEn: Long? = null,
+    /** Cuando la mesa pasó a ocupada por llegada del cliente. */
+    val convertidaEn: Long? = null
+)
 
 /** Prefijo corto de zona para IDs tipo B1, T1, I1… */
 fun zonaPrefijo(zona: String): String = when {

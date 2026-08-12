@@ -6,8 +6,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [Mesa::class, Producto::class, Pedido::class, LineaPedido::class],
-    version = 9,
+    entities = [Mesa::class, Producto::class, Pedido::class, LineaPedido::class, Reserva::class],
+    version = 10,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -15,6 +15,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun productoDao(): ProductoDao
     abstract fun pedidoDao(): PedidoDao
     abstract fun lineaPedidoDao(): LineaPedidoDao
+    abstract fun reservaDao(): ReservaDao
 
     companion object {
         val MIGRATION_4_5 = object : Migration(4, 5) {
@@ -68,6 +69,31 @@ abstract class AppDatabase : RoomDatabase() {
                         WHERE m2.zona = mesas.zona AND m2.id <= mesas.id
                     )""".trimIndent()
                 )
+            }
+        }
+
+        /**
+         * v9→v10: hold de sala — `bloqueada`, `reservaActivaId` en mesas + tabla `reservas`.
+         * Sin FK en reservaActivaId (SQLite ALTER no añade FK; integridad vía transacciones).
+         */
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE mesas ADD COLUMN bloqueada INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE mesas ADD COLUMN reservaActivaId INTEGER DEFAULT NULL")
+                db.execSQL(
+                    """CREATE TABLE IF NOT EXISTS `reservas` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `mesaId` INTEGER NOT NULL,
+                        `nombre` TEXT NOT NULL,
+                        `paraEpoch` INTEGER,
+                        `creadaEn` INTEGER NOT NULL,
+                        `canceladaEn` INTEGER,
+                        `convertidaEn` INTEGER,
+                        FOREIGN KEY(`mesaId`) REFERENCES `mesas`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )""".trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_reservas_mesaId` ON `reservas` (`mesaId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_mesas_reservaActivaId` ON `mesas` (`reservaActivaId`)")
             }
         }
 

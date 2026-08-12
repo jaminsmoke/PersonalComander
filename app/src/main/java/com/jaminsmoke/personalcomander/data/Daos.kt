@@ -21,7 +21,7 @@ interface MesaDao {
     @Query("SELECT COUNT(*) FROM mesas")
     fun observeCount(): Flow<Int>
 
-    @Query("SELECT COUNT(*) FROM mesas WHERE estado != 'LIBRE'")
+    @Query("SELECT COUNT(*) FROM mesas WHERE estado != 'LIBRE' OR bloqueada = 1 OR reservaActivaId IS NOT NULL")
     fun observeOcupadas(): Flow<Int>
 
     @Insert
@@ -30,8 +30,17 @@ interface MesaDao {
     @Update
     suspend fun update(mesa: Mesa)
 
+    @Query("SELECT * FROM mesas WHERE id = :id")
+    suspend fun getById(id: Long): Mesa?
+
     @Query("UPDATE mesas SET estado = :estado, comandaActivaId = :comandaId WHERE id = :id")
     suspend fun updateEstado(id: Long, estado: MesaEstado, comandaId: Long?)
+
+    @Query("UPDATE mesas SET bloqueada = :bloqueada WHERE id = :id")
+    suspend fun setBloqueada(id: Long, bloqueada: Boolean)
+
+    @Query("UPDATE mesas SET reservaActivaId = :reservaId WHERE id = :id")
+    suspend fun setReservaActiva(id: Long, reservaId: Long?)
 
     @Query("UPDATE mesas SET alias = :alias, capacidad = :capacidad, forma = :forma WHERE id = :id")
     suspend fun updateConfig(id: Long, alias: String?, capacidad: Int, forma: MesaForma)
@@ -62,6 +71,21 @@ interface MesaDao {
 
     @Query("UPDATE mesas SET girada = :girada WHERE id = :id")
     suspend fun updateGiro(id: Long, girada: Boolean)
+}
+
+@Dao
+interface ReservaDao {
+    @Query("SELECT * FROM reservas WHERE id = :id")
+    suspend fun getById(id: Long): Reserva?
+
+    @Insert
+    suspend fun insert(reserva: Reserva): Long
+
+    @Query("UPDATE reservas SET canceladaEn = :ts WHERE id = :id")
+    suspend fun marcarCancelada(id: Long, ts: Long)
+
+    @Query("UPDATE reservas SET convertidaEn = :ts WHERE id = :id")
+    suspend fun marcarConvertida(id: Long, ts: Long)
 }
 
 @Dao

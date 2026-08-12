@@ -24,7 +24,8 @@ import org.junit.runner.RunWith
  *  v4 -> v5: +posX, +posY        (board con posición libre)
  *  v5 -> v6: +girada             (girar mesas rectangulares)
  *  v6 -> v7: FKs + índices       (M1 — ver nota en AppDatabase)
- *  v7 -> v8: +índice creadoEn    (optimización total del día)
+ *  v8 -> v9: +indiceZona         (IDs B1/T2 por zona)
+ *  v9 -> v10: bloqueada + reservas (hold de sala)
  */
 @RunWith(AndroidJUnit4::class)
 class MigracionesTest {
@@ -117,28 +118,42 @@ class MigracionesTest {
             found
         }
         assertTrue("debe existir columna indiceZona (v9)", tieneIndiceZona)
+        val tieneBloqueada = db.query("PRAGMA table_info(`mesas`)").use { cursor ->
+            var found = false
+            while (cursor.moveToNext()) if (cursor.getString(1) == "bloqueada") found = true
+            found
+        }
+        assertTrue("debe existir columna bloqueada (v10)", tieneBloqueada)
+        assertEquals(
+            "tabla reservas debe existir (v10)",
+            0L,
+            db.query("SELECT COUNT(*) FROM `reservas`").use { it.moveToFirst(); it.getLong(0) }
+        )
     }
 
+    private val migracionesHastaV10 = arrayOf(
+        AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6,
+        AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8,
+        AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10
+    )
+
     @Test
-    fun migrarV4aV9_conservaDatos() {
+    fun migrarV4aV10_conservaDatos() {
         crearBD("migracion-v4.db", 4)
-        abrirConRoom("migracion-v4.db",
-            AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6,
-            AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8,
-            AppDatabase.MIGRATION_8_9
-        ).apply {
+        abrirConRoom("migracion-v4.db", *migracionesHastaV10).apply {
             verificarDatosYEsquema()
             close()
         }
     }
 
     @Test
-    fun migrarV6aV9_conservaDatos() {
+    fun migrarV6aV10_conservaDatos() {
         // Caso real: los usuarios del release 1.2 tenían la BD en v6
         crearBD("migracion-v6.db", 6)
-        abrirConRoom("migracion-v6.db",
+        abrirConRoom(
+            "migracion-v6.db",
             AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8,
-            AppDatabase.MIGRATION_8_9
+            AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -146,11 +161,12 @@ class MigracionesTest {
     }
 
     @Test
-    fun migrarV7RotaA_v9_reparaEsquema() {
+    fun migrarV7RotaA_v10_reparaEsquema() {
         // BD v7 dejada por la migración antigua (índices idx_* y sin FKs en pedidos/líneas)
         crearBD("migracion-v7rota.db", 7, rota = true)
-        abrirConRoom("migracion-v7rota.db",
-            AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9
+        abrirConRoom(
+            "migracion-v7rota.db",
+            AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -158,7 +174,7 @@ class MigracionesTest {
     }
 
     @Test
-    fun migrarV7LimpiaA_v9_conservaDatos() {
+    fun migrarV7LimpiaA_v10_conservaDatos() {
         // BD v7 creada directamente por Room (esquema correcto con FKs e índices)
         crearBD("migracion-v7limpia.db", 6)
         SQLiteDatabase.openOrCreateDatabase(ctx.getDatabasePath("migracion-v7limpia.db"), null).apply {
@@ -166,8 +182,9 @@ class MigracionesTest {
             version = 7
             close()
         }
-        abrirConRoom("migracion-v7limpia.db",
-            AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9
+        abrirConRoom(
+            "migracion-v7limpia.db",
+            AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -175,7 +192,7 @@ class MigracionesTest {
     }
 
     @Test
-    fun migrarV8aV9_anadeIndiceZonaPorZona() {
+    fun migrarV8aV10_anadeIndiceZonaYSala() {
         // BD canónica v8 (con FKs e índices pero sin indiceZona)
         crearBD("migracion-v8.db", 6)
         SQLiteDatabase.openOrCreateDatabase(ctx.getDatabasePath("migracion-v8.db"), null).apply {
@@ -183,7 +200,10 @@ class MigracionesTest {
             version = 8
             close()
         }
-        abrirConRoom("migracion-v8.db", AppDatabase.MIGRATION_8_9).apply {
+        abrirConRoom(
+            "migracion-v8.db",
+            AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10
+        ).apply {
             verificarDatosYEsquema()
             val db = openHelper.writableDatabase
             // indiceZona relleno por zona según id (ambas mesas son de zonas distintas → índice 1)
@@ -191,6 +211,32 @@ class MigracionesTest {
                 db.query("SELECT `indiceZona` FROM `mesas` WHERE `id` = 1").use { it.moveToFirst(); it.getLong(0) })
             assertEquals("mesa 2 (zona Bar) debe tener indiceZona 1", 1L,
                 db.query("SELECT `indiceZona` FROM `mesas` WHERE `id` = 2").use { it.moveToFirst(); it.getLong(0) })
+            close()
+        }
+    }
+
+    @Test
+    fun migrarV9aV10_anadeBloqueadaYReservas() {
+        crearBD("migracion-v9.db", 6)
+        SQLiteDatabase.openOrCreateDatabase(ctx.getDatabasePath("migracion-v9.db"), null).apply {
+            promoverConFKs()
+            execSQL("ALTER TABLE mesas ADD COLUMN indiceZona INTEGER NOT NULL DEFAULT 0")
+            execSQL(
+                """UPDATE mesas SET indiceZona = (
+                    SELECT COUNT(*) FROM mesas m2
+                    WHERE m2.zona = mesas.zona AND m2.id <= mesas.id
+                )""".trimIndent()
+            )
+            version = 9
+            close()
+        }
+        abrirConRoom("migracion-v9.db", AppDatabase.MIGRATION_9_10).apply {
+            verificarDatosYEsquema()
+            val db = openHelper.writableDatabase
+            assertEquals(
+                0L,
+                db.query("SELECT `bloqueada` FROM `mesas` WHERE `id` = 1").use { it.moveToFirst(); it.getLong(0) }
+            )
             close()
         }
     }

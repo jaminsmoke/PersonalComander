@@ -98,9 +98,10 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.data.CategoriaIcono
 import com.jaminsmoke.personalcomander.data.LineaPedido
-import com.jaminsmoke.personalcomander.data.MesaEstado
+import com.jaminsmoke.personalcomander.data.MesaVisualStatus
 import com.jaminsmoke.personalcomander.data.PedidoEstado
 import com.jaminsmoke.personalcomander.data.Producto
+import com.jaminsmoke.personalcomander.data.mesaVisualStatus
 import com.jaminsmoke.personalcomander.ui.components.PcPrimaryButton
 import com.jaminsmoke.personalcomander.ui.components.PcSecondaryButton
 import com.jaminsmoke.personalcomander.ui.theme.mesaStatusAccent
@@ -238,8 +239,8 @@ fun ComandaScreen(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            val estado = state.mesa?.estado
-            val accent = estado?.let { mesaStatusAccent(it) }
+            val visual = state.mesa?.let { mesaVisualStatus(it) }
+            val accent = visual?.let { mesaStatusAccent(it) }
                 ?: MaterialTheme.colorScheme.onSurfaceVariant
             TopAppBar(
                 title = {
@@ -249,7 +250,7 @@ fun ComandaScreen(
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
-                            estadoLabel(estado),
+                            estadoVisualLabel(visual),
                             style = MaterialTheme.typography.labelMedium,
                             color = accent,
                         )
@@ -670,9 +671,11 @@ private fun CategorySidebarItem(label: String, selected: Boolean, onClick: () ->
 }
 
 @Composable
-private fun estadoLabel(estado: MesaEstado?): String = when (estado) {
-    MesaEstado.LIBRE -> stringResource(R.string.mesas_free)
-    MesaEstado.OCUPADA -> stringResource(R.string.mesas_occupied)
-    MesaEstado.EN_COCINA -> stringResource(R.string.mesas_in_kitchen)
+private fun estadoVisualLabel(status: MesaVisualStatus?): String = when (status) {
+    MesaVisualStatus.LIBRE -> stringResource(R.string.mesas_free)
+    MesaVisualStatus.OCUPADA -> stringResource(R.string.mesas_occupied)
+    MesaVisualStatus.EN_COCINA -> stringResource(R.string.mesas_in_kitchen)
+    MesaVisualStatus.RESERVADA -> stringResource(R.string.mesas_reserved)
+    MesaVisualStatus.BLOQUEADA -> stringResource(R.string.mesas_blocked)
     null -> ""
 }

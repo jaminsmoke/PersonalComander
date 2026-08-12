@@ -7,7 +7,9 @@ import com.jaminsmoke.personalcomander.PersonalComanderApp
 import com.jaminsmoke.personalcomander.R
 import androidx.room.withTransaction
 import com.jaminsmoke.personalcomander.data.Mesa
+import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
+import com.jaminsmoke.personalcomander.data.Reserva
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -181,6 +183,96 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 _mensaje.value = ctx.getString(R.string.error_create_table, e.message ?: e.javaClass.simpleName)
+            }
+        }
+    }
+
+    fun avisarMesaBloqueada() {
+        _mensaje.value = ctx.getString(R.string.error_table_blocked)
+    }
+
+    fun reservar(mesa: Mesa, nombre: String, paraEpoch: Long? = null) {
+        val n = nombre.trim()
+        if (n.isEmpty()) {
+            _mensaje.value = ctx.getString(R.string.error_reserve_name)
+            return
+        }
+        if (mesa.comandaActivaId != null || mesa.estado != MesaEstado.LIBRE) {
+            _mensaje.value = ctx.getString(R.string.error_reserve_busy)
+            return
+        }
+        if (mesa.bloqueada) {
+            _mensaje.value = ctx.getString(R.string.error_reserve_blocked)
+            return
+        }
+        if (mesa.reservaActivaId != null) {
+            _mensaje.value = ctx.getString(R.string.error_reserve_already)
+            return
+        }
+        viewModelScope.launch {
+            try {
+                db.withTransaction {
+                    val id = db.reservaDao().insert(
+                        Reserva(
+                            mesaId = mesa.id,
+                            nombre = n,
+                            paraEpoch = paraEpoch,
+                            creadaEn = System.currentTimeMillis()
+                        )
+                    )
+                    db.mesaDao().setReservaActiva(mesa.id, id)
+                }
+            } catch (e: Exception) {
+                _mensaje.value = ctx.getString(R.string.error_reserve, e.message ?: e.javaClass.simpleName)
+            }
+        }
+    }
+
+    fun cancelarReserva(mesa: Mesa) {
+        val rid = mesa.reservaActivaId
+        if (rid == null) {
+            _mensaje.value = ctx.getString(R.string.error_reserve_none)
+            return
+        }
+        viewModelScope.launch {
+            try {
+                db.withTransaction {
+                    db.reservaDao().marcarCancelada(rid, System.currentTimeMillis())
+                    db.mesaDao().setReservaActiva(mesa.id, null)
+                }
+            } catch (e: Exception) {
+                _mensaje.value = ctx.getString(R.string.error_reserve_cancel, e.message ?: e.javaClass.simpleName)
+            }
+        }
+    }
+
+    fun bloquear(mesa: Mesa) {
+        if (mesa.comandaActivaId != null) {
+            _mensaje.value = ctx.getString(R.string.error_block_active)
+            return
+        }
+        viewModelScope.launch {
+            try {
+                db.withTransaction {
+                    // Al bloquear, cancelar reserva activa si la hubiera
+                    mesa.reservaActivaId?.let { rid ->
+                        db.reservaDao().marcarCancelada(rid, System.currentTimeMillis())
+                        db.mesaDao().setReservaActiva(mesa.id, null)
+                    }
+                    db.mesaDao().setBloqueada(mesa.id, true)
+                }
+            } catch (e: Exception) {
+                _mensaje.value = ctx.getString(R.string.error_block, e.message ?: e.javaClass.simpleName)
+            }
+        }
+    }
+
+    fun desbloquear(mesa: Mesa) {
+        viewModelScope.launch {
+            try {
+                db.mesaDao().setBloqueada(mesa.id, false)
+            } catch (e: Exception) {
+                _mensaje.value = ctx.getString(R.string.error_unblock, e.message ?: e.javaClass.simpleName)
             }
         }
     }

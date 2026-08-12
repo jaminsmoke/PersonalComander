@@ -36,15 +36,17 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FitScreen
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.TableChart
-import androidx.compose.material.icons.filled.FitScreen
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.ZoomOut
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -100,8 +102,9 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
-import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
+import com.jaminsmoke.personalcomander.data.MesaVisualStatus
+import com.jaminsmoke.personalcomander.data.mesaVisualStatus
 import com.jaminsmoke.personalcomander.ui.components.PcGoldFab
 import com.jaminsmoke.personalcomander.ui.components.StatusChip
 import com.jaminsmoke.personalcomander.ui.theme.PcBoardCanvas
@@ -129,6 +132,7 @@ fun MesasScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var mesaEditando by remember { mutableStateOf<Mesa?>(null) }
     var mesaBorrando by remember { mutableStateOf<Mesa?>(null) }
+    var mesaReservando by remember { mutableStateOf<Mesa?>(null) }
     var mesaAislada by remember { mutableStateOf<Mesa?>(null) }
     var aisladaFinalX by remember { mutableStateOf(0f) }
     var aisladaFinalY by remember { mutableStateOf(0f) }
@@ -499,11 +503,18 @@ fun MesasScreen(
                                         .offset(x = animX.dp, y = animY.dp)
                                         .width(mw.dp),
                                     onClick = {
-                                        if (draggedMesa == null) onOpenMesa(mesa.id)
+                                        if (draggedMesa == null) {
+                                            if (mesa.bloqueada) viewModel.avisarMesaBloqueada()
+                                            else onOpenMesa(mesa.id)
+                                        }
                                     },
                                     onEditClick = { mesaEditando = mesa },
                                     onDeleteClick = { mesaBorrando = mesa },
                                     onRotateClick = { viewModel.toggleGiro(mesa) },
+                                    onReservarClick = { mesaReservando = mesa },
+                                    onCancelarReservaClick = { viewModel.cancelarReserva(mesa) },
+                                    onBloquearClick = { viewModel.bloquear(mesa) },
+                                    onDesbloquearClick = { viewModel.desbloquear(mesa) },
                                     onPointerActive = { active ->
                                         if (active) mesasConPuntero[mesa.id] = true
                                         else mesasConPuntero.remove(mesa.id)
@@ -647,9 +658,17 @@ fun MesasScreen(
                 } else {
                     MesasListaView(
                         mesas = mesasFiltradas,
-                        onOpenMesa = onOpenMesa,
+                        onOpenMesa = { id ->
+                            val m = mesasFiltradas.find { it.id == id }
+                            if (m?.bloqueada == true) viewModel.avisarMesaBloqueada()
+                            else onOpenMesa(id)
+                        },
                         onEdit = { mesaEditando = it },
-                        onDelete = { mesaBorrando = it }
+                        onDelete = { mesaBorrando = it },
+                        onReservar = { mesaReservando = it },
+                        onCancelarReserva = { viewModel.cancelarReserva(it) },
+                        onBloquear = { viewModel.bloquear(it) },
+                        onDesbloquear = { viewModel.desbloquear(it) },
                     )
                 }
             }
@@ -796,6 +815,37 @@ fun MesasScreen(
             dismissButton = { TextButton(onClick = { mesaBorrando = null }) { Text(stringResource(R.string.menu_cancel)) } }
         )
     }
+
+    mesaReservando?.let { mesa ->
+        var nombreReserva by remember(mesa.id) { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { mesaReservando = null },
+            title = { Text(stringResource(R.string.mesas_reserve_title, mesa.nombreVisible)) },
+            text = {
+                OutlinedTextField(
+                    value = nombreReserva,
+                    onValueChange = { nombreReserva = it },
+                    label = { Text(stringResource(R.string.mesas_reserve_name)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.reservar(mesa, nombreReserva)
+                        mesaReservando = null
+                    },
+                    enabled = nombreReserva.isNotBlank()
+                ) { Text(stringResource(R.string.mesas_menu_reserve)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { mesaReservando = null }) {
+                    Text(stringResource(R.string.menu_cancel))
+                }
+            }
+        )
+    }
 }
 
 /**
@@ -807,7 +857,11 @@ private fun MesasListaView(
     mesas: List<Mesa>,
     onOpenMesa: (Long) -> Unit,
     onEdit: (Mesa) -> Unit,
-    onDelete: (Mesa) -> Unit
+    onDelete: (Mesa) -> Unit,
+    onReservar: (Mesa) -> Unit,
+    onCancelarReserva: (Mesa) -> Unit,
+    onBloquear: (Mesa) -> Unit,
+    onDesbloquear: (Mesa) -> Unit,
 ) {
     val porZona = mesas.groupBy { it.zona }
     LazyColumn(
@@ -825,7 +879,16 @@ private fun MesasListaView(
                 )
             }
             items(mesasZona, key = { it.id }) { mesa ->
-                MesaListaCard(mesa, onOpenMesa, onEdit, onDelete)
+                MesaListaCard(
+                    mesa = mesa,
+                    onOpenMesa = onOpenMesa,
+                    onEdit = onEdit,
+                    onDelete = onDelete,
+                    onReservar = onReservar,
+                    onCancelarReserva = onCancelarReserva,
+                    onBloquear = onBloquear,
+                    onDesbloquear = onDesbloquear,
+                )
             }
         }
     }
@@ -836,11 +899,17 @@ private fun MesaListaCard(
     mesa: Mesa,
     onOpenMesa: (Long) -> Unit,
     onEdit: (Mesa) -> Unit,
-    onDelete: (Mesa) -> Unit
+    onDelete: (Mesa) -> Unit,
+    onReservar: (Mesa) -> Unit,
+    onCancelarReserva: (Mesa) -> Unit,
+    onBloquear: (Mesa) -> Unit,
+    onDesbloquear: (Mesa) -> Unit,
 ) {
-    val accent = mesaStatusAccent(mesa.estado)
-    val fill = mesaStatusFill(mesa.estado)
+    val visual = mesaVisualStatus(mesa)
+    val accent = mesaStatusAccent(visual)
+    val fill = mesaStatusFill(visual)
     val onFill = mesaStatusOnFill()
+    var menuExpanded by remember { mutableStateOf(false) }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -868,29 +937,69 @@ private fun MesaListaCard(
                     color = onFill,
                 )
                 Text(
-                    "${formaLabel(mesa.forma)} ${mesa.capacidad}p · ${mesaEstadoLabel(mesa)}",
+                    "${formaLabel(mesa.forma)} ${mesa.capacidad}p · ${mesaVisualLabel(visual)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = onFill.copy(alpha = 0.7f)
                 )
             }
-            StatusChip(text = mesaEstadoLabel(mesa), accent = accent)
+            StatusChip(text = mesaVisualLabel(visual), accent = accent)
             if (mesa.comandaActivaId != null) {
                 Spacer(Modifier.width(8.dp))
                 Box(Modifier.size(8.dp).background(PcComandaDot, CircleShape))
             }
-            IconButton(onClick = { onEdit(mesa) }) {
-                Icon(Icons.Default.Edit, stringResource(R.string.mesas_menu_edit), tint = onFill)
-            }
-            IconButton(onClick = { onDelete(mesa) }) {
-                Icon(Icons.Default.Delete, stringResource(R.string.mesas_menu_delete), tint = MaterialTheme.colorScheme.error)
+            Box {
+                IconButton(onClick = { menuExpanded = true }) {
+                    Icon(Icons.Default.Menu, stringResource(R.string.mesas_menu_more), tint = onFill)
+                }
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.mesas_menu_edit)) },
+                        onClick = { menuExpanded = false; onEdit(mesa) }
+                    )
+                    when (visual) {
+                        MesaVisualStatus.LIBRE -> {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.mesas_menu_reserve)) },
+                                onClick = { menuExpanded = false; onReservar(mesa) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.mesas_menu_block)) },
+                                onClick = { menuExpanded = false; onBloquear(mesa) }
+                            )
+                        }
+                        MesaVisualStatus.RESERVADA -> {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.mesas_menu_cancel_reserve)) },
+                                onClick = { menuExpanded = false; onCancelarReserva(mesa) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.mesas_menu_block)) },
+                                onClick = { menuExpanded = false; onBloquear(mesa) }
+                            )
+                        }
+                        MesaVisualStatus.BLOQUEADA -> {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.mesas_menu_unblock)) },
+                                onClick = { menuExpanded = false; onDesbloquear(mesa) }
+                            )
+                        }
+                        else -> Unit
+                    }
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.mesas_menu_delete), color = MaterialTheme.colorScheme.error) },
+                        onClick = { menuExpanded = false; onDelete(mesa) }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun mesaEstadoLabel(mesa: Mesa): String = when (mesa.estado) {
-    MesaEstado.LIBRE -> stringResource(R.string.mesas_free)
-    MesaEstado.OCUPADA -> stringResource(R.string.mesas_occupied)
-    MesaEstado.EN_COCINA -> stringResource(R.string.mesas_in_kitchen)
+private fun mesaVisualLabel(status: MesaVisualStatus): String = when (status) {
+    MesaVisualStatus.LIBRE -> stringResource(R.string.mesas_free)
+    MesaVisualStatus.OCUPADA -> stringResource(R.string.mesas_occupied)
+    MesaVisualStatus.EN_COCINA -> stringResource(R.string.mesas_in_kitchen)
+    MesaVisualStatus.RESERVADA -> stringResource(R.string.mesas_reserved)
+    MesaVisualStatus.BLOQUEADA -> stringResource(R.string.mesas_blocked)
 }

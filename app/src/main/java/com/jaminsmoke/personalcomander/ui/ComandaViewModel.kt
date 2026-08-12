@@ -224,6 +224,18 @@ class ComandaViewModel(
         clearFeedbackVoz()
     }
 
+    private suspend fun marcarOcupada(mesaId: Long, comandaId: Long) {
+        convertirReservaSiActiva(mesaId)
+        db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, comandaId)
+    }
+
+    private suspend fun convertirReservaSiActiva(mesaId: Long) {
+        val mesa = db.mesaDao().getById(mesaId) ?: return
+        val rid = mesa.reservaActivaId ?: return
+        db.reservaDao().marcarConvertida(rid, System.currentTimeMillis())
+        db.mesaDao().setReservaActiva(mesaId, null)
+    }
+
     private suspend fun addProductosBatch(lineasVoz: List<LineaVoz>) {
         mutex.withLock {
             db.withTransaction {
@@ -231,11 +243,11 @@ class ComandaViewModel(
                 var p = db.pedidoDao().getActivo(mesaId)
                 if (p == null) {
                     val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
-                    db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, nuevoId)
+                    marcarOcupada(mesaId, nuevoId)
                     p = Pedido(id = nuevoId, mesaId = mesaId)
                 } else if (p.estado == PedidoEstado.ENVIADA) {
                     db.pedidoDao().update(p.copy(estado = PedidoEstado.ABIERTA))
-                    db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, p.id)
+                    marcarOcupada(mesaId, p.id)
                 }
                 val lineas = db.lineaPedidoDao().getForPedido(p.id)
                 for (lv in lineasVoz) {
@@ -296,12 +308,12 @@ class ComandaViewModel(
                         val pedidoActivo = if (p == null) {
                             if (cerrada) return@withTransaction
                             val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
-                            db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, nuevoId)
+                            marcarOcupada(mesaId, nuevoId)
                             Pedido(id = nuevoId, mesaId = mesaId)
                         } else {
                             if (p.estado == PedidoEstado.ENVIADA) {
                                 db.pedidoDao().update(p.copy(estado = PedidoEstado.ABIERTA))
-                                db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, p.id)
+                                marcarOcupada(mesaId, p.id)
                             }
                             p
                         }
@@ -378,7 +390,7 @@ class ComandaViewModel(
                     try {
                         val p = db.pedidoDao().getLastCerrado(mesaId) ?: return@withTransaction
                         db.pedidoDao().update(p.copy(estado = PedidoEstado.ABIERTA, cerradoEn = null))
-                        db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, p.id)
+                        marcarOcupada(mesaId, p.id)
                         cerrada = false
                         _mostrarUndo.value = false
                         undoJob?.cancel()
