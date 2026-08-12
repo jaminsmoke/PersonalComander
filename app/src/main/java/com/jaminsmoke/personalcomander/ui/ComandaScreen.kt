@@ -71,6 +71,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -100,6 +101,9 @@ import com.jaminsmoke.personalcomander.data.LineaPedido
 import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.PedidoEstado
 import com.jaminsmoke.personalcomander.data.Producto
+import com.jaminsmoke.personalcomander.ui.components.PcPrimaryButton
+import com.jaminsmoke.personalcomander.ui.components.PcSecondaryButton
+import com.jaminsmoke.personalcomander.ui.theme.mesaAccent
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -231,16 +235,35 @@ fun ComandaScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
+            val estado = state.mesa?.estado
+            val accent = estado?.let { MaterialTheme.colorScheme.mesaAccent(it) }
+                ?: MaterialTheme.colorScheme.onSurfaceVariant
             TopAppBar(
                 title = {
                     Column {
-                        Text(stringResource(R.string.comanda_table_prefix, state.mesa?.nombreVisible ?: "#$mesaId"))
-                        Text(estadoLabel(state.mesa?.estado), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            stringResource(R.string.comanda_table_prefix, state.mesa?.nombreVisible ?: "#$mesaId"),
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            estadoLabel(estado),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = accent,
+                        )
                     }
                 },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.btn_back)) } }
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.btn_back))
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
             )
         }
     ) { padding ->
@@ -249,16 +272,28 @@ fun ComandaScreen(
             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(state.busqueda, viewModel::setBusqueda, Modifier.weight(1f), placeholder = { Text(stringResource(R.string.comanda_search_placeholder)) }, singleLine = true)
                 IconButton(onClick = { if (micPermissionGranted) iniciarVoz() else permissionLauncher.launch(Manifest.permission.RECORD_AUDIO) }, enabled = !state.escuchandoVoz) {
-                    Icon(Icons.Default.Mic, stringResource(R.string.comanda_voice_talk), tint = if (state.escuchandoVoz) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+                    Icon(
+                        Icons.Default.Mic,
+                        stringResource(R.string.comanda_voice_talk),
+                        tint = if (state.escuchandoVoz) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary,
+                    )
                 }
             }
 
             // Processing card
             if (state.procesandoVoz) {
-                Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                Card(
+                    Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                ) {
                     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Mic, null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                        Text(stringResource(R.string.comanda_processing), Modifier.padding(start = 8.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        Icon(Icons.Default.Mic, null, tint = MaterialTheme.colorScheme.secondary)
+                        Text(
+                            stringResource(R.string.comanda_processing),
+                            Modifier.padding(start = 8.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
                     }
                 }
             }
@@ -284,7 +319,7 @@ fun ComandaScreen(
                     else -> MaterialTheme.colorScheme.outline
                 }
                 val micTint = when {
-                    esCercana || btConectado -> MaterialTheme.colorScheme.primary
+                    esCercana || btConectado -> MaterialTheme.colorScheme.secondary
                     esLejana -> MaterialTheme.colorScheme.error
                     else -> MaterialTheme.colorScheme.onSurfaceVariant
                 }
@@ -337,7 +372,7 @@ fun ComandaScreen(
                             for (i in 0 until 5) {
                                 val altura = ((rmsAnim / 15f).coerceIn(0.08f, 1f) * 28.dp.value).dp
                                 val barColor = when {
-                                    esCercana || btConectado -> MaterialTheme.colorScheme.primary
+                                    esCercana || btConectado -> MaterialTheme.colorScheme.secondary
                                     esLejana -> MaterialTheme.colorScheme.error
                                     else -> MaterialTheme.colorScheme.outline
                                 }
@@ -441,14 +476,14 @@ fun ComandaScreen(
                             Tab(selected = state.categoria == null, onClick = { viewModel.setCategoria(null) }) {
                                 Text(stringResource(R.string.comanda_all_categories), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                                     fontWeight = if (state.categoria == null) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (state.categoria == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                    color = if (state.categoria == null) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             state.categorias.forEach { cat ->
                                 val emoji = CategoriaIcono.de(cat)
                                 Tab(selected = state.categoria == cat, onClick = { viewModel.setCategoria(if (state.categoria == cat) null else cat) }) {
                                     Text("$emoji $cat", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                                         fontWeight = if (state.categoria == cat) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (state.categoria == cat) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                        color = if (state.categoria == cat) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         }
@@ -472,8 +507,8 @@ fun ComandaScreen(
                             ) {
                                 agrupados.forEach { (categoria, prods) ->
                                     stickyHeader {
-                                        Surface(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface) {
-                                            Text("${CategoriaIcono.de(categoria)} $categoria", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp))
+                                        Surface(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surfaceContainerLowest) {
+                                            Text("${CategoriaIcono.de(categoria)} $categoria", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp))
                                         }
                                     }
                                     items(prods, key = { it.id }) { p -> ProductoRow(p, onClick = { viewModel.addProducto(p) }) }
@@ -524,27 +559,37 @@ fun ComandaScreen(
 
 @Composable
 private fun ProductoRow(producto: Producto, onClick: () -> Unit) {
-    Card(Modifier.fillMaxWidth().clickable(onClick = onClick), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+    val scheme = MaterialTheme.colorScheme
+    Card(
+        Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = scheme.surfaceContainer),
+    ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(producto.nombre, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("${CategoriaIcono.de(producto.categoria)} ${producto.categoria}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(producto.nombre, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis, color = scheme.onSurface)
+                Text("${CategoriaIcono.de(producto.categoria)} ${producto.categoria}", style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant)
             }
-            Text(producto.precio.formatoEuro(), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-            Icon(Icons.Default.Add, stringResource(R.string.btn_add), Modifier.padding(start = 6.dp).size(20.dp), tint = MaterialTheme.colorScheme.primary)
+            Text(producto.precio.formatoEuro(), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = scheme.secondary)
+            Icon(Icons.Default.Add, stringResource(R.string.btn_add), Modifier.padding(start = 6.dp).size(20.dp), tint = scheme.secondary)
         }
     }
 }
 
 @Composable
 private fun ProductoGridCard(producto: Producto, onClick: () -> Unit) {
-    Card(Modifier.fillMaxWidth().clickable(onClick = onClick), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+    val scheme = MaterialTheme.colorScheme
+    Card(
+        Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = scheme.surfaceContainer),
+    ) {
         Column(Modifier.fillMaxWidth().padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(CategoriaIcono.de(producto.categoria), style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(4.dp))
-            Text(producto.nombre, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+            Text(producto.nombre, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, color = scheme.onSurface)
             Spacer(Modifier.height(4.dp))
-            Text(producto.precio.formatoEuro(), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Text(producto.precio.formatoEuro(), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = scheme.secondary)
         }
     }
 }
@@ -556,24 +601,36 @@ private fun ComandaPanel(
     onEnviarACocina: () -> Unit, onCerrarMesa: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, shadowElevation = 8.dp) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(color = scheme.surfaceContainerLowest, shadowElevation = 8.dp) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
-            Text(stringResource(R.string.comanda_panel_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            if (lineas.isEmpty()) Text(stringResource(R.string.comanda_empty), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 8.dp))
-            else LazyColumn(Modifier.heightIn(max = 160.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                items(lineas, key = { it.id }) { linea -> LineaRow(linea, { onAumentar(linea) }, { onDisminuir(linea) }) }
+            Text(stringResource(R.string.comanda_panel_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = scheme.onSurface)
+            if (lineas.isEmpty()) {
+                Text(stringResource(R.string.comanda_empty), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 8.dp))
+            } else {
+                LazyColumn(Modifier.heightIn(max = 160.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    items(lineas, key = { it.id }) { linea -> LineaRow(linea, { onAumentar(linea) }, { onDisminuir(linea) }) }
+                }
             }
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.comanda_total_label), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.comanda_total_label), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface)
                 Spacer(Modifier.weight(1f))
-                Text(total.formatoEuro(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(total.formatoEuro(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = scheme.secondary)
             }
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val hay = pedidoEstado != null && lineas.isNotEmpty()
-                Button(onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onEnviarACocina() }, Modifier.weight(1f), enabled = hay && pedidoEstado == PedidoEstado.ABIERTA) {
-                    Text(if (pedidoEstado == PedidoEstado.ENVIADA) stringResource(R.string.comanda_in_kitchen) else stringResource(R.string.comanda_send_to_kitchen))
-                }
-                OutlinedButton(onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onCerrarMesa() }, Modifier.weight(1f), enabled = pedidoEstado != null) { Text(stringResource(R.string.comanda_close_table)) }
+                PcPrimaryButton(
+                    text = if (pedidoEstado == PedidoEstado.ENVIADA) stringResource(R.string.comanda_in_kitchen) else stringResource(R.string.comanda_send_to_kitchen),
+                    onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onEnviarACocina() },
+                    enabled = hay && pedidoEstado == PedidoEstado.ABIERTA,
+                    modifier = Modifier.weight(1f),
+                )
+                PcSecondaryButton(
+                    text = stringResource(R.string.comanda_close_table),
+                    onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onCerrarMesa() },
+                    enabled = pedidoEstado != null,
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
     }
@@ -581,27 +638,30 @@ private fun ComandaPanel(
 
 @Composable
 private fun LineaRow(linea: LineaPedido, onAumentar: () -> Unit, onDisminuir: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text("${linea.cantidad}×", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        Text(linea.nombreProducto, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
-        Text((linea.precioUnitario * linea.cantidad).formatoEuro(), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+        Text("${linea.cantidad}×", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = scheme.secondary)
+        Text(linea.nombreProducto, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, color = scheme.onSurface, modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
+        Text((linea.precioUnitario * linea.cantidad).formatoEuro(), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = scheme.onSurface)
         IconButton(onClick = onDisminuir, Modifier.size(32.dp)) { Icon(Icons.Default.Clear, stringResource(R.string.btn_remove), Modifier.size(18.dp)) }
-        IconButton(onClick = onAumentar, Modifier.size(32.dp)) { Icon(Icons.Default.Add, stringResource(R.string.btn_add), Modifier.size(18.dp)) }
+        IconButton(onClick = onAumentar, Modifier.size(32.dp)) { Icon(Icons.Default.Add, stringResource(R.string.btn_add), Modifier.size(18.dp), tint = scheme.secondary) }
     }
 }
 
 @Composable
 private fun CategorySidebarItem(label: String, selected: Boolean, onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
     Surface(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(10.dp),
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+        color = if (selected) scheme.primaryContainer else scheme.surfaceContainer,
+        border = if (selected) androidx.compose.foundation.BorderStroke(1.dp, scheme.secondary.copy(alpha = 0.4f)) else null,
     ) {
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (selected) scheme.secondary else scheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis

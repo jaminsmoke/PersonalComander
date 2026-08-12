@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.jaminsmoke.personalcomander.ui.components.PcPrimaryButton
 
 @Composable
 fun EmptyState(
@@ -38,7 +38,7 @@ fun EmptyState(
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.55f)
         )
         Spacer(Modifier.height(16.dp))
         Text(
@@ -56,9 +56,7 @@ fun EmptyState(
         )
         if (actionLabel != null && onAction != null) {
             Spacer(Modifier.height(24.dp))
-            Button(onClick = onAction) {
-                Text(actionLabel)
-            }
+            PcPrimaryButton(text = actionLabel, onClick = onAction)
         }
     }
 }

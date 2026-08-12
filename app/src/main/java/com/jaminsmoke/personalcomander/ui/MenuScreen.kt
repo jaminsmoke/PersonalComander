@@ -1,13 +1,19 @@
 package com.jaminsmoke.personalcomander.ui
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -15,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Restaurant
@@ -35,6 +40,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -42,17 +48,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.res.stringResource
-import com.jaminsmoke.personalcomander.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Producto
+import com.jaminsmoke.personalcomander.ui.components.PcGoldFab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,10 +82,26 @@ fun MenuScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            PcGoldFab(
+                onClick = {
+                    editando = null
+                    dialogVisible = true
+                },
+                contentDescription = stringResource(R.string.menu_new_product),
+            )
+        },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.menu_title)) },
+                title = {
+                    Text(
+                        stringResource(R.string.menu_title),
+                        color = MaterialTheme.colorScheme.secondary,
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) {
@@ -87,14 +109,10 @@ fun MenuScreen(
                         }
                     }
                 },
-                actions = {
-                    IconButton(onClick = {
-                        editando = null
-                        dialogVisible = true
-                    }) {
-                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.menu_new_product))
-                    }
-                }
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                    titleContentColor = MaterialTheme.colorScheme.secondary,
+                ),
             )
         }
     ) { padding ->
@@ -176,23 +194,28 @@ private fun MenuProductoRow(
     onToggleDisponible: () -> Unit,
     onEliminar: () -> Unit
 ) {
-    val textoColor = if (producto.disponible) Color.Unspecified
-    else MaterialTheme.colorScheme.onSurfaceVariant
+    val scheme = MaterialTheme.colorScheme
+    val accent = if (producto.disponible) scheme.tertiary else scheme.outline
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (producto.disponible) MaterialTheme.colorScheme.surfaceVariant
-            else MaterialTheme.colorScheme.surface
-        )
+        colors = CardDefaults.cardColors(containerColor = scheme.surfaceContainer),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.25f)),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 14.dp, top = 4.dp, bottom = 4.dp, end = 4.dp),
+                .padding(start = 12.dp, top = 6.dp, bottom = 6.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Box(
+                Modifier
+                    .width(4.dp)
+                    .height(40.dp)
+                    .background(accent, RoundedCornerShape(2.dp))
+            )
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = producto.nombre,
@@ -200,19 +223,19 @@ private fun MenuProductoRow(
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    color = textoColor
+                    color = if (producto.disponible) scheme.onSurface else scheme.onSurfaceVariant,
                 )
                 Text(
                     text = if (producto.disponible) producto.categoria else stringResource(R.string.menu_hidden_label, producto.categoria),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = scheme.onSurfaceVariant
                 )
             }
             Text(
                 text = producto.precio.formatoEuro(),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = textoColor,
+                color = if (producto.disponible) scheme.secondary else scheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
             Checkbox(
@@ -226,7 +249,7 @@ private fun MenuProductoRow(
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = stringResource(R.string.btn_delete),
-                    tint = MaterialTheme.colorScheme.error
+                    tint = scheme.error
                 )
             }
         }
