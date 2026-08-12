@@ -3,17 +3,23 @@
 package com.jaminsmoke.personalcomander.ui
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothProfile
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,8 +27,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -31,6 +37,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Button
@@ -43,7 +50,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -55,11 +62,13 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -77,6 +86,7 @@ import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.PedidoEstado
 import com.jaminsmoke.personalcomander.data.Producto
 
+@SuppressLint("MissingPermission")
 @Composable
 fun ComandaScreen(
     mesaId: Long,
@@ -97,13 +107,30 @@ fun ComandaScreen(
     }
 
     var textoParcial by remember { mutableStateOf<String?>(null) }
+    var rmsActual by remember { mutableFloatStateOf(0f) }
     val recognizer = remember { VozRecognizer(context) }
     DisposableEffect(Unit) { onDispose { recognizer.destruir() } }
 
+    // Detectar Bluetooth conectado (mejor esfuerzo, sin permiso BLUETOOTH_CONNECT)
+    @Suppress("DEPRECATION")
+    val btAdapter = remember { BluetoothAdapter.getDefaultAdapter() }
+    val btConectado = remember {
+        if (btAdapter?.isEnabled == true) {
+            runCatching {
+                btAdapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothAdapter.STATE_CONNECTED
+            }.getOrDefault(false)
+        } else false
+    }
+
     val iniciarVoz: () -> Unit = {
-        textoParcial = null; viewModel.setEscuchandoVoz(true)
+        textoParcial = null; rmsActual = 0f; viewModel.setEscuchandoVoz(true)
+        recognizer.onRms = { rmsActual = it }
         recognizer.onParcial = { textoParcial = it }
-        recognizer.onResultado = { textoParcial = null; viewModel.setEscuchandoVoz(false); viewModel.procesarVoz(it) }
+        recognizer.onResultado = {
+            textoParcial = null; viewModel.setEscuchandoVoz(false)
+            val cercana = recognizer.vozCercana || btConectado
+            viewModel.procesarVoz(it, cercana)
+        }
         recognizer.onError = { textoParcial = null; viewModel.setEscuchandoVoz(false); viewModel.informar(mensajeErrorVoz(context, it)) }
         recognizer.empezar()
     }
@@ -142,18 +169,53 @@ fun ComandaScreen(
                 }
             }
 
-            // Listening card
-            if (state.escuchandoVoz) {
-                Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+            // Processing card
+            if (state.procesandoVoz) {
+                Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
                     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Mic, null, tint = MaterialTheme.colorScheme.onErrorContainer)
+                        Icon(Icons.Default.Mic, null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                        Text(stringResource(R.string.comanda_processing), Modifier.padding(start = 8.dp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                    }
+                }
+            }
+
+            // Listening card
+            if (state.escuchandoVoz && !state.procesandoVoz) {
+                val rmsAnim by animateFloatAsState(rmsActual, animationSpec = tween(150), label = "rms")
+                val cercaniaColor = when {
+                    btConectado -> MaterialTheme.colorScheme.tertiaryContainer
+                    rmsActual >= RMS_UMBRAL_CERCANIA -> MaterialTheme.colorScheme.errorContainer
+                    else -> MaterialTheme.colorScheme.surfaceVariant
+                }
+                Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = cercaniaColor)) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Mic, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
-                            Text(stringResource(R.string.comanda_listening), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(stringResource(R.string.comanda_listening), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                                if (btConectado) {
+                                    Icon(Icons.Default.Bluetooth, null, Modifier.size(16.dp).padding(start = 4.dp), tint = MaterialTheme.colorScheme.tertiary)
+                                }
+                            }
                             val parcial = textoParcial
                             if (parcial != null) {
-                                Text(parcial, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                Text(parcial, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f), maxLines = 2, overflow = TextOverflow.Ellipsis)
                             } else {
-                                Text(stringResource(R.string.comanda_voice_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.6f))
+                                Text(stringResource(R.string.comanda_voice_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                            }
+                            // Barras de RMS
+                            Spacer(Modifier.height(4.dp))
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.Bottom) {
+                                for (i in 0 until 5) {
+                                    val altura = ((rmsAnim / 15f).coerceIn(0.1f, 1f) * (12 + i * 8).dp.value).dp
+                                    Box(Modifier.width(3.dp).height(altura).clip(RoundedCornerShape(2.dp)).background(
+                                        if (rmsActual >= RMS_UMBRAL_CERCANIA || btConectado) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.outline
+                                    ))
+                                }
+                            }
+                            if (!btConectado && rmsActual > 0f && rmsActual < RMS_UMBRAL_CERCANIA) {
+                                Text(stringResource(R.string.comanda_rms_low), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 2.dp))
                             }
                         }
                         OutlinedButton(onClick = detenerVoz) { Text(stringResource(R.string.comanda_cancel)) }
@@ -215,7 +277,7 @@ fun ComandaScreen(
                 } else {
                     // Phone: tabs at top
                     Column(Modifier.fillMaxSize()) {
-                        ScrollableTabRow(
+                        PrimaryScrollableTabRow(
                             selectedTabIndex = state.categorias.indexOf(state.categoria).coerceAtLeast(0),
                             modifier = Modifier.fillMaxWidth(),
                             edgePadding = 12.dp, divider = {}, indicator = {}

@@ -22,7 +22,6 @@
     <string name="mesas_in_kitchen">In kitchen</string>
     <string name="mesas_all_zones">📍 All</string>
     <string name="mesas_alias_title">Alias for %s</string>
-    <string name="mesas_alias_desc">Set a custom name. It will be cleared when the table closes.</string>
     <string name="mesas_alias_label">Name (optional)</string>
     <string name="mesas_capacidad_label">Capacity (people)</string>
     <string name="mesas_zone_label">Zone</string>
@@ -61,7 +60,8 @@
     <string name="comanda_search_placeholder">Search product…</string>
     <string name="comanda_voice_talk">Voice order</string>
     <string name="comanda_listening">Listening…</string>
-    <string name="comanda_voice_hint">Say the order, e.g. \"two lattes and a cheesecake\"</string>
+    <string name="comanda_voice_hint">Say \"add\" + your order, e.g. \"add two lattes\"</string>
+    <string name="comanda_rms_low">Move closer to the device for better capture</string>
     <string name="comanda_cancel">Cancel</string>
     <string name="comanda_panel_title">Order</string>
     <string name="comanda_empty">No items. Tap a product to add it.</string>
@@ -74,6 +74,15 @@
     <string name="comanda_voice_partial">«%1$s» → Added: %2$s · Unrecognized: %3$s</string>
     <string name="comanda_voice_unrecognized">«%1$s» → Could not recognize: %2$s</string>
     <string name="comanda_voice_not_understood">«%s» → Could not understand the order</string>
+    <string name="comanda_voice_no_keyword">«%s» → Say \"add\" before the order so I can recognize it</string>
+    <string name="comanda_processing">Processing…</string>
+    <string name="comanda_voice_removed">«%1$s» → Removed: %2$s</string>
+    <string name="comanda_voice_remove_partial">«%1$s» → Removed: %2$s · Unrecognized: %3$s</string>
+    <string name="comanda_voice_remove_unrecognized">«%1$s» → Could not recognize: %2$s</string>
+    <string name="comanda_voice_removed_all">Order cleared by voice</string>
+    <string name="comanda_voice_no_order">No active order to remove products from</string>
+    <string name="comanda_voice_sent_cant_remove">Order already sent to kitchen, cannot modify</string>
+    <string name="comanda_voice_far">«%1$s» → Distant voice. Use a headset or move closer.</string>
 
     <!-- Settings Screen -->
     <string name="ajustes_title">Settings</string>
@@ -108,7 +117,7 @@
     <string name="sync_cannot_read_json">Could not read JSON from %s</string>
     <string name="sync_no_mapping">The selected program has no mapping</string>
     <string name="sync_cannot_download_db">Could not download database from %s</string>
-    <string name="sync_table_not_found">Table \'%s\' does not exist. Available: %s</string>
+    <string name="sync_table_not_found">Table \'%1$s\' does not exist. Available: %2$s</string>
     <string name="sync_error">Sync error: %s</string>
     <string name="import_error_read">Error reading file: %s</string>
     <string name="import_error_apply">Error importing: %s</string>
@@ -118,7 +127,6 @@
     <string name="error_update_table">Error updating table: %s</string>
     <string name="error_delete_table">Error deleting table: %s</string>
     <string name="error_delete_table_active">Cannot delete a table with an active order. Close it first.</string>
-    <string name="error_reorder_table">Error reordering: %s</string>
     <string name="error_move_table">Error moving table: %s</string>
     <string name="error_rotate_table">Error rotating table: %s</string>
     <string name="error_create_table">Error creating table: %s</string>

@@ -42,6 +42,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -49,7 +50,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
@@ -162,7 +163,7 @@ fun MesasScreen(
             Column(Modifier.fillMaxSize()) {
                 // Zone tabs
                 if (zonas.size > 1) {
-                    ScrollableTabRow(
+                    PrimaryScrollableTabRow(
                         selectedTabIndex = zonas.indexOf(zonaSeleccionada).coerceAtLeast(0),
                         modifier = Modifier.fillMaxWidth(),
                         edgePadding = 12.dp, divider = {}, indicator = {}
@@ -450,7 +451,7 @@ fun MesasScreen(
                             onValueChange = { createZona = it; zonaExpanded = true },
                             label = { Text(stringResource(R.string.mesas_zone_label)) },
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true),
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = zonaExpanded) }
                         )
                         val filtered = if (createZona.isBlank()) zonas

@@ -9,188 +9,9 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import com.jaminsmoke.personalcomander.R
-import com.jaminsmoke.personalcomander.data.Producto
-import com.jaminsmoke.personalcomander.data.normalizarNombre
 
-/** Delegada a [normalizarNombre] en data — unifica la normalización de texto en un solo sitio. */
-fun normalizar(texto: String): String = normalizarNombre(texto)
-
-/** Distancia de Levenshtein (coste mínimo de ediciones) entre dos textos. */
-fun levenshtein(a: String, b: String): Int {
-    if (a == b) return 0
-    val dp = IntArray(b.length + 1) { it }
-    for (i in 1..a.length) {
-        var prev = dp[0]
-        dp[0] = i
-        for (j in 1..b.length) {
-            val temp = dp[j]
-            dp[j] = minOf(
-                dp[j] + 1,
-                dp[j - 1] + 1,
-                prev + if (a[i - 1] == b[j - 1]) 0 else 1
-            )
-            prev = temp
-        }
-    }
-    return dp[b.length]
-}
-
-private val numerosTexto = mapOf(
-    "un" to 1, "una" to 1, "uno" to 1, "unas" to 1, "unos" to 1,
-    "dos" to 2, "tres" to 3, "cuatro" to 4, "cinco" to 5,
-    "seis" to 6, "siete" to 7, "ocho" to 8, "nueve" to 9, "diez" to 10,
-    "once" to 11, "doce" to 12, "trece" to 13, "catorce" to 14, "quince" to 15
-)
-
-private val palabrasRelleno = setOf(
-    "y", "e", "el", "la", "los", "las", "un", "una", "uno", "de", "del",
-    "a", "al", "por", "para", "quiero", "quisiera", "me", "pongo",
-    "pon", "ponme", "pongame", "trae", "traeme", "necesito", "tambien",
-    "mas", "otra", "otro", "luego", "despues", "yadme", "deme"
-)
-
-data class LineaVoz(val producto: Producto, val cantidad: Int)
-
-data class ResultadoVoz(
-    val lineas: List<LineaVoz>,
-    val noEntendido: List<String>
-)
-
-/**
- * Convierte una comanda hablada en líneas de productos.
- * Ej.: "dos cafés con leche y una tarta de queso" ->
- *      [(Café con leche, 2), (Tarta de queso, 1)]
- */
-fun parsearComanda(texto: String, productos: List<Producto>): ResultadoVoz {
-    val tokens = normalizar(texto).split(" ")
-    if (tokens.all { it.isEmpty() }) return ResultadoVoz(emptyList(), emptyList())
-
-    val productosTokens = productos.map { p -> normalizar(p.nombre).split(" ") to p }
-
-    val lineas = mutableListOf<LineaVoz>()
-    val noEntendido = mutableListOf<String>()
-    var i = 0
-    var qty = 1
-
-    while (i < tokens.size) {
-        val tok = tokens[i]
-
-        val numero = tok.toIntOrNull() ?: numerosTexto[tok]
-        if (numero != null) {
-            qty = numero
-            i++
-            continue
-        }
-
-        val matchExacto = buscarExacto(tokens, i, productosTokens)
-        if (matchExacto != null) {
-            lineas.add(LineaVoz(matchExacto.second, qty))
-            qty = 1
-            i += matchExacto.first
-            continue
-        }
-
-        val matchDifuso = buscarDifuso(tokens, i, productosTokens)
-        if (matchDifuso != null) {
-            lineas.add(LineaVoz(matchDifuso.second, qty))
-            qty = 1
-            i += matchDifuso.first
-            continue
-        }
-
-        if (tok in palabrasRelleno) {
-            i++
-            continue
-        }
-        noEntendido.add(tok)
-        i++
-    }
-    return ResultadoVoz(lineas, noEntendido)
-}
-
-/** Empareja desde i el nombre de producto contiguo más largo (coincidencia exacta de tokens). */
-private fun buscarExacto(
-    tokens: List<String>,
-    i: Int,
-    productosTokens: List<Pair<List<String>, Producto>>
-): Pair<Int, Producto>? {
-    var mejor: Pair<Int, Producto>? = null
-    for ((tokensProd, p) in productosTokens) {
-        if (i + tokensProd.size > tokens.size) continue
-        if (tokens.subList(i, i + tokensProd.size) == tokensProd) {
-            if (mejor == null || tokensProd.size > mejor.first) {
-                mejor = tokensProd.size to p
-            }
-        }
-    }
-    return mejor
-}
-
-/**
- * Empareja desde i permitiendo errores de voz (plurales, palabras pegadas, erratas).
- * Tolerancia aumentada para ambientes con ruido: len + 1 (más permisivo).
- * Ante empate de distancia prefiere consumir más tokens (la comanda más larga).
- */
-private fun buscarDifuso(
-    tokens: List<String>,
-    i: Int,
-    productosTokens: List<Pair<List<String>, Producto>>
-): Pair<Int, Producto>? {
-    var mejor: Pair<Int, Producto>? = null
-    var mejorDist = Int.MAX_VALUE
-    var mejorLen = 0
-    for ((tokensProd, p) in productosTokens) {
-        val maxLen = minOf(tokensProd.size, tokens.size - i)
-        val objetivoFull = tokensProd.joinToString(" ")
-        for (len in 1..maxLen) {
-            val sub = tokens.subList(i, i + len).joinToString(" ")
-            val subSingular = if (sub.length > 1 && sub.endsWith("s")) {
-                sub.dropLast(1)
-            } else {
-                sub
-            }
-            val objetivo = tokensProd.take(len).joinToString(" ")
-            val d = minOf(
-                levenshtein(sub, objetivo),
-                levenshtein(sub, objetivoFull),
-                levenshtein(subSingular, objetivoFull)
-            )
-            // Tolerancia aumentada: len + 1 para ambientes ruidosos
-            val tolerancia = len + 1
-            if (d <= tolerancia && (d < mejorDist || (d == mejorDist && len > mejorLen))) {
-                mejorDist = d
-                mejorLen = len
-                mejor = len to p
-            }
-        }
-    }
-    return mejor
-}
-
-/**
- * Devuelve un score de coincidencia para la búsqueda (menor = mejor).
- * null = sin coincidencia.
- */
-fun coincidenciaBusqueda(query: String, producto: Producto): Int? {
-    val q = normalizar(query)
-    if (q.isEmpty()) return 0
-    val nombre = normalizar(producto.nombre)
-    val categoria = normalizar(producto.categoria)
-
-    if (nombre.startsWith(q) || categoria.startsWith(q)) return 0
-    if (nombre.contains(q) || categoria.contains(q) || q.contains(nombre)) return 1
-
-    val qTokens = q.split(" ")
-    val pTokens = nombre.split(" ")
-    var dist = 0
-    for (t in qTokens) {
-        // Tolerancia aumentada para búsqueda manual en entorno ruidoso
-        val min = pTokens.minOfOrNull { levenshtein(t, it) } ?: return null
-        if (min > 3) return null
-        dist += min
-    }
-    return 2 + dist
-}
+/** Umbral de RMS (dB) por debajo del cual se considera ruido lejano, no voz del camarero. */
+const val RMS_UMBRAL_CERCANIA = 6.0f
 
 /** Envuelve SpeechRecognizer optimizado para ambientes con ruido de bar/restaurante. */
 class VozRecognizer(private val appContext: Context) {
@@ -199,6 +20,7 @@ class VozRecognizer(private val appContext: Context) {
     private var reintentos = 0
     private val maxReintentos = 1
     private val handler = Handler(Looper.getMainLooper())
+    private var rmsMax = 0f
     private val timeoutRunnable = Runnable {
         if (activo) {
             activo = false
@@ -207,22 +29,28 @@ class VozRecognizer(private val appContext: Context) {
         }
     }
 
+    /** true si el nivel máximo de voz captado sugiere un camarero cerca del dispositivo. */
+    val vozCercana: Boolean get() = rmsMax >= RMS_UMBRAL_CERCANIA
+
     var onResultado: ((String) -> Unit)? = null
     var onParcial: ((String) -> Unit)? = null
     var onError: ((Int) -> Unit)? = null
+    var onRms: ((Float) -> Unit)? = null
 
     init {
         speech?.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {}
             override fun onBeginningOfSpeech() { reintentos = 0 }
-            override fun onRmsChanged(rmsdB: Float) {}
+            override fun onRmsChanged(rmsdB: Float) {
+                if (rmsdB > rmsMax) rmsMax = rmsdB
+                onRms?.invoke(rmsdB)
+            }
             override fun onBufferReceived(buffer: ByteArray?) {}
             override fun onEndOfSpeech() {}
 
             override fun onError(error: Int) {
                 handler.removeCallbacks(timeoutRunnable)
                 activo = false
-                // Auto-retry en ambientes ruidosos: si no se entendió, reintentar una vez
                 if (error == SpeechRecognizer.ERROR_NO_MATCH && reintentos < maxReintentos) {
                     reintentos++
                     handler.postDelayed({ empezar() }, 300)
@@ -267,14 +95,13 @@ class VozRecognizer(private val appContext: Context) {
             return
         }
         activo = true
+        rmsMax = 0f
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, idioma)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, idioma)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-            // Optimizaciones para ambientes ruidosos
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-            // Silencio más corto = captura más rápida en entornos con ruido de fondo
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L)
         }

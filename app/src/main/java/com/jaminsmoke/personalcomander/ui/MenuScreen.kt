@@ -1,5 +1,6 @@
 package com.jaminsmoke.personalcomander.ui
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -232,6 +233,7 @@ private fun ProductoDialog(
     var error by remember { mutableStateOf<String?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
 
+    @SuppressLint("LocalContextGetResourceValueCall")
     fun guardar() {
         val p = parsePrecio(precio)
         error = when {

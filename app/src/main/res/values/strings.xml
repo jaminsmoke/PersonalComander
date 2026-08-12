@@ -22,7 +22,6 @@
     <string name="mesas_in_kitchen">En cocina</string>
     <string name="mesas_all_zones">📍 Todas</string>
     <string name="mesas_alias_title">Alias de %s</string>
-    <string name="mesas_alias_desc">Asigna un nombre personalizado. Se borrará al cerrar la mesa.</string>
     <string name="mesas_alias_label">Nombre (opcional)</string>
     <string name="mesas_capacidad_label">Capacidad (personas)</string>
     <string name="mesas_zone_label">Zona</string>
@@ -61,7 +60,8 @@
     <string name="comanda_search_placeholder">Buscar producto…</string>
     <string name="comanda_voice_talk">Hablar comanda</string>
     <string name="comanda_listening">Escuchando…</string>
-    <string name="comanda_voice_hint">Di la comanda, ej: «dos cafés con leche»</string>
+    <string name="comanda_voice_hint">Di «añade» + tu comanda, ej: «añade dos cafés»</string>
+    <string name="comanda_rms_low">Acerca el dispositivo para mejorar la captura</string>
     <string name="comanda_cancel">Cancelar</string>
     <string name="comanda_panel_title">Comanda</string>
     <string name="comanda_empty">Sin artículos. Toca un producto para añadirlo.</string>
@@ -74,6 +74,15 @@
     <string name="comanda_voice_partial">«%1$s» → Añadido: %2$s · No reconocido: %3$s</string>
     <string name="comanda_voice_unrecognized">«%1$s» → No reconocí: %2$s</string>
     <string name="comanda_voice_not_understood">«%s» → No entendí la comanda</string>
+    <string name="comanda_voice_no_keyword">«%s» → Di «añade» antes de la comanda para que te reconozca</string>
+    <string name="comanda_processing">Procesando…</string>
+    <string name="comanda_voice_removed">«%1$s» → Quitado: %2$s</string>
+    <string name="comanda_voice_remove_partial">«%1$s» → Quitado: %2$s · No reconocido: %3$s</string>
+    <string name="comanda_voice_remove_unrecognized">«%1$s» → No reconocí: %2$s</string>
+    <string name="comanda_voice_removed_all">Comanda vaciada por voz</string>
+    <string name="comanda_voice_no_order">No hay comanda activa para quitar productos</string>
+    <string name="comanda_voice_sent_cant_remove">La comanda ya está en cocina, no se puede modificar</string>
+    <string name="comanda_voice_far">«%1$s» → Voz lejana. Usa un manos libres o acerca el dispositivo.</string>
 
     <!-- Ajustes Screen -->
     <string name="ajustes_title">Ajustes</string>
@@ -108,7 +117,7 @@
     <string name="sync_cannot_read_json">No se pudo leer el JSON en %s</string>
     <string name="sync_no_mapping">El programa seleccionado no tiene mapeo</string>
     <string name="sync_cannot_download_db">No se pudo descargar la base de datos en %s</string>
-    <string name="sync_table_not_found">No existe la tabla \'%s\'. Disponibles: %s</string>
+    <string name="sync_table_not_found">No existe la tabla \'%1$s\'. Disponibles: %2$s</string>
     <string name="sync_error">Error de sincronización: %s</string>
     <string name="import_error_read">Error al leer archivo: %s</string>
     <string name="import_error_apply">Error al importar: %s</string>
@@ -118,7 +127,6 @@
     <string name="error_update_table">Error al actualizar mesa: %s</string>
     <string name="error_delete_table">Error al eliminar mesa: %s</string>
     <string name="error_delete_table_active">No se puede eliminar una mesa con comanda activa. Ciérrala primero.</string>
-    <string name="error_reorder_table">Error al reordenar: %s</string>
     <string name="error_move_table">Error al mover mesa: %s</string>
     <string name="error_rotate_table">Error al girar mesa: %s</string>
     <string name="error_create_table">Error al crear mesa: %s</string>

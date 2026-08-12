@@ -9,6 +9,7 @@ import com.jaminsmoke.personalcomander.PersonalComanderApp
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.AppDatabase
 import com.jaminsmoke.personalcomander.data.LineaPedido
+import com.jaminsmoke.personalcomander.data.normalizarNombre
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.Pedido
@@ -38,6 +39,7 @@ data class ComandaUiState(
     val busqueda: String = "",
     val categoria: String? = null,
     val escuchandoVoz: Boolean = false,
+    val procesandoVoz: Boolean = false,
     val feedbackVoz: String? = null,
     val error: String? = null
 ) {
@@ -56,7 +58,6 @@ class ComandaViewModel(
     private val mutex = Mutex()
     private var cerrada = false
 
-    /** Emite true cuando la mesa se ha cerrado exitosamente (para auto-navegar back) */
     private val _mesaCerrada = MutableStateFlow(false)
     val mesaCerrada: StateFlow<Boolean> = _mesaCerrada.asStateFlow()
 
@@ -75,6 +76,7 @@ class ComandaViewModel(
     private val _busqueda = MutableStateFlow("")
     private val _categoria = MutableStateFlow<String?>(null)
     private val _escuchandoVoz = MutableStateFlow(false)
+    private val _procesandoVoz = MutableStateFlow(false)
     private val _feedbackVoz = MutableStateFlow<String?>(null)
     private val _error = MutableStateFlow<String?>(null)
 
@@ -85,10 +87,9 @@ class ComandaViewModel(
             lineas,
             db.productoDao().observeAll()
         ) { mesa, p, ls, prods -> ComandaData(mesa, p, ls, prods) }
-            .distinctUntilChanged()  // O2: solo recalcula categorías/filtro si cambian datos reales
+            .distinctUntilChanged()
 
-        // Wrap feedbackVoz + error to keep them separate within 5-flow combine limit
-        val _snackState = combine(_feedbackVoz, _error) { f, e -> SnackState(f, e) }
+        val _snackState = combine(_feedbackVoz, _error, _procesandoVoz) { f, e, p -> SnackState(f, e, p) }
 
         combine(datos, _busqueda, _categoria, _escuchandoVoz, _snackState) { d, busqueda, categoria, escuchando, ss ->
             val cats = d.productos.map { it.categoria }.distinct()
@@ -102,13 +103,12 @@ class ComandaViewModel(
                 mesa = d.mesa, pedido = d.pedido, lineas = d.lineas,
                 categorias = cats, productos = filtrados,
                 busqueda = busqueda, categoria = categoria,
-                escuchandoVoz = escuchando, feedbackVoz = ss.feedbackVoz, error = ss.error
+                escuchandoVoz = escuchando, procesandoVoz = ss.procesando, feedbackVoz = ss.feedbackVoz, error = ss.error
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ComandaUiState())
     }
 
-    private data class SnackState(val feedbackVoz: String?, val error: String?)
-
+    private data class SnackState(val feedbackVoz: String?, val error: String?, val procesando: Boolean = false)
     private data class ComandaData(
         val mesa: Mesa?, val pedido: Pedido?,
         val lineas: List<LineaPedido>, val productos: List<Producto>
@@ -125,35 +125,99 @@ class ComandaViewModel(
 
     fun limpiarError() { _error.value = null }
 
-    fun procesarVoz(texto: String) {
+    fun procesarVoz(texto: String, vozCercana: Boolean = true) {
         viewModelScope.launch {
+            _procesandoVoz.value = true
             try {
-                val productos = db.productoDao().getAllDisponibles()
-                val resultado = parsearComanda(texto, productos)
-                if (resultado.lineas.isNotEmpty()) {
-                    addProductosBatch(resultado.lineas)
+                if (!vozCercana) {
+                    _feedbackVoz.value = ctx.getString(R.string.comanda_voice_far, texto)
+                    clearFeedbackVoz()
+                    _procesandoVoz.value = false
+                    return@launch
                 }
-                val resumen = resultado.lineas.joinToString(", ") { "${it.cantidad}× ${it.producto.nombre}" }
-                val pendientes = resultado.noEntendido.joinToString(" ")
-                _feedbackVoz.value = when {
-                    resumen.isEmpty() && pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_unrecognized, texto, pendientes)
-                    resumen.isEmpty() -> ctx.getString(R.string.comanda_voice_not_understood, texto)
-                    pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_partial, texto, resumen, pendientes)
-                    else -> ctx.getString(R.string.comanda_voice_added, texto, resumen)
+
+                val accion = extraerAccion(texto)
+                if (accion == null) {
+                    _feedbackVoz.value = ctx.getString(R.string.comanda_voice_no_keyword, texto)
+                    clearFeedbackVoz()
+                    _procesandoVoz.value = false
+                    return@launch
                 }
-                clearFeedbackVoz()
+
+                when (accion) {
+                    is AccionVoz.Anadir -> procesarAnadir(accion.texto, texto)
+                    is AccionVoz.Quitar -> procesarQuitar(accion.texto, texto)
+                }
             } catch (e: Exception) {
                 _error.value = ctx.getString(R.string.error_add_product, e.message ?: e.javaClass.simpleName)
+            } finally {
+                _procesandoVoz.value = false
             }
         }
     }
 
-    /** Inserta todas las líneas de voz en una sola transacción atómica. */
+    private suspend fun procesarAnadir(comanda: String, textoOriginal: String) {
+        val productos = db.productoDao().getAllDisponibles()
+        val resultado = parsearComanda(comanda, productos)
+        if (resultado.lineas.isNotEmpty()) {
+            addProductosBatch(resultado.lineas)
+        }
+        val resumen = resultado.lineas.joinToString(", ") { "${it.cantidad}× ${it.producto.nombre}" }
+        val pendientes = resultado.noEntendido.joinToString(" ")
+        _feedbackVoz.value = when {
+            resumen.isEmpty() && pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_unrecognized, textoOriginal, pendientes)
+            resumen.isEmpty() -> ctx.getString(R.string.comanda_voice_not_understood, textoOriginal)
+            pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_partial, textoOriginal, resumen, pendientes)
+            else -> ctx.getString(R.string.comanda_voice_added, textoOriginal, resumen)
+        }
+        clearFeedbackVoz()
+    }
+
+    private suspend fun procesarQuitar(comanda: String, textoOriginal: String) {
+        val p = db.pedidoDao().getActivo(mesaId) ?: run {
+            _feedbackVoz.value = ctx.getString(R.string.comanda_voice_no_order)
+            clearFeedbackVoz()
+            return
+        }
+        if (p.estado == PedidoEstado.ENVIADA) {
+            _feedbackVoz.value = ctx.getString(R.string.comanda_voice_sent_cant_remove)
+            clearFeedbackVoz()
+            return
+        }
+        val lineas = db.lineaPedidoDao().getForPedido(p.id)
+        if (lineas.isEmpty()) {
+            _feedbackVoz.value = ctx.getString(R.string.comanda_voice_no_order)
+            clearFeedbackVoz()
+            return
+        }
+
+        val primeraPalabra = comanda.split(" ").first()
+        if (primeraPalabra == "todo" || primeraPalabra == "todos" || primeraPalabra == "todas") {
+            removeAllLineas(lineas)
+            _feedbackVoz.value = ctx.getString(R.string.comanda_voice_removed_all)
+            clearFeedbackVoz()
+            return
+        }
+
+        val resultado = parsearQuitar(comanda, lineas)
+        if (resultado.lineas.isNotEmpty()) {
+            removeLineasBatch(resultado.lineas, lineas)
+        }
+        val resumen = resultado.lineas.joinToString(", ") { "${it.cantidad}× ${it.nombreProducto}" }
+        val pendientes = resultado.noEntendido.joinToString(" ")
+        _feedbackVoz.value = when {
+            resumen.isEmpty() && pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_remove_unrecognized, textoOriginal, pendientes)
+            resumen.isEmpty() -> ctx.getString(R.string.comanda_voice_not_understood, textoOriginal)
+            pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_remove_partial, textoOriginal, resumen, pendientes)
+            else -> ctx.getString(R.string.comanda_voice_removed, textoOriginal, resumen)
+        }
+        clearFeedbackVoz()
+    }
+
     private suspend fun addProductosBatch(lineasVoz: List<LineaVoz>) {
         mutex.withLock {
             db.withTransaction {
                 if (cerrada) return@withTransaction
-                // Ensure active pedido
                 var p = db.pedidoDao().getActivo(mesaId)
                 if (p == null) {
                     val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
@@ -163,7 +227,6 @@ class ComandaViewModel(
                     db.pedidoDao().update(p.copy(estado = PedidoEstado.ABIERTA))
                     db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, p.id)
                 }
-                // Insert/update all lines
                 val lineas = db.lineaPedidoDao().getForPedido(p.id)
                 for (lv in lineasVoz) {
                     val existente = lineas.firstOrNull { it.productoId == lv.producto.id }
@@ -176,6 +239,29 @@ class ComandaViewModel(
                         ))
                     }
                 }
+            }
+        }
+    }
+
+    private suspend fun removeLineasBatch(quitadas: List<LineaQuitar>, lineas: List<LineaPedido>) {
+        val cambios = resolverQuitar(quitadas, lineas)
+        mutex.withLock {
+            db.withTransaction {
+                for ((linea, nuevaCantidad) in cambios) {
+                    if (nuevaCantidad != null) {
+                        db.lineaPedidoDao().update(linea.copy(cantidad = nuevaCantidad))
+                    } else {
+                        db.lineaPedidoDao().delete(linea)
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun removeAllLineas(lineas: List<LineaPedido>) {
+        mutex.withLock {
+            db.withTransaction {
+                for (l in lineas) db.lineaPedidoDao().delete(l)
             }
         }
     }
@@ -197,7 +283,6 @@ class ComandaViewModel(
                             db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, nuevoId)
                             Pedido(id = nuevoId, mesaId = mesaId)
                         } else {
-                            // Reabrir pedido enviado: al añadir más productos, vuelve a ABIERTA
                             if (p.estado == PedidoEstado.ENVIADA) {
                                 db.pedidoDao().update(p.copy(estado = PedidoEstado.ABIERTA))
                                 db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, p.id)
@@ -265,7 +350,7 @@ class ComandaViewModel(
                         val p = db.pedidoDao().getActivo(mesaId) ?: return@withTransaction
                         db.pedidoDao().update(p.copy(estado = PedidoEstado.CERRADA, cerradoEn = System.currentTimeMillis()))
                         db.mesaDao().updateEstado(mesaId, MesaEstado.LIBRE, null)
-                        cerrada = true  // solo tras éxito: si falla, se puede reintentar
+                        cerrada = true
                         _mesaCerrada.value = true
                     } catch (e: Exception) {
                         _error.value = ctx.getString(R.string.error_close_table, e.message ?: e.javaClass.simpleName)
@@ -279,5 +364,31 @@ class ComandaViewModel(
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
             ComandaViewModel(app, mesaId) as T
+    }
+}
+
+/**
+ * Resuelve qué líneas modificar/eliminar dado un comando de quitar.
+ * Pura, sin dependencias de BD — testeable.
+ * @return lista de pares (linea original, nueva cantidad o null si se elimina)
+ */
+fun resolverQuitar(
+    quitadas: List<LineaQuitar>,
+    lineas: List<LineaPedido>
+): List<Pair<LineaPedido, Int?>> = buildList {
+    val resto = lineas.toMutableList()
+    for (lq in quitadas) {
+        val idx = resto.indexOfFirst {
+            normalizarNombre(it.nombreProducto) == normalizarNombre(lq.nombreProducto)
+        }
+        if (idx == -1) continue
+        val linea = resto[idx]
+        if (linea.cantidad > lq.cantidad) {
+            add(linea to (linea.cantidad - lq.cantidad))
+            resto[idx] = linea.copy(cantidad = linea.cantidad - lq.cantidad)
+        } else {
+            add(linea to null)
+            resto.removeAt(idx)
+        }
     }
 }
