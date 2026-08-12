@@ -465,3 +465,17 @@ internal fun zonaEmoji(zona: String): String = when {
     zona.contains("VIP", ignoreCase = true) || zona.contains("Reservado", ignoreCase = true) -> "\u2B50"
     else -> "\uD83D\uDCCD"
 }
+
+/**
+ * Placeholder shimmer para el board de mesas. Usa las dimensiones reales de las
+ * cartas (CARD_WIDTH × CARD_W) para que los skeletons coincidan con el layout final.
+ * @param modulo número de módulos de ancho (1 = mesa simple, 2 = rectangular, 3 = XL).
+ */
+@Composable
+internal fun MesaShimmerBox(modifier: Modifier = Modifier, modulo: Int = 1) {
+    ShimmerBox(
+        modifier = modifier.width((CARD_W * modulo).dp),
+        height = CARD_W.toInt(),
+        radius = 16
+    )
+}

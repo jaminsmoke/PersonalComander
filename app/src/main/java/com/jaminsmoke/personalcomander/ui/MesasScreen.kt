@@ -422,12 +422,9 @@ fun MesasScreen(
                         // Shimmer loading — only while data hasn't arrived yet
                         if (cargando) {
                             for (i in 0 until 12) {
-                                ShimmerBox(
+                                MesaShimmerBox(
                                     modifier = Modifier
                                         .offset(x = (CELL_F + (i % 4) * 160).dp, y = (CELL_F + (i / 4) * 160).dp)
-                                        .width(CARD_WIDTH),
-                                    height = 0,
-                                    radius = 16
                                 )
                             }
                         }
