@@ -97,24 +97,42 @@ El body debe contener una descripción **muy completa** del item y del problema 
 
 **Regla de oro**: NUNCA pasar de Debate a Roadmap sin preguntar al usuario y recibir su aprobación explícita.
 
-**Formato fijo de alternativas** — siempre presentar exactamente estas 3 opciones:
+**Investigación previa (obligatoria al entrar en Debate, antes de listar opciones)**:
 
-1. **Opción sólida** 🏗️ — la más correcta y robusta a largo plazo. Aunque suponga más trabajo, es la mejor desde el punto de vista de arquitectura, mantenibilidad y escalabilidad.
-2. **Opción rápida** ⚡ — la más rápida de implementar. Puede coincidir o no con la sólida. Prioriza velocidad sobre perfección.
-3. **Opción intermedia** ⚖️ — equilibrio entre solidez y velocidad. Solo cuando exista un punto medio real; si no hay, indicar "no aplica".
+Al pasar a Debate — y **antes** de redactar `Alternativas` — investigar a fondo la causa y el espacio de soluciones. Documentar en el body la sección `Investigación previa`:
+
+- Archivos, flujos y dependencias leídos (con rutas concretas).
+- Hipótesis de causa(s): los ítems suelen ser **multicausales**; no quedarse en el síntoma superficial.
+- Patrones del proyecto / ecosistema relevantes (Compose, Room, Material 3, etc.).
+- Restricciones reales (API, datos, UX en sala, alcance de versión).
+- Qué se descartó y por qué (aunque sea breve).
+- **Estrategia de rama / integración**: ¿el cambio justifica rama dedicada (`feature/...`) vs trabajo en `main`? Anotar propuesta (nombre de rama, merge a `main` al Changelog, PRs si aplica). En cambios grandes (rediseño UI, migraciones, features transversales) la rama dedicada es la opción por defecto a contemplar.
+
+Sin esta sección no se presentan las opciones. La investigación vive en Debate (no hincha Detectado); Detectado aporta el problema, Debate aporta el mapa de soluciones.
+
+**Formato fijo de alternativas** — siempre presentar exactamente estas **4** opciones (en este orden):
+
+1. **Solución raíz** 🌳 — va al origen del problema (modelo, arquitectura, navegación, contrato de datos, identidad de producto…). No se limita a “hacerlo bien dentro de lo que hay”; puede proponer rediseño o cambio de enfoque. Exige basarse en la `Investigación previa`. Si el problema es genuinamente superficial y no hay causa estructural, indicar **"no aplica"** con una frase de justificación (casi siempre sí conviene explorarla: un bug “simple” puede esconder una solución más robusta).
+2. **Opción sólida** 🏗️ — la más correcta y robusta **dentro del diseño actual** (o con cambios acotados). Mejor arquitectura/mantenibilidad/escalabilidad sin replantear el sistema entero.
+3. **Opción rápida** ⚡ — la más rápida de implementar. Puede coincidir o no con la sólida/raíz. Prioriza velocidad sobre perfección.
+4. **Opción intermedia** ⚖️ — equilibrio entre profundidad y velocidad. Solo cuando exista un punto medio real; si no hay, indicar "no aplica".
 
 Cada opción debe llevar:
 - Descripción clara de la solución
 - Número estimado de líneas/cambios
 - Pros (✅) y contras (⚠️)
 
-**Recomendación situacional**: al final, recomendar cuál elegir según el contexto:
-- Si es un **bug crítico en producción** → favorecer la opción rápida
-- Si es una **mejora sin urgencia** → favorecer la opción sólida
-- Si es **deuda técnica acumulada** → favorecer la opción intermedia
+**Recomendación situacional (revisar por ítem)**: al final, recomendar una opción **según el contexto concreto de ese ítem**, no por regla mecánica. Orientaciones de partida (siempre contrastarlas con lo hallado en la investigación):
+
+- Bug crítico en producción → suele favorecer la **rápida** (mitigar ya), sin ocultar si la raíz merece un follow-up.
+- Mejora sin urgencia → suele favorecer la **sólida** o la **raíz**, según si el diseño actual basta o hay que replantear.
+- Deuda técnica acumulada → suele favorecer la **intermedia** o la **raíz** si la deuda es estructural.
+- Rediseño / identidad de producto / problema multicausal profundo → valorar explícitamente la **raíz**.
+
+La recomendación debe citar **por qué** encaja este ítem (1–3 frases), no solo etiquetar el tipo.
 
 **Proceso**:
-- Añadir secciones `Análisis`, `Alternativas` (con las 3 opciones) y `Recomendación` al body.
+- Añadir secciones `Investigación previa`, `Análisis`, `Alternativas` (con las 4 opciones) y `Recomendación` al body.
 - **Parar y preguntar** al usuario. Solo cuando él decida, marcar `Decision: Aprobado` y mover a Roadmap.
 - Si `Decision: Cancelado` → documentar motivo, convertir a issue, cerrar, mover a Changelog.
 - Si `Decision: Diferido` → documentar motivo y condición, devolver a Detectado.
@@ -235,7 +253,7 @@ Each item's body evolves through the lifecycle. The CLI generates a template at 
 | Phase | Body sections | Reglas |
 |---|---|---|
 | **Detectado** | Contexto, Hallazgo y evidencia, Impacto, Alcance a debatir, Preguntas para Debate, Criterio para avanzar, Clasificación preliminar | Descripción MUY completa. No perder contexto. |
-| **Debate** | + Alternativas, Trade-offs, Recomendación | **PARAR y preguntar al usuario.** No avanzar sin aprobación explícita. |
+| **Debate** | + Investigación previa, Análisis, Alternativas (4: raíz / sólida / rápida / intermedia), Recomendación | Investigar antes de opciones. **PARAR y preguntar.** No avanzar sin aprobación explícita. |
 | **Roadmap** | + Decisión acordada, Plan aprobado, Criterios de aceptación, Plan de verificación, Riesgos y recuperación | Investigar a fondo. Añadir lo que falte al plan. |
 | **Ejecutando** | + Implementación (qué se hizo realmente, diferencias con el plan si las hay) | Convertir draft→issue al ENTRAR. Documentar cambios sobre el plan. |
 | **Verificando** | + Verificación (checklist de tests, typecheck, lint, comprobaciones específicas) | Ejecutar TODO lo aplicable. Arreglar errores preexistentes si se encuentran. |
