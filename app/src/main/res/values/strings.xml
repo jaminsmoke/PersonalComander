@@ -1,4 +1,7 @@
 <resources>
+    <string name="mesas_zoom_out">Alejar</string>
+    <string name="mesas_zoom_in">Acercar</string>
+    <string name="mesas_fit_grid">Ver todo el grid</string>
     <string name="app_name">Personal Comander</string>
 
     <!-- Home Screen -->

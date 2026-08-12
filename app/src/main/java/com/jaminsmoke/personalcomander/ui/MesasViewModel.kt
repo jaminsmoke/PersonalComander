@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 class MesasViewModel(application: Application) : AndroidViewModel(application) {
     private val db = (application as PersonalComanderApp).db
@@ -82,9 +83,46 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleGiro(mesa: Mesa) {
         viewModelScope.launch {
             try {
-                db.mesaDao().updateGiro(mesa.id, !mesa.girada)
+                db.withTransaction {
+                    val nuevoGiro = !mesa.girada
+                    val (w, h) = mesaDims(mesa.forma, nuevoGiro)
+                    val ocupadas = db.mesaDao().getPorZona(mesa.zona)
+                        .filter { it.id != mesa.id }
+                        .map {
+                            val (ow, oh) = mesaDims(it.forma, it.girada)
+                            listOf(it.posX, it.posY, ow, oh)
+                        }
+                    val (x, y) = findNearestFreeCell(mesa.posX, mesa.posY, w, h, ocupadas)
+                    db.mesaDao().updateGiro(mesa.id, nuevoGiro)
+                    if (x != mesa.posX || y != mesa.posY) {
+                        db.mesaDao().updatePosicion(mesa.id, x, y)
+                    }
+                }
             } catch (e: Exception) {
                 _mensaje.value = ctx.getString(R.string.error_rotate_table, e.message ?: e.javaClass.simpleName)
+            }
+        }
+    }
+
+    /** Corrige una sola vez posiciones antiguas que no respetaban el grid fijo. */
+    fun normalizarPosiciones(mesasZona: List<Mesa>) {
+        val normalizadas = normalizarMesasEnGrid(mesasZona)
+        val cambios = mesasZona.filter { mesa ->
+            val destino = normalizadas[mesa.id]
+            destino != null && (abs(destino.x - mesa.posX) >= 0.01f || abs(destino.y - mesa.posY) >= 0.01f)
+        }
+        if (cambios.isEmpty()) return
+
+        viewModelScope.launch {
+            try {
+                db.withTransaction {
+                    cambios.forEach { mesa ->
+                        val destino = normalizadas.getValue(mesa.id)
+                        db.mesaDao().updatePosicion(mesa.id, destino.x, destino.y)
+                    }
+                }
+            } catch (e: Exception) {
+                _mensaje.value = ctx.getString(R.string.error_move_table, e.message ?: e.javaClass.simpleName)
             }
         }
     }

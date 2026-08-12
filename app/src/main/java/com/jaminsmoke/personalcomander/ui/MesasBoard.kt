@@ -2,6 +2,8 @@ package com.jaminsmoke.personalcomander.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -48,6 +50,7 @@ import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
 import kotlin.math.abs
+import kotlin.math.floor
 import kotlin.math.roundToInt
 
 // Grid system: all positions snap to multiples of CELL
@@ -61,6 +64,44 @@ internal val CARD_W = 120f
 // distribución sin quedar corto, y encaja en pantalla con auto-fit.
 internal const val ZONA_ANCHO = 2000f
 internal const val ZONA_ALTO = 2600f
+internal const val MIN_BOARD_SCALE = 0.08f
+internal const val MAX_BOARD_SCALE = 3f
+
+/** Escala necesaria para encajar por completo el grid, conservando un margen visible. */
+internal fun calcularEscalaAjuste(
+    viewportW: Float,
+    viewportH: Float,
+    contentW: Float,
+    contentH: Float,
+    padding: Float = 0f
+): Float {
+    if (viewportW <= 0f || viewportH <= 0f || contentW <= 0f || contentH <= 0f) return 1f
+    val availableW = (viewportW - padding * 2f).coerceAtLeast(1f)
+    val availableH = (viewportH - padding * 2f).coerceAtLeast(1f)
+    return minOf(availableW / contentW, availableH / contentH)
+        .coerceIn(MIN_BOARD_SCALE, MAX_BOARD_SCALE)
+}
+
+/**
+ * Limita el pan a los bordes del grid. Si el grid cabe en el viewport, lo
+ * mantiene centrado en ese eje en lugar de pegarlo a la esquina superior.
+ */
+internal fun limitarPan(pan: Float, viewport: Float, content: Float): Float {
+    if (viewport <= 0f || content <= 0f) return 0f
+    return if (content <= viewport) {
+        (viewport - content) / 2f
+    } else {
+        pan.coerceIn(viewport - content, 0f)
+    }
+}
+
+/** Pan que conserva bajo los dedos el mismo punto del board al hacer zoom. */
+internal fun panTrasZoom(
+    pan: Float,
+    focoAnterior: Float,
+    focoActual: Float,
+    ratio: Float
+): Float = focoActual - (focoAnterior - pan) * ratio
 
 /** Altura en dp de una carta según su forma */
 internal fun mesaAltura(forma: MesaForma): Float = when (forma) {
@@ -111,7 +152,8 @@ internal fun MesaCard(
     onDragStarted: () -> Unit,
     onDrag: (Offset) -> Unit,
     onDragEnd: () -> Unit,
-    onRotateClick: () -> Unit
+    onRotateClick: () -> Unit,
+    onPointerActive: (Boolean) -> Unit
 ) {
     val color = mesaColor(mesa.estado)
     val label = when (mesa.estado) {
@@ -133,6 +175,19 @@ internal fun MesaCard(
             .height(cardHeight)
             .graphicsLayer {
                 if (isDragging) alpha = 0.4f
+            }
+            .pointerInput(mesa.id, "camera-guard") {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    onPointerActive(true)
+                    try {
+                        do {
+                            val event = awaitPointerEvent()
+                        } while (event.changes.any { it.pressed })
+                    } finally {
+                        onPointerActive(false)
+                    }
+                }
             }
             .pointerInput(mesa.id, "tap") {
                 detectTapGestures(onTap = { onClick() })
@@ -277,11 +332,11 @@ internal fun findNearestFreeCell(
     limiteX: Float = ZONA_ANCHO,
     limiteY: Float = ZONA_ALTO
 ): Pair<Float, Float> {
-    // Rango permitido: [CELL_F, limite - tamaño - margen]
-    val maxX = limiteX - draggedW - CELL_F
-    val maxY = limiteY - draggedH - CELL_F
-    val safeX = targetX.coerceIn(CELL_F, maxOf(CELL_F, maxX))
-    val safeY = targetY.coerceIn(CELL_F, maxOf(CELL_F, maxY))
+    // Rango permitido alineado a celdas completas: [CELL_F, maxGrid].
+    val maxX = maxOf(CELL_F, floor((limiteX - draggedW - CELL_F) / CELL_F) * CELL_F)
+    val maxY = maxOf(CELL_F, floor((limiteY - draggedH - CELL_F) / CELL_F) * CELL_F)
+    val safeX = ((targetX / CELL_F).roundToInt() * CELL_F).coerceIn(CELL_F, maxX)
+    val safeY = ((targetY / CELL_F).roundToInt() * CELL_F).coerceIn(CELL_F, maxY)
 
     fun hayColision(x: Float, y: Float): Boolean = occupied.any { o ->
         colisionan(x, y, draggedW, draggedH, o[0], o[1], o[2], o[3])
@@ -329,11 +384,28 @@ internal fun clampAlBorde(
     limiteX: Float = ZONA_ANCHO,
     limiteY: Float = ZONA_ALTO
 ): Pair<Float, Float> {
-    val maxX = maxOf(CELL_F, limiteX - w - CELL_F)
-    val maxY = maxOf(CELL_F, limiteY - h - CELL_F)
-    val cX = x.coerceIn(CELL_F, maxX)
-    val cY = y.coerceIn(CELL_F, maxY)
-    return (cX / CELL_F).roundToInt() * CELL_F to (cY / CELL_F).roundToInt() * CELL_F
+    val maxX = maxOf(CELL_F, floor((limiteX - w - CELL_F) / CELL_F) * CELL_F)
+    val maxY = maxOf(CELL_F, floor((limiteY - h - CELL_F) / CELL_F) * CELL_F)
+    val cX = ((x / CELL_F).roundToInt() * CELL_F).coerceIn(CELL_F, maxX)
+    val cY = ((y / CELL_F).roundToInt() * CELL_F).coerceIn(CELL_F, maxY)
+    return cX to cY
+}
+
+/**
+ * Repara posiciones legacy fuera del grid y solapes, conservando todas las
+ * mesas dentro del espacio fijo de su zona.
+ */
+internal fun normalizarMesasEnGrid(mesas: List<Mesa>): Map<Long, Offset> {
+    val posiciones = linkedMapOf<Long, Offset>()
+    val ocupadas = mutableListOf<List<Float>>()
+
+    mesas.sortedWith(compareBy<Mesa> { it.indiceZona }.thenBy { it.id }).forEach { mesa ->
+        val (w, h) = mesaDims(mesa.forma, mesa.girada)
+        val (x, y) = findNearestFreeCell(mesa.posX, mesa.posY, w, h, ocupadas)
+        posiciones[mesa.id] = Offset(x, y)
+        ocupadas += listOf(x, y, w, h)
+    }
+    return posiciones
 }
 
 /** Detecta si una mesa está demasiado lejos del cluster (Manhattan > 500dp) */

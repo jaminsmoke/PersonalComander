@@ -168,10 +168,80 @@ class MesasBoardTest {
         assertEquals(0f, y % CELL_F, 0.001f)
     }
 
+    @Test
+    fun findNearestFreeCell_alinea_tambien_un_target_interior() {
+        val (x, y) = findNearestFreeCell(213f, 267f, CARD_W, CARD_W, emptyList())
+        assertEquals(0f, x % CELL_F, 0.001f)
+        assertEquals(0f, y % CELL_F, 0.001f)
+    }
+
+    @Test
+    fun clampAlBorde_no_redondea_fuera_con_dimensiones_no_multiplos() {
+        val (w, h) = mesaDims(MesaForma.RECTANGULAR_XL, girada = false)
+        val (x, y) = clampAlBorde(ZONA_ANCHO, ZONA_ALTO, w, h)
+        assertFalse(estaFueraDeLimites(x, y, w, h))
+        assertEquals(0f, x % CELL_F, 0.001f)
+        assertEquals(0f, y % CELL_F, 0.001f)
+    }
+
+    // ── cámara ──
+
+    @Test
+    fun autoFit_puede_bajar_de_20_por_ciento_para_mostrar_todo() {
+        val scale = calcularEscalaAjuste(
+            viewportW = 360f,
+            viewportH = 600f,
+            contentW = ZONA_ANCHO,
+            contentH = ZONA_ALTO,
+            padding = 12f
+        )
+        assertTrue("scale=$scale debe caber en una pantalla estrecha", scale < 0.2f)
+        assertTrue(ZONA_ANCHO * scale <= 360f - 24f + 0.001f)
+        assertTrue(ZONA_ALTO * scale <= 600f - 24f + 0.001f)
+    }
+
+    @Test
+    fun limitarPan_centra_el_grid_si_cabe() {
+        assertEquals(300f, limitarPan(pan = 0f, viewport = 1000f, content = 400f), 0.001f)
+    }
+
+    @Test
+    fun limitarPan_no_deja_perder_bordes_si_el_grid_es_grande() {
+        assertEquals(0f, limitarPan(pan = 80f, viewport = 400f, content = 1000f), 0.001f)
+        assertEquals(-600f, limitarPan(pan = -900f, viewport = 400f, content = 1000f), 0.001f)
+    }
+
+    @Test
+    fun panTrasZoom_conserva_el_punto_bajo_el_foco() {
+        val nuevoPan = panTrasZoom(pan = -100f, focoAnterior = 200f, focoActual = 200f, ratio = 2f)
+        assertEquals(-400f, nuevoPan, 0.001f)
+    }
+
+    // ── normalización legacy ──
+
+    @Test
+    fun normalizarMesasEnGrid_repara_fuera_de_limites_y_solapes() {
+        val mesas = listOf(
+            mesaEn(id = 1, x = -300f, y = 40f),
+            mesaEn(id = 2, x = -300f, y = 40f),
+            mesaEn(id = 3, x = 5000f, y = 5000f)
+        )
+        val posiciones = normalizarMesasEnGrid(mesas)
+
+        posiciones.forEach { (_, pos) ->
+            assertFalse(estaFueraDeLimites(pos.x, pos.y, CARD_W, CARD_W))
+            assertEquals(0f, pos.x % CELL_F, 0.001f)
+            assertEquals(0f, pos.y % CELL_F, 0.001f)
+        }
+        val p1 = posiciones.getValue(1)
+        val p2 = posiciones.getValue(2)
+        assertFalse(colisionan(p1.x, p1.y, CARD_W, CARD_W, p2.x, p2.y, CARD_W, CARD_W))
+    }
+
     // ── traerCerca ──
 
-    private fun mesaEn(x: Float, y: Float) = Mesa(
-        numero = 1, alias = null, zona = "Z", indiceZona = 1,
+    private fun mesaEn(x: Float, y: Float, id: Long = 0) = Mesa(
+        id = id, numero = id.toInt().coerceAtLeast(1), alias = null, zona = "Z", indiceZona = id.toInt().coerceAtLeast(1),
         forma = MesaForma.CUADRADA, capacidad = 4, posX = x, posY = y
     )
 
