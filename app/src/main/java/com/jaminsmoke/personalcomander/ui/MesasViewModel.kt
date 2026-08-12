@@ -139,15 +139,18 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
                     // global), pero siempre dentro de los límites del grid estándar.
                     val mesasZona = db.mesaDao().getPorZona(zona)
                     val candidata = mesasZona.maxByOrNull { it.posX }
-                        ?.let { it.posX + CARD_W + CELL_F to it.posY }
+                        ?.let {
+                            val (lastW, _) = mesaDims(it.forma, it.girada)
+                            it.posX + lastW + CELL_F to it.posY
+                        }
                         ?: ((maxNum % 4) * 160f to (maxNum / 4) * 160f + CELL_F)
                     val ocupadas = mesasZona.map {
                         val (ow, oh) = mesaDims(it.forma, it.girada)
                         listOf(it.posX, it.posY, ow, oh)
                     }
+                    val (newW, newH) = mesaDims(forma, girada = false)
                     val (px, py) = findNearestFreeCell(
-                        candidata.first, candidata.second,
-                        CARD_W, mesaAltura(forma), ocupadas
+                        candidata.first, candidata.second, newW, newH, ocupadas
                     )
                     db.mesaDao().insertMesa(
                         Mesa(

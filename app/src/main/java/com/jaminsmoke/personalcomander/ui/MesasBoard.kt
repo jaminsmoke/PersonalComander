@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +67,7 @@ internal const val ZONA_ANCHO = 2000f
 internal const val ZONA_ALTO = 2600f
 internal const val MIN_BOARD_SCALE = 0.08f
 internal const val MAX_BOARD_SCALE = 3f
+internal val CAMERA_EDGE_MARGIN = 36.dp
 
 /** Escala necesaria para encajar por completo el grid, conservando un margen visible. */
 internal fun calcularEscalaAjuste(
@@ -86,12 +88,17 @@ internal fun calcularEscalaAjuste(
  * Limita el pan a los bordes del grid. Si el grid cabe en el viewport, lo
  * mantiene centrado en ese eje en lugar de pegarlo a la esquina superior.
  */
-internal fun limitarPan(pan: Float, viewport: Float, content: Float): Float {
+internal fun limitarPan(
+    pan: Float,
+    viewport: Float,
+    content: Float,
+    edgeMargin: Float = 0f
+): Float {
     if (viewport <= 0f || content <= 0f) return 0f
     return if (content <= viewport) {
         (viewport - content) / 2f
     } else {
-        pan.coerceIn(viewport - content, 0f)
+        pan.coerceIn(viewport - content - edgeMargin, edgeMargin)
     }
 }
 
@@ -103,20 +110,20 @@ internal fun panTrasZoom(
     ratio: Float
 ): Float = focoActual - (focoAnterior - pan) * ratio
 
-/** Altura en dp de una carta según su forma */
-internal fun mesaAltura(forma: MesaForma): Float = when (forma) {
-    MesaForma.REDONDA -> CARD_W
-    MesaForma.CUADRADA -> CARD_W
-    MesaForma.RECTANGULAR -> CARD_W * 0.55f
-    MesaForma.RECTANGULAR_XL -> CARD_W * 0.4f
+/** Número de módulos cuadrados que representa cada mesa. */
+internal fun mesaModulos(forma: MesaForma): Int = when (forma) {
+    MesaForma.REDONDA, MesaForma.CUADRADA -> 1
+    MesaForma.RECTANGULAR -> 2
+    MesaForma.RECTANGULAR_XL -> 3
 }
 
 internal fun esRectangular(forma: MesaForma) = forma == MesaForma.RECTANGULAR || forma == MesaForma.RECTANGULAR_XL
 
 /** Dimensiones reales (w,h) de una mesa considerando si está girada */
 internal fun mesaDims(forma: MesaForma, girada: Boolean): Pair<Float, Float> {
-    if (girada && esRectangular(forma)) return mesaAltura(forma) to CARD_W
-    return CARD_W to mesaAltura(forma)
+    val largo = CARD_W * mesaModulos(forma)
+    if (girada && esRectangular(forma)) return CARD_W to largo
+    return largo to CARD_W
 }
 
 /** Color de fondo de una carta según su estado */
@@ -169,6 +176,11 @@ internal fun MesaCard(
 
     var menuExpanded by remember { mutableStateOf(false) }
     var dragArrancado by remember { mutableStateOf(false) }
+    val currentOnClick by rememberUpdatedState(onClick)
+    val currentOnDragStarted by rememberUpdatedState(onDragStarted)
+    val currentOnDrag by rememberUpdatedState(onDrag)
+    val currentOnDragEnd by rememberUpdatedState(onDragEnd)
+    val currentOnPointerActive by rememberUpdatedState(onPointerActive)
 
     Card(
         modifier = modifier
@@ -179,18 +191,18 @@ internal fun MesaCard(
             .pointerInput(mesa.id, "camera-guard") {
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
-                    onPointerActive(true)
+                    currentOnPointerActive(true)
                     try {
                         do {
                             val event = awaitPointerEvent()
                         } while (event.changes.any { it.pressed })
                     } finally {
-                        onPointerActive(false)
+                        currentOnPointerActive(false)
                     }
                 }
             }
             .pointerInput(mesa.id, "tap") {
-                detectTapGestures(onTap = { onClick() })
+                detectTapGestures(onTap = { currentOnClick() })
             }
             .pointerInput(mesa.id, "drag") {
                 detectDragGesturesAfterLongPress(
@@ -203,19 +215,19 @@ internal fun MesaCard(
                         if (!dragArrancado) {
                             dragArrancado = true
                             menuExpanded = false
-                            onDragStarted()
+                            currentOnDragStarted()
                         }
-                        onDrag(dragAmount)
+                        currentOnDrag(dragAmount)
                     },
                     onDragEnd = {
                         if (dragArrancado) {
-                            onDragEnd()
+                            currentOnDragEnd()
                             dragArrancado = false
                         }
                     },
                     onDragCancel = {
                         if (dragArrancado) {
-                            onDragEnd()
+                            currentOnDragEnd()
                             dragArrancado = false
                         }
                     }
@@ -419,9 +431,16 @@ internal fun isIsolated(x: Float, y: Float, draggedId: Long, allMesas: List<Mesa
  * Posición segura cerca del cluster (borde inferior-derecho de las demás
  * mesas), buscando celda libre dentro de los límites del grid.
  */
-internal fun traerCerca(allMesas: List<Mesa>): Pair<Float, Float> {
+internal fun traerCerca(
+    allMesas: List<Mesa>,
+    draggedW: Float = CARD_W,
+    draggedH: Float = CARD_W
+): Pair<Float, Float> {
     if (allMesas.isEmpty()) return CELL_F to CELL_F
-    val maxX = allMesas.maxOf { it.posX } + CARD_W + CELL_F
+    val maxX = allMesas.maxOf {
+        val (w, _) = mesaDims(it.forma, it.girada)
+        it.posX + w
+    } + CELL_F
     val avgY = allMesas.map { it.posY }.average().toFloat()
     val targetX = (maxX / CELL_F).roundToInt() * CELL_F
     val targetY = (avgY / CELL_F).roundToInt() * CELL_F
@@ -429,7 +448,7 @@ internal fun traerCerca(allMesas: List<Mesa>): Pair<Float, Float> {
         val (ow, oh) = mesaDims(it.forma, it.girada)
         listOf(it.posX, it.posY, ow, oh)
     }
-    return findNearestFreeCell(targetX, targetY, CARD_W, CARD_W, ocupadas)
+    return findNearestFreeCell(targetX, targetY, draggedW, draggedH, ocupadas)
 }
 
 internal fun formaLabel(forma: MesaForma): String = when (forma) {

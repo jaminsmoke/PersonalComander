@@ -243,8 +243,9 @@ fun MesasScreen(
                     val (mx, my) = boundsState.value
                     val contentW = with(density) { mx.dp.toPx() } * targetScale
                     val contentH = with(density) { my.dp.toPx() } * targetScale
-                    panX = limitarPan(panX, viewportSize.width.toFloat(), contentW)
-                    panY = limitarPan(panY, viewportSize.height.toFloat(), contentH)
+                    val edgeMargin = with(density) { CAMERA_EDGE_MARGIN.toPx() }
+                    panX = limitarPan(panX, viewportSize.width.toFloat(), contentW, edgeMargin)
+                    panY = limitarPan(panY, viewportSize.height.toFloat(), contentH, edgeMargin)
                 }
 
                 // Auto-fit: encuadra el grid completo de la zona en el viewport
@@ -289,7 +290,7 @@ fun MesasScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0xFFE8EDF2))
+                        .background(Color(0xFF1E2A35))
                         .clipToBounds()
                         .onSizeChanged { viewportSize = it }
                         .pointerInput(Unit) {
@@ -355,16 +356,19 @@ fun MesasScreen(
                                 scaleY = scale
                             }
                             .drawWithCache {
-                                val borderW = (2.dp.toPx() / scale).coerceIn(1f, 12f)
-                                val half = borderW / 2f
                                 val spacing = CELL.toPx()
                                 val majorSpacing = spacing * 5f
-                                val dotColor = Color(0xFFB8C2CC)
-                                val majorColor = Color(0xFFD5DCE3)
-                                val canvasColor = Color(0xFFFCFDFE)
-                                val borderColor = Color(0xFF20262D)
+                                val dotColor = Color(0xFFAEBBC6)
+                                val majorColor = Color(0xFFD3DDE4)
+                                val canvasColor = Color(0xFFF9FCFD)
+                                val glowColor = Color(0xFF35D8E8).copy(alpha = 0.22f)
+                                val accentColor = Color(0xFF35D8E8)
+                                val coreColor = Color(0xFF102C36)
                                 val dotRadius = (1.15.dp.toPx() / scale).coerceIn(0.7f, 7f)
                                 val majorStroke = (0.65.dp.toPx() / scale).coerceIn(0.5f, 5f)
+                                val glowW = (12.dp.toPx() / scale).coerceIn(4f, 90f)
+                                val accentW = (4.dp.toPx() / scale).coerceIn(2f, 36f)
+                                val coreW = (1.25.dp.toPx() / scale).coerceIn(1f, 12f)
 
                                 onDrawBehind {
                                     drawRect(canvasColor)
@@ -392,12 +396,25 @@ fun MesasScreen(
                                         x += spacing
                                     }
 
-                                    // Este borde define inequívocamente el canvas real.
+                                    // Perímetro emisivo en tres capas: halo de
+                                    // aproximación, línea cian y núcleo de contraste.
                                     drawRect(
-                                        color = borderColor,
-                                        topLeft = Offset(half, half),
-                                        size = Size(size.width - borderW, size.height - borderW),
-                                        style = Stroke(width = borderW)
+                                        color = glowColor,
+                                        topLeft = Offset(glowW / 2f, glowW / 2f),
+                                        size = Size(size.width - glowW, size.height - glowW),
+                                        style = Stroke(width = glowW)
+                                    )
+                                    drawRect(
+                                        color = accentColor,
+                                        topLeft = Offset(accentW / 2f, accentW / 2f),
+                                        size = Size(size.width - accentW, size.height - accentW),
+                                        style = Stroke(width = accentW)
+                                    )
+                                    drawRect(
+                                        color = coreColor,
+                                        topLeft = Offset(coreW / 2f, coreW / 2f),
+                                        size = Size(size.width - coreW, size.height - coreW),
+                                        style = Stroke(width = coreW)
                                     )
                                 }
                             }
@@ -692,7 +709,10 @@ fun MesasScreen(
                         mesaAislada = null
                     }) { Text(stringResource(R.string.btn_delete), color = MaterialTheme.colorScheme.error) }
                     TextButton(onClick = {
-                        val (tx, ty) = traerCerca(mesasFiltradas.filter { it.id != mesa.id })
+                        val (mw, mh) = mesaDims(mesa.forma, mesa.girada)
+                        val (tx, ty) = traerCerca(
+                            mesasFiltradas.filter { it.id != mesa.id }, mw, mh
+                        )
                         viewModel.updatePosicion(mesa, tx, ty)
                         mesaAislada = null
                     }) { Text(stringResource(R.string.mesas_isolated_bring)) }

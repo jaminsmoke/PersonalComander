@@ -176,7 +176,7 @@ class MesasBoardTest {
     }
 
     @Test
-    fun clampAlBorde_no_redondea_fuera_con_dimensiones_no_multiplos() {
+    fun clampAlBorde_no_saca_fuera_una_mesa_de_tres_modulos() {
         val (w, h) = mesaDims(MesaForma.RECTANGULAR_XL, girada = false)
         val (x, y) = clampAlBorde(ZONA_ANCHO, ZONA_ALTO, w, h)
         assertFalse(estaFueraDeLimites(x, y, w, h))
@@ -212,9 +212,39 @@ class MesasBoardTest {
     }
 
     @Test
+    fun limitarPan_deja_margen_exterior_para_ver_el_borde() {
+        val margin = 36f
+        assertEquals(
+            margin,
+            limitarPan(pan = 100f, viewport = 400f, content = 1000f, edgeMargin = margin),
+            0.001f
+        )
+        assertEquals(
+            -636f,
+            limitarPan(pan = -900f, viewport = 400f, content = 1000f, edgeMargin = margin),
+            0.001f
+        )
+    }
+
+    @Test
     fun panTrasZoom_conserva_el_punto_bajo_el_foco() {
         val nuevoPan = panTrasZoom(pan = -100f, focoAnterior = 200f, focoActual = 200f, ratio = 2f)
         assertEquals(-400f, nuevoPan, 0.001f)
+    }
+
+    // ── dimensiones modulares ──
+
+    @Test
+    fun mesas_rectangulares_equivalen_a_dos_y_tres_cuadradas() {
+        assertEquals(CARD_W to CARD_W, mesaDims(MesaForma.CUADRADA, girada = false))
+        assertEquals(CARD_W * 2f to CARD_W, mesaDims(MesaForma.RECTANGULAR, girada = false))
+        assertEquals(CARD_W * 3f to CARD_W, mesaDims(MesaForma.RECTANGULAR_XL, girada = false))
+    }
+
+    @Test
+    fun giro_intercambia_largo_y_alto_de_mesas_modulares() {
+        assertEquals(CARD_W to CARD_W * 2f, mesaDims(MesaForma.RECTANGULAR, girada = true))
+        assertEquals(CARD_W to CARD_W * 3f, mesaDims(MesaForma.RECTANGULAR_XL, girada = true))
     }
 
     // ── normalización legacy ──
