@@ -80,9 +80,10 @@ Detectado → Debate → Roadmap → Ejecutando → Verificando → Changelog
 ```
 
 - **Drafts** until `Ejecutando` — NEVER convert to issue before that
-- **Ejecutando**: convert draft → issue, add labels (1 Tipo + 1 Área), start coding
-- **Verificando**: document implementation, verify checklists
-- **Changelog**: close issue, add ✅ to title, set completion dates
+- **Al pasar de Roadmap → Ejecutando**: convertir draft → issue, añadir labels (1 Tipo + 1 Área). Aquí empieza la implementación real (código).
+- **Ejecutando**: fase de implementación. Escribir código, hacer commits locales. El body debe reflejar avances.
+- **Verificando**: ejecutar validaciones — typecheck (`./gradlew assembleDebug`), tests (`./gradlew test`), lint, y cualquier otra verificación aplicable. Documentar resultados en el body (sección Verificación).
+- **Changelog**: ANTES de mover, hacer commit con la referencia de los cambios. Al mover a Changelog, anotar el SHA del commit en el body (sección Implementación). Luego cerrar el issue, añadir ✅ al título, setear fechas de completado. Finalmente, hacer push a la rama de trabajo o a `main`.
 - **No skipping**: every item advances in order. Exception: `Cancelado` → Changelog
 - **Version always > latest release**: consult `gh release list`, pick the next one (currently v1.5)
 
@@ -111,9 +112,22 @@ $KANBAN move <itemId> --status Debate
 $KANBAN convert-draft <itemId>
 gh issue edit <N> --add-label "bug,UI/UX"
 
-# Close (at Changelog)
+# Ejecutando: convertir draft → issue antes de implementar
+$KANBAN convert-draft <itemId>
+$KANBAN move <itemId> --status Ejecutando
+gh issue edit <N> --add-label "bug,UI/UX"
+
+# Verificando: ejecutar validaciones
+git add -A && git commit -m "..."   # commit local
+./gradlew assembleDebug              # typecheck
+./gradlew test                       # unit tests
+
+# Changelog: commit final, push, cerrar
+git add -A && git commit -m "..."   # commit con SHA referenciable
+# Anotar SHA en body → sección Implementación
 $KANBAN move <itemId> --status Changelog
 gh issue close <N> -r completed
+git push                             # a la rama de trabajo o main
 
 # Delete (IRREVERSIBLE, requires --yes)
 $KANBAN delete <itemId> --yes
@@ -128,8 +142,9 @@ Each item's body evolves through the lifecycle. The CLI generates a template at 
 | **Detectado** | Contexto, Hallazgo y evidencia, Impacto, Alcance a debatir, Preguntas para Debate, Criterio para avanzar, Clasificación preliminar |
 | **Debate** | + Alternativas, trade-offs, Decision |
 | **Roadmap** | + Decisión acordada, Plan aprobado, Criterios de aceptación, Riesgos |
-| **Verificando** | + Implementación (commits, files), Verificación (checklist) |
-| **Changelog** | Cerrar issue, ✅ en título, setear `Completado` / `Completado exacto` |
+| **Ejecutando** | Convertir draft → issue. Implementar el código. Hacer commits locales. |
+| **Verificando** | + Implementación (commits, archivos). Ejecutar validaciones: typecheck, tests, lint, compilación. Documentar resultados en Verificación (checklist). |
+| **Changelog** | ANTES de mover: commit con referencia. Anotar SHA en Implementación. Cerrar issue, ✅ en título, setear `Completado` / `Completado exacto`. Push a la rama. |
 
 ### Fields reference
 
