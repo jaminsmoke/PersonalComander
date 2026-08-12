@@ -51,12 +51,8 @@ val PcOnErrorContainer = Color(0xFFFFDAD6)
 val PcInverseSurface = Color(0xFFE0E3E5)
 val PcInverseOnSurface = Color(0xFF2D3133)
 
-/** Relleno de pieza de mesa en el board (plantilla). */
-val PcMesaFill = Color(0xFF1B2D3E)
-val PcMesaFillHover = Color(0xFF243B51)
-
 /**
- * Plano del board: sepia/crema claro para contraste con mesas oscuras y borde gold.
+ * Plano del board: sepia/crema claro para contraste con mesas de color por estado.
  * El viewport exterior (fuera del plano) sigue en surface oscura.
  */
 val PcBoardCanvas = Color(0xFFF2E8D5)

@@ -103,7 +103,7 @@ import com.jaminsmoke.personalcomander.data.PedidoEstado
 import com.jaminsmoke.personalcomander.data.Producto
 import com.jaminsmoke.personalcomander.ui.components.PcPrimaryButton
 import com.jaminsmoke.personalcomander.ui.components.PcSecondaryButton
-import com.jaminsmoke.personalcomander.ui.theme.mesaAccent
+import com.jaminsmoke.personalcomander.ui.theme.mesaStatusAccent
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -239,7 +239,7 @@ fun ComandaScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             val estado = state.mesa?.estado
-            val accent = estado?.let { MaterialTheme.colorScheme.mesaAccent(it) }
+            val accent = estado?.let { mesaStatusAccent(it) }
                 ?: MaterialTheme.colorScheme.onSurfaceVariant
             TopAppBar(
                 title = {

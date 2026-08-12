@@ -52,8 +52,9 @@ import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
 import com.jaminsmoke.personalcomander.ui.theme.PcComandaDot
-import com.jaminsmoke.personalcomander.ui.theme.PcMesaFill
-import com.jaminsmoke.personalcomander.ui.theme.mesaAccent
+import com.jaminsmoke.personalcomander.ui.theme.mesaStatusAccent
+import com.jaminsmoke.personalcomander.ui.theme.mesaStatusFill
+import com.jaminsmoke.personalcomander.ui.theme.mesaStatusOnFill
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -130,8 +131,8 @@ internal fun mesaDims(forma: MesaForma, girada: Boolean): Pair<Float, Float> {
     return largo to CARD_W
 }
 
-/** Color de relleno de pieza (board). El acento de estado va aparte. */
-internal fun mesaFillColor(): Color = PcMesaFill
+/** Relleno de pieza según estado (colores intuitivos, no theme). */
+internal fun mesaFillColor(estado: MesaEstado): Color = mesaStatusFill(estado)
 
 
 /** Radio de esquinas de una carta según su forma */
@@ -163,8 +164,9 @@ internal fun MesaCard(
     onRotateClick: () -> Unit,
     onPointerActive: (Boolean) -> Unit
 ) {
-    val fill = mesaFillColor()
-    val accent = MaterialTheme.colorScheme.mesaAccent(mesa.estado)
+    val fill = mesaFillColor(mesa.estado)
+    val accent = mesaStatusAccent(mesa.estado)
+    val onFill = mesaStatusOnFill()
     val label = when (mesa.estado) {
         MesaEstado.LIBRE -> stringResource(R.string.mesas_free)
         MesaEstado.OCUPADA -> stringResource(R.string.mesas_occupied)
@@ -236,8 +238,8 @@ internal fun MesaCard(
                 )
             },
         shape = RoundedCornerShape(shapeRadius),
-        colors = CardDefaults.cardColors(containerColor = fill),
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.45f)),
+        colors = CardDefaults.cardColors(containerColor = fill, contentColor = onFill),
+        border = BorderStroke(1.5.dp, accent.copy(alpha = 0.55f)),
     ) {
         val isRound = mesa.forma == MesaForma.REDONDA
         Box(
@@ -255,21 +257,21 @@ internal fun MesaCard(
                     text = mesa.nombreVisible,
                     style = if (isRound) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = accent,
+                    color = onFill,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 if (mesa.alias != null) {
-                    Text(mesa.idZona, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(mesa.idZona, style = MaterialTheme.typography.labelSmall, color = onFill.copy(alpha = 0.7f))
                 }
                 if (isRound) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("${mesa.capacidad}p", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${mesa.capacidad}p", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = onFill.copy(alpha = 0.75f))
                         if (tieneComanda) Box(Modifier.size(6.dp).background(PcComandaDot, CircleShape))
-                        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = accent)
+                        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = accent)
                     }
                 }
             }
@@ -279,9 +281,9 @@ internal fun MesaCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("${mesa.capacidad}p", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("${mesa.capacidad}p", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = onFill.copy(alpha = 0.75f))
                     if (tieneComanda) Box(Modifier.size(8.dp).background(PcComandaDot, CircleShape))
-                    Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, textAlign = TextAlign.End, color = accent)
+                    Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End, color = accent)
                 }
             }
 
@@ -315,14 +317,15 @@ internal fun DragOverlayCard(mesa: Mesa) {
     val shapeRadius = mesaShapeRadius(mesa.forma)
     val (cardWf, cardHf) = mesaDims(mesa.forma, mesa.girada)
     val cardHeight = cardHf.dp
-    val fill = mesaFillColor()
-    val accent = MaterialTheme.colorScheme.mesaAccent(mesa.estado)
+    val fill = mesaFillColor(mesa.estado)
+    val accent = mesaStatusAccent(mesa.estado)
+    val onFill = mesaStatusOnFill()
 
     Card(
         modifier = Modifier.width(cardWf.dp).height(cardHeight),
         shape = RoundedCornerShape(shapeRadius),
-        colors = CardDefaults.cardColors(containerColor = fill),
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.45f)),
+        colors = CardDefaults.cardColors(containerColor = fill, contentColor = onFill),
+        border = BorderStroke(1.5.dp, accent.copy(alpha = 0.55f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Box(Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {
@@ -330,7 +333,7 @@ internal fun DragOverlayCard(mesa: Mesa) {
                 text = mesa.nombreVisible,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = accent,
+                color = onFill,
             )
         }
     }

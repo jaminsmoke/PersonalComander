@@ -108,7 +108,9 @@ import com.jaminsmoke.personalcomander.ui.theme.PcBoardCanvas
 import com.jaminsmoke.personalcomander.ui.theme.PcBoardGrid
 import com.jaminsmoke.personalcomander.ui.theme.PcBoardGridMajor
 import com.jaminsmoke.personalcomander.ui.theme.PcComandaDot
-import com.jaminsmoke.personalcomander.ui.theme.mesaAccent
+import com.jaminsmoke.personalcomander.ui.theme.mesaStatusAccent
+import com.jaminsmoke.personalcomander.ui.theme.mesaStatusFill
+import com.jaminsmoke.personalcomander.ui.theme.mesaStatusOnFill
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -311,7 +313,7 @@ fun MesasScreen(
                 }
 
                 val scheme = MaterialTheme.colorScheme
-                // Plano claro (sepia); viewport exterior oscuro — contraste con mesas PcMesaFill.
+                // Plano claro (sepia); viewport exterior oscuro — contraste con mesas por estado.
                 val boardCanvasColor = PcBoardCanvas
                 val boardGridColor = PcBoardGrid
                 val boardMajorColor = PcBoardGridMajor
@@ -836,14 +838,16 @@ private fun MesaListaCard(
     onEdit: (Mesa) -> Unit,
     onDelete: (Mesa) -> Unit
 ) {
-    val accent = MaterialTheme.colorScheme.mesaAccent(mesa.estado)
+    val accent = mesaStatusAccent(mesa.estado)
+    val fill = mesaStatusFill(mesa.estado)
+    val onFill = mesaStatusOnFill()
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onOpenMesa(mesa.id) },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        colors = CardDefaults.cardColors(containerColor = fill, contentColor = onFill),
         shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.25f)),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.4f)),
     ) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
@@ -861,12 +865,12 @@ private fun MesaListaCard(
                     mesa.nombreVisible,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = onFill,
                 )
                 Text(
                     "${formaLabel(mesa.forma)} ${mesa.capacidad}p · ${mesaEstadoLabel(mesa)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = onFill.copy(alpha = 0.7f)
                 )
             }
             StatusChip(text = mesaEstadoLabel(mesa), accent = accent)
@@ -875,7 +879,7 @@ private fun MesaListaCard(
                 Box(Modifier.size(8.dp).background(PcComandaDot, CircleShape))
             }
             IconButton(onClick = { onEdit(mesa) }) {
-                Icon(Icons.Default.Edit, stringResource(R.string.mesas_menu_edit))
+                Icon(Icons.Default.Edit, stringResource(R.string.mesas_menu_edit), tint = onFill)
             }
             IconButton(onClick = { onDelete(mesa) }) {
                 Icon(Icons.Default.Delete, stringResource(R.string.mesas_menu_delete), tint = MaterialTheme.colorScheme.error)
