@@ -79,13 +79,69 @@ Detectado → Debate → Roadmap → Ejecutando → Verificando → Changelog
   Draft      Draft     Draft     Issue OPEN    Issue OPEN    Issue CLOSED
 ```
 
-- **Drafts** until `Ejecutando` — NEVER convert to issue before that
-- **Al pasar de Roadmap → Ejecutando**: convertir draft → issue, añadir labels (1 Tipo + 1 Área). Aquí empieza la implementación real (código).
-- **Ejecutando**: fase de implementación. Escribir código, hacer commits locales. El body debe reflejar avances.
-- **Verificando**: ejecutar validaciones — typecheck (`./gradlew assembleDebug`), tests (`./gradlew test`), lint, y cualquier otra verificación aplicable. Documentar resultados en el body (sección Verificación).
-- **Changelog**: ANTES de mover, hacer commit con la referencia de los cambios. Al mover a Changelog, anotar el SHA del commit en el body (sección Implementación). Luego cerrar el issue, añadir ✅ al título, setear fechas de completado. Finalmente, hacer push a la rama de trabajo o a `main`.
-- **No skipping**: every item advances in order. Exception: `Cancelado` → Changelog
-- **Version always > latest release**: consult `gh release list`, pick the next one (currently v1.5)
+**Drafts** until `Ejecutando` — NEVER convert to issue before that.
+
+**No skipping**: every item advances in order. Exception: `Cancelado` → Changelog.
+
+**Version always > latest release**: consult `gh release list`, pick the next one (currently v1.5).
+
+#### 1. Detectado — Describir el problema a fondo
+
+El body debe contener una descripción **muy completa** del item y del problema detectado. No perder contexto: cuanta más información se documente aquí, más fácil será retomarlo en el futuro.
+
+- Rellenar TODAS las secciones de la plantilla con contenido específico, no placeholders.
+- Incluir: archivos exactos, líneas de código, trazas, versiones, métricas, capturas si aplica.
+- Describir el impacto real en el usuario/producto, no solo el síntoma técnico.
+
+#### 2. Debate — Preguntar al usuario, NO decidir solo
+
+**Regla de oro**: NUNCA pasar de Debate a Roadmap sin preguntar al usuario y recibir su aprobación explícita.
+
+- Proponer **varias alternativas** (2-4), cada una con pros/contras claros.
+- Dar una **recomendación argumentada** de cuál es la mejor opción y por qué.
+- Usar `--append` para añadir secciones `Alternativas`, `Trade-offs` y `Recomendación` al body.
+- **Parar y preguntar** al usuario. Solo cuando él decida, marcar `Decision: Aprobado` y mover a Roadmap.
+- Si `Decision: Cancelado` → documentar motivo, convertir a issue, cerrar, mover a Changelog.
+- Si `Decision: Diferido` → documentar motivo y condición, devolver a Detectado.
+
+#### 3. Roadmap — Planificar en profundidad antes de tocar código
+
+Con la decisión ya tomada y acordada en la fase anterior, detallar **mucho más** el plan de implementación.
+
+- Investigar a fondo: leer archivos relacionados, imports necesarios, dependencias, posibles efectos colaterales.
+- Revisar si el plan acordado en Debate se queda corto — añadir lo que falte.
+- Documentar: `Decisión acordada`, `Plan aprobado` (paso a paso), `Criterios de aceptación`, `Plan de verificación`, `Riesgos y recuperación`.
+- Solo cuando el plan sea sólido y completo, mover a Ejecutando.
+
+#### 4. Ejecutando — Implementar el plan
+
+- Al entrar: convertir draft → issue, añadir labels (1 Tipo + 1 Área). **Aquí empieza el código.**
+- Implementar siguiendo el plan detallado de Roadmap.
+- Si algo difiere del plan original, **documentarlo** en el body (sección `Implementación`) explicando el porqué del cambio.
+- Hacer commits locales con mensajes descriptivos.
+
+#### 5. Verificando — Tests y comprobaciones exhaustivas
+
+**No es solo compilar.** Es verificar que el cambio funciona y no rompe nada.
+
+- Ejecutar validaciones **según el tipo de item**:
+  - UI/UX → `assembleDebug`, tests de UI, revisar visualmente si aplica.
+  - Datos → tests de Room, migraciones, integridad de datos.
+  - Voz → probar reconocimiento, timeouts, Bluetooth.
+  - Sync → probar import/export, conectividad.
+- Si se encuentran **errores preexistentes** relacionados, arreglarlos o documentarlos como nuevo item.
+- Documentar TODO en el body: sección `Verificación` con checklist de lo ejecutado y resultados.
+- Solo cuando todo esté verificado, commitear y pasar a Changelog.
+
+#### 6. Changelog — Cerrar, fechar y publicar
+
+1. **Commit final** con mensaje descriptivo (si no se hizo ya en Verificando).
+2. Anotar el **SHA del commit** en el body (sección `Commit`).
+3. Mover status a `Changelog`.
+4. Setear `Completado` (fecha) y `Completado exacto` (ISO-8601).
+5. Añadir ✅ al título del issue.
+6. Cerrar el issue (`gh issue close -r completed`).
+7. **Push** a la rama de trabajo (normalmente `main`).
 
 ### CLI (all commands from project root)
 
@@ -105,29 +161,27 @@ $KANBAN show <itemId>
 $KANBAN body <itemId>              # read
 $KANBAN body <itemId> --set "..."  # replace
 
-# Move status
-$KANBAN move <itemId> --status Debate
+# Change status (use set-field, NOT move)
+$KANBAN set-field <itemId> --field "Status" --option "Debate"
 
 # Convert draft → issue (only at Ejecutando)
 $KANBAN convert-draft <itemId>
 gh issue edit <N> --add-label "bug,UI/UX"
 
-# Ejecutando: convertir draft → issue antes de implementar
-$KANBAN convert-draft <itemId>
-$KANBAN move <itemId> --status Ejecutando
-gh issue edit <N> --add-label "bug,UI/UX"
-
-# Verificando: ejecutar validaciones
-git add -A && git commit -m "..."   # commit local
+# Verificando: ejecutar validaciones según el tipo de item
 ./gradlew assembleDebug              # typecheck
 ./gradlew test                       # unit tests
+# Añadir comprobaciones específicas según área (UI, Datos, Voz, Sync...)
 
-# Changelog: commit final, push, cerrar
-git add -A && git commit -m "..."   # commit con SHA referenciable
-# Anotar SHA en body → sección Implementación
-$KANBAN move <itemId> --status Changelog
+# Changelog: commit con SHA referenciable, cerrar, push
+git add <files> && git commit -m "..."
+$KANBAN body <itemId> --append "Commit" --content "SHA: \`$(git rev-parse --short HEAD)\`"
+$KANBAN set-field <itemId> --field "Status" --option "Changelog"
+$KANBAN set-field <itemId> --field "Completado" --date "YYYY-MM-DD"
+$KANBAN set-field <itemId> --field "Completado exacto" --text "YYYY-MM-DDTHH:MM:SSZ"
+gh issue edit <N> --title "✅ ..."
 gh issue close <N> -r completed
-git push                             # a la rama de trabajo o main
+git push
 
 # Delete (IRREVERSIBLE, requires --yes)
 $KANBAN delete <itemId> --yes
@@ -137,14 +191,14 @@ $KANBAN delete <itemId> --yes
 
 Each item's body evolves through the lifecycle. The CLI generates a template at creation — **always fill it with specific content**, never leave the placeholders.
 
-| Phase | Sections to fill |
-|---|---|
-| **Detectado** | Contexto, Hallazgo y evidencia, Impacto, Alcance a debatir, Preguntas para Debate, Criterio para avanzar, Clasificación preliminar |
-| **Debate** | + Alternativas, trade-offs, Decision |
-| **Roadmap** | + Decisión acordada, Plan aprobado, Criterios de aceptación, Plan de verificación, Riesgos y recuperación |
-| **Ejecutando** | Convertir draft → issue (solo al ENTRAR). + Avances en el body: commits, decisiones técnicas, bloqueos. |
-| **Verificando** | + Implementación (commit SHA, archivos modificados). + Verificación (checklist de validaciones ejecutadas: typecheck, tests, lint, build). |
-| **Changelog** | ANTES de mover: commit final, anotar SHA en Implementación. Cerrar issue, ✅ en título, setear `Completado` / `Completado exacto`. Push. |
+| Phase | Body sections | Reglas |
+|---|---|---|
+| **Detectado** | Contexto, Hallazgo y evidencia, Impacto, Alcance a debatir, Preguntas para Debate, Criterio para avanzar, Clasificación preliminar | Descripción MUY completa. No perder contexto. |
+| **Debate** | + Alternativas, Trade-offs, Recomendación | **PARAR y preguntar al usuario.** No avanzar sin aprobación explícita. |
+| **Roadmap** | + Decisión acordada, Plan aprobado, Criterios de aceptación, Plan de verificación, Riesgos y recuperación | Investigar a fondo. Añadir lo que falte al plan. |
+| **Ejecutando** | + Implementación (qué se hizo realmente, diferencias con el plan si las hay) | Convertir draft→issue al ENTRAR. Documentar cambios sobre el plan. |
+| **Verificando** | + Verificación (checklist de tests, typecheck, lint, comprobaciones específicas) | Ejecutar TODO lo aplicable. Arreglar errores preexistentes si se encuentran. |
+| **Changelog** | + Commit (SHA). Setear `Completado`, `Completado exacto`. ✅ en título. | Commit → SHA al body → cerrar issue → push a main. |
 
 ### Fields reference
 
