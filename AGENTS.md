@@ -141,10 +141,10 @@ Each item's body evolves through the lifecycle. The CLI generates a template at 
 |---|---|
 | **Detectado** | Contexto, Hallazgo y evidencia, Impacto, Alcance a debatir, Preguntas para Debate, Criterio para avanzar, Clasificación preliminar |
 | **Debate** | + Alternativas, trade-offs, Decision |
-| **Roadmap** | + Decisión acordada, Plan aprobado, Criterios de aceptación, Riesgos |
-| **Ejecutando** | Convertir draft → issue. Implementar el código. Hacer commits locales. |
-| **Verificando** | + Implementación (commits, archivos). Ejecutar validaciones: typecheck, tests, lint, compilación. Documentar resultados en Verificación (checklist). |
-| **Changelog** | ANTES de mover: commit con referencia. Anotar SHA en Implementación. Cerrar issue, ✅ en título, setear `Completado` / `Completado exacto`. Push a la rama. |
+| **Roadmap** | + Decisión acordada, Plan aprobado, Criterios de aceptación, Plan de verificación, Riesgos y recuperación |
+| **Ejecutando** | Convertir draft → issue (solo al ENTRAR). + Avances en el body: commits, decisiones técnicas, bloqueos. |
+| **Verificando** | + Implementación (commit SHA, archivos modificados). + Verificación (checklist de validaciones ejecutadas: typecheck, tests, lint, build). |
+| **Changelog** | ANTES de mover: commit final, anotar SHA en Implementación. Cerrar issue, ✅ en título, setear `Completado` / `Completado exacto`. Push. |
 
 ### Fields reference
 
