@@ -169,4 +169,16 @@
     <string name="lbl_route">Path</string>
     <string name="lbl_ip_server">POS server IP</string>
     <string name="lbl_access">Shortcuts</string>
+
+    <!-- Empty States -->
+    <string name="empty_mesas_title">No tables</string>
+    <string name="empty_mesas_subtitle">Create your first table to start managing orders</string>
+    <string name="empty_mesas_action">Create table</string>
+    <string name="empty_menu_title">No products</string>
+    <string name="empty_menu_subtitle">Add products to the menu to create orders</string>
+    <string name="empty_menu_action">Create product</string>
+    <string name="empty_comanda_no_products">No products available</string>
+    <string name="empty_comanda_no_products_subtitle">Add products from menu management</string>
+    <string name="empty_comanda_no_results">No results</string>
+    <string name="empty_comanda_no_results_subtitle">Try a different search term or category</string>
 </resources>

@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.RestaurantMenu
+import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.FitScreen
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.ZoomOut
@@ -233,7 +234,17 @@ fun MesasScreen(
                     }
                 }
 
-                if (!mostrarLista) {
+                // Empty state: no hay mesas y no está cargando
+                if (!cargando && mesasFiltradas.isEmpty()) {
+                    EmptyState(
+                        icon = Icons.Default.TableChart,
+                        title = stringResource(R.string.empty_mesas_title),
+                        subtitle = stringResource(R.string.empty_mesas_subtitle),
+                        modifier = Modifier.weight(1f),
+                        actionLabel = stringResource(R.string.empty_mesas_action),
+                        onAction = { crearVisible = true }
+                    )
+                } else if (!mostrarLista) {
                 // Board fijo compartido por todas las zonas: ninguna mesa ni la
                 // cámara amplían el espacio acordado de 2000×2600dp.
                 val maxX = ZONA_ANCHO

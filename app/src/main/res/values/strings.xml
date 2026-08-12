@@ -169,4 +169,16 @@
     <string name="lbl_route">Ruta</string>
     <string name="lbl_ip_server">IP del servidor TPV</string>
     <string name="lbl_access">Accesos</string>
+
+    <!-- Empty States -->
+    <string name="empty_mesas_title">Sin mesas</string>
+    <string name="empty_mesas_subtitle">Crea tu primera mesa para empezar a gestionar comandas</string>
+    <string name="empty_mesas_action">Crear mesa</string>
+    <string name="empty_menu_title">Sin productos</string>
+    <string name="empty_menu_subtitle">Añade productos al menú para poder crear comandas</string>
+    <string name="empty_menu_action">Crear producto</string>
+    <string name="empty_comanda_no_products">No hay productos disponibles</string>
+    <string name="empty_comanda_no_products_subtitle">Añade productos desde la gestión del menú</string>
+    <string name="empty_comanda_no_results">Sin resultados</string>
+    <string name="empty_comanda_no_results_subtitle">Prueba con otro término de búsqueda o categoría</string>
 </resources>

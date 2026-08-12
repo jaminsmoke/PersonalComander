@@ -8,14 +8,21 @@ import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Producto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class MenuViewModel(application: Application) : AndroidViewModel(application) {
     private val db = (application as PersonalComanderApp).db
     private val ctx = getApplication<Application>()
     val productos: Flow<List<Producto>> = db.productoDao().observeAllIncluyendoOcultos()
+
+    val cargando: StateFlow<Boolean> = db.productoDao().observeAllIncluyendoOcultos()
+        .map { false }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     private val _mensaje = MutableStateFlow<String?>(null)
     val mensaje: StateFlow<String?> = _mensaje.asStateFlow()

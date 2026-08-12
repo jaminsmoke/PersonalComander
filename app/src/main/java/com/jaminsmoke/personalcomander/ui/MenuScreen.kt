@@ -18,6 +18,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -60,6 +61,7 @@ fun MenuScreen(
     viewModel: MenuViewModel = viewModel()
 ) {
     val productos by viewModel.productos.collectAsState(initial = emptyList())
+    val cargando by viewModel.cargando.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var dialogVisible by remember { mutableStateOf(false) }
@@ -94,23 +96,34 @@ fun MenuScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(productos, key = { it.id }) { producto ->
-                MenuProductoRow(
-                    producto = producto,
-                    onEditar = {
-                        editando = producto
-                        dialogVisible = true
-                    },
-                    onToggleDisponible = { viewModel.toggleDisponible(producto) },
-                    onEliminar = { confirmarBorrado = producto }
-                )
+        if (!cargando && productos.isEmpty()) {
+            EmptyState(
+                icon = Icons.Default.Restaurant,
+                title = stringResource(R.string.empty_menu_title),
+                subtitle = stringResource(R.string.empty_menu_subtitle),
+                modifier = Modifier.padding(padding),
+                actionLabel = stringResource(R.string.empty_menu_action),
+                onAction = { editando = null; dialogVisible = true }
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = PaddingValues(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(productos, key = { it.id }) { producto ->
+                    MenuProductoRow(
+                        producto = producto,
+                        onEditar = {
+                            editando = producto
+                            dialogVisible = true
+                        },
+                        onToggleDisponible = { viewModel.toggleDisponible(producto) },
+                        onEliminar = { confirmarBorrado = producto }
+                    )
+                }
             }
         }
     }

@@ -48,6 +48,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -379,6 +381,15 @@ fun ComandaScreen(
                         }
 
                         // Product grid (more columns on wide screens)
+                        if (state.productos.isEmpty()) {
+                            val esBusqueda = state.busqueda.isNotBlank() || state.categoria != null
+                            EmptyState(
+                                icon = if (esBusqueda) Icons.Default.SearchOff else Icons.Default.ShoppingCart,
+                                title = stringResource(if (esBusqueda) R.string.empty_comanda_no_results else R.string.empty_comanda_no_products),
+                                subtitle = stringResource(if (esBusqueda) R.string.empty_comanda_no_results_subtitle else R.string.empty_comanda_no_products_subtitle),
+                                modifier = Modifier.weight(1f)
+                            )
+                        } else {
                         val gridCols = if (state.categoria == null && state.busqueda.isBlank()) 3 else 4
                         if (state.categoria == null && state.busqueda.isBlank()) {
                             val agrupados = state.productos.groupBy { it.categoria }
@@ -405,6 +416,7 @@ fun ComandaScreen(
                                 items(state.productos, key = { it.id }) { p -> ProductoGridCard(p, onClick = { viewModel.addProducto(p) }) }
                             }
                         }
+                        } // end else (productos no vacíos)
                     }
                 } else {
                     // Phone: tabs at top
@@ -431,7 +443,15 @@ fun ComandaScreen(
 
                         Spacer(Modifier.height(4.dp))
 
-                        if (state.categoria == null && state.busqueda.isBlank()) {
+                        if (state.productos.isEmpty()) {
+                            val esBusqueda = state.busqueda.isNotBlank() || state.categoria != null
+                            EmptyState(
+                                icon = if (esBusqueda) Icons.Default.SearchOff else Icons.Default.ShoppingCart,
+                                title = stringResource(if (esBusqueda) R.string.empty_comanda_no_results else R.string.empty_comanda_no_products),
+                                subtitle = stringResource(if (esBusqueda) R.string.empty_comanda_no_results_subtitle else R.string.empty_comanda_no_products_subtitle),
+                                modifier = Modifier.weight(1f)
+                            )
+                        } else if (state.categoria == null && state.busqueda.isBlank()) {
                             val agrupados = state.productos.groupBy { it.categoria }
                             LazyColumn(
                                 Modifier.fillMaxWidth().weight(1f),
