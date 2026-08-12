@@ -61,6 +61,17 @@ class ComandaViewModel(
     private val _mesaCerrada = MutableStateFlow(false)
     val mesaCerrada: StateFlow<Boolean> = _mesaCerrada.asStateFlow()
 
+    private val _mostrarConfirmacionCierre = MutableStateFlow(false)
+    val mostrarConfirmacionCierre: StateFlow<Boolean> = _mostrarConfirmacionCierre.asStateFlow()
+
+    private val _mostrarUndo = MutableStateFlow(false)
+    val mostrarUndo: StateFlow<Boolean> = _mostrarUndo.asStateFlow()
+
+    private val _tiempoRestanteUndo = MutableStateFlow(0)
+    val tiempoRestanteUndo: StateFlow<Int> = _tiempoRestanteUndo.asStateFlow()
+
+    private var undoJob: kotlinx.coroutines.Job? = null
+
     companion object {
         private const val FEEDBACK_VOZ_TIMEOUT_MS = 5000L
     }
@@ -336,7 +347,39 @@ class ComandaViewModel(
         }
     }
 
-    fun cerrarMesa() {
+    fun solicitarCierre() {
+        _mostrarConfirmacionCierre.value = true
+    }
+
+    fun cancelarCierre() {
+        _mostrarConfirmacionCierre.value = false
+    }
+
+    fun confirmarCierre() {
+        _mostrarConfirmacionCierre.value = false
+        cerrarMesa()
+    }
+
+    fun reabrirMesa() {
+        viewModelScope.launch {
+            mutex.withLock {
+                db.withTransaction {
+                    try {
+                        val p = db.pedidoDao().getLastCerrado(mesaId) ?: return@withTransaction
+                        db.pedidoDao().update(p.copy(estado = PedidoEstado.ABIERTA, cerradoEn = null))
+                        db.mesaDao().updateEstado(mesaId, MesaEstado.OCUPADA, p.id)
+                        cerrada = false
+                        _mostrarUndo.value = false
+                        undoJob?.cancel()
+                    } catch (e: Exception) {
+                        _error.value = ctx.getString(R.string.error_close_table, e.message ?: e.javaClass.simpleName)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun cerrarMesa() {
         viewModelScope.launch {
             mutex.withLock {
                 db.withTransaction {
@@ -345,7 +388,20 @@ class ComandaViewModel(
                         db.pedidoDao().update(p.copy(estado = PedidoEstado.CERRADA, cerradoEn = System.currentTimeMillis()))
                         db.mesaDao().updateEstado(mesaId, MesaEstado.LIBRE, null)
                         cerrada = true
-                        _mesaCerrada.value = true
+                        // No navegamos automáticamente — mostramos undo en su lugar
+                        _mostrarUndo.value = true
+                        _tiempoRestanteUndo.value = 300 // 5 minutos
+                        // Iniciar countdown
+                        undoJob?.cancel()
+                        undoJob = viewModelScope.launch {
+                            for (i in 300 downTo 0) {
+                                _tiempoRestanteUndo.value = i
+                                kotlinx.coroutines.delay(1000L)
+                            }
+                            // Timer expiró — navegamos atrás
+                            _mostrarUndo.value = false
+                            _mesaCerrada.value = true
+                        }
                     } catch (e: Exception) {
                         _error.value = ctx.getString(R.string.error_close_table, e.message ?: e.javaClass.simpleName)
                     }

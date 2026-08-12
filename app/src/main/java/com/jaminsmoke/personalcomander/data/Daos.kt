@@ -111,6 +111,9 @@ interface PedidoDao {
     @Query("SELECT * FROM pedidos WHERE mesaId = :mesaId AND estado != 'CERRADA' ORDER BY id DESC LIMIT 1")
     suspend fun getActivo(mesaId: Long): Pedido?
 
+    @Query("SELECT * FROM pedidos WHERE mesaId = :mesaId AND estado = 'CERRADA' ORDER BY cerradoEn DESC LIMIT 1")
+    suspend fun getLastCerrado(mesaId: Long): Pedido?
+
     @Query("SELECT COUNT(*) FROM pedidos WHERE estado != 'CERRADA'")
     fun observeActivos(): Flow<Int>
 

@@ -74,6 +74,12 @@
     <string name="comanda_send_to_kitchen">Send to kitchen</string>
     <string name="comanda_in_kitchen">In kitchen ✓</string>
     <string name="comanda_close_table">Close table</string>
+    <string name="comanda_close_confirm_title">Confirm closure</string>
+    <string name="comanda_close_confirm_body">You are about to close table %1$s with %2$d items (%3$s). This will end the service.</string>
+    <string name="comanda_close_confirm_button">Close table</string>
+    <string name="comanda_close_undo">Reopen table</string>
+    <string name="comanda_close_undo_snackbar">Table closed. Tap Reopen to undo.</string>
+    <string name="comanda_close_reopened">Table reopened successfully</string>
     <string name="comanda_all_categories">📋 All</string>
     <string name="comanda_voice_added">«%1$s» → Added: %2$s</string>
     <string name="comanda_voice_partial">«%1$s» → Added: %2$s · Unrecognized: %3$s</string>
