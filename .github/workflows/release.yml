@@ -32,7 +32,7 @@ jobs:
       - name: Generate keystore.properties
         run: |
           cat > keystore.properties <<EOF
-          storeFile=app/release.keystore
+          storeFile=release.keystore
           storePassword=${{ secrets.KEYSTORE_PASSWORD }}
           keyAlias=${{ secrets.KEY_ALIAS }}
           keyPassword=${{ secrets.KEY_PASSWORD }}
