@@ -95,7 +95,7 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 
 ## 🤝 Contributing
 
-We welcome contributions! Check out the [contributing guide](CONTRIBUTING.md) to get started, and open issues for bugs or feature ideas.
+We welcome contributions! Check out the [contributing guide](CONTRIBUTING.md) to get started, and open issues for bugs or feature ideas. For security vulnerabilities, see our [security policy](SECURITY.md).
 
 ## 📄 License
 
