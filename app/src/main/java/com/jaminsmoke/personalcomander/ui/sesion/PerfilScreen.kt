@@ -128,7 +128,7 @@ fun PerfilScreen(
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 when (val actual = modo) {
-                    is ModoSesion.Sala -> Text(
+                    is ModoSesion.Establecimiento -> Text(
                         text = stringResource(
                             if (actual.admitido) R.string.sesion_modo_sala_admitido else R.string.sesion_modo_sala_pendiente,
                             "${actual.barHost}:${actual.barPuerto}",
@@ -212,7 +212,7 @@ fun PerfilScreen(
                 if (busy) {
                     CircularProgressIndicator()
                 }
-                if (modo is ModoSesion.Sala) {
+                if (modo is ModoSesion.Establecimiento) {
                     PcSecondaryButton(
                         text = stringResource(R.string.sesion_desconectar_bar),
                         onClick = { viewModel.desconectarBar() },

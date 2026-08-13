@@ -364,12 +364,14 @@ gh api repos/jaminsmoke/PersonalComander/rulesets --jq '.[] | {name, target, enf
 ## Data model
 
 ```
-Mesa (table)  1──* Pedido (order)  1──* LineaPedido (line items)
-                    │
-                    └── linked via comandaActivaId on Mesa
-                    
+Sala (room of the venue)  1──* Mesa (table)  1──* Pedido (order)  1──* LineaPedido (line items)
+                                    │
+                                    └── linked via comandaActivaId on Mesa
+
 Producto (product) ─── referenced by LineaPedido.productoId
 ```
+
+El camarero se liga a un **establecimiento** (cuenta del Bar), no a una sala. Las **salas** (barra, interior, terraza…) son del mapa del local. `ModoSesion.Establecimiento` + `admitido` candan carta y mapa.
 
 Key enums: `MesaEstado` (LIBRE, OCUPADA, EN_COCINA), `MesaForma` (REDONDA, CUADRADA, RECTANGULAR, RECTANGULAR_XL), `PedidoEstado` (ABIERTA, ENVIADA, CERRADA).
 

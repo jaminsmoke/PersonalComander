@@ -8,8 +8,38 @@ import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
+interface SalaDao {
+    @Query("SELECT * FROM salas ORDER BY orden, id")
+    fun observeAll(): Flow<List<Sala>>
+
+    @Query("SELECT * FROM salas ORDER BY orden, id")
+    suspend fun getAll(): List<Sala>
+
+    @Query("SELECT * FROM salas WHERE id = :id")
+    suspend fun getById(id: Long): Sala?
+
+    @Query("SELECT COUNT(*) FROM salas")
+    suspend fun count(): Int
+
+    @Insert
+    suspend fun insert(sala: Sala): Long
+
+    @Insert
+    suspend fun insertAll(salas: List<Sala>)
+
+    @Update
+    suspend fun update(sala: Sala)
+
+    @Query("DELETE FROM salas WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
+    @Query("SELECT COALESCE(MAX(orden), -1) FROM salas")
+    suspend fun getMaxOrden(): Int
+}
+
+@Dao
 interface MesaDao {
-    @Query("SELECT * FROM mesas ORDER BY zona, numero")
+    @Query("SELECT * FROM mesas ORDER BY salaId, numero")
     fun observeAll(): Flow<List<Mesa>>
 
     @Query("SELECT * FROM mesas WHERE id = :id")
@@ -54,14 +84,17 @@ interface MesaDao {
     @Query("SELECT COALESCE(MAX(numero), 0) FROM mesas")
     suspend fun getMaxNumero(): Int
 
-    @Query("SELECT COALESCE(MAX(indiceZona), 0) FROM mesas WHERE zona = :zona")
-    suspend fun getMaxIndiceZona(zona: String): Int
+    @Query("SELECT COALESCE(MAX(indiceZona), 0) FROM mesas WHERE salaId = :salaId")
+    suspend fun getMaxIndiceSala(salaId: Long): Int
 
-    @Query("SELECT * FROM mesas WHERE zona = :zona ORDER BY indiceZona")
-    suspend fun getPorZona(zona: String): List<Mesa>
+    @Query("SELECT * FROM mesas WHERE salaId = :salaId ORDER BY indiceZona")
+    suspend fun getPorSala(salaId: Long): List<Mesa>
 
-    @Query("UPDATE mesas SET indiceZona = indiceZona - 1 WHERE zona = :zona AND indiceZona > :indice")
-    suspend fun decrementarIndicesZona(zona: String, indice: Int)
+    @Query("SELECT COUNT(*) FROM mesas WHERE salaId = :salaId")
+    suspend fun countPorSala(salaId: Long): Int
+
+    @Query("UPDATE mesas SET indiceZona = indiceZona - 1 WHERE salaId = :salaId AND indiceZona > :indice")
+    suspend fun decrementarIndicesSala(salaId: Long, indice: Int)
 
     @Insert
     suspend fun insertMesa(mesa: Mesa): Long

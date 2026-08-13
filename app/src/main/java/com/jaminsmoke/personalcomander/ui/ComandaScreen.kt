@@ -102,6 +102,7 @@ import com.jaminsmoke.personalcomander.data.MesaVisualStatus
 import com.jaminsmoke.personalcomander.data.PedidoEstado
 import com.jaminsmoke.personalcomander.data.Producto
 import com.jaminsmoke.personalcomander.data.mesaVisualStatus
+import com.jaminsmoke.personalcomander.data.nombreVisible
 import com.jaminsmoke.personalcomander.ui.components.PcPrimaryButton
 import com.jaminsmoke.personalcomander.ui.components.PcSecondaryButton
 import com.jaminsmoke.personalcomander.ui.theme.mesaStatusAccent
@@ -246,7 +247,7 @@ fun ComandaScreen(
                 title = {
                     Column {
                         Text(
-                            stringResource(R.string.comanda_table_prefix, state.mesa?.nombreVisible ?: "#$mesaId"),
+                            stringResource(R.string.comanda_table_prefix, state.mesa?.nombreVisible(state.salaNombre) ?: "#$mesaId"),
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
@@ -537,7 +538,7 @@ fun ComandaScreen(
 
     // Diálogo de confirmación de cierre
     if (mostrarConfirmacion) {
-        val mesaNombre = state.mesa?.nombreVisible ?: "#$mesaId"
+        val mesaNombre = state.mesa?.nombreVisible(state.salaNombre) ?: "#$mesaId"
         val numLineas = state.lineas.size
         val total = state.total.formatoEuro()
         AlertDialog(

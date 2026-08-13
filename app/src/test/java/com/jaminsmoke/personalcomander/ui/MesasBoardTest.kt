@@ -271,7 +271,7 @@ class MesasBoardTest {
     // ── traerCerca ──
 
     private fun mesaEn(x: Float, y: Float, id: Long = 0) = Mesa(
-        id = id, numero = id.toInt().coerceAtLeast(1), alias = null, zona = "Z", indiceZona = id.toInt().coerceAtLeast(1),
+        id = id, numero = id.toInt().coerceAtLeast(1), alias = null, salaId = 1, indiceZona = id.toInt().coerceAtLeast(1),
         forma = MesaForma.CUADRADA, capacidad = 4, posX = x, posY = y
     )
 

@@ -26,6 +26,7 @@ import org.junit.runner.RunWith
  *  v6 -> v7: FKs + índices       (M1 — ver nota en AppDatabase)
  *  v8 -> v9: +indiceZona         (IDs B1/T2 por zona)
  *  v9 -> v10: bloqueada + reservas (hold de sala)
+ *  v10 -> v11: tabla salas + mesas.salaId (deja de existir zona)
  */
 @RunWith(AndroidJUnit4::class)
 class MigracionesTest {
@@ -129,31 +130,50 @@ class MigracionesTest {
             0L,
             db.query("SELECT COUNT(*) FROM `reservas`").use { it.moveToFirst(); it.getLong(0) }
         )
+        val tieneSalaId = db.query("PRAGMA table_info(`mesas`)").use { cursor ->
+            var found = false
+            while (cursor.moveToNext()) if (cursor.getString(1) == "salaId") found = true
+            found
+        }
+        assertTrue("debe existir columna salaId (v11)", tieneSalaId)
+        val noTieneZona = db.query("PRAGMA table_info(`mesas`)").use { cursor ->
+            var found = false
+            while (cursor.moveToNext()) if (cursor.getString(1) == "zona") found = true
+            !found
+        }
+        assertTrue("no debe existir columna zona (v11)", noTieneZona)
+        assertEquals(
+            "tabla salas debe existir (v11)",
+            2L,
+            db.query("SELECT COUNT(*) FROM `salas`").use { it.moveToFirst(); it.getLong(0) }
+        )
     }
 
-    private val migracionesHastaV10 = arrayOf(
+    private val migracionesHastaV11 = arrayOf(
         AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6,
         AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8,
-        AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10
+        AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10,
+        AppDatabase.MIGRATION_10_11
     )
 
     @Test
-    fun migrarV4aV10_conservaDatos() {
+    fun migrarV4aV11_conservaDatos() {
         crearBD("migracion-v4.db", 4)
-        abrirConRoom("migracion-v4.db", *migracionesHastaV10).apply {
+        abrirConRoom("migracion-v4.db", *migracionesHastaV11).apply {
             verificarDatosYEsquema()
             close()
         }
     }
 
     @Test
-    fun migrarV6aV10_conservaDatos() {
+    fun migrarV6aV11_conservaDatos() {
         // Caso real: los usuarios del release 1.2 tenían la BD en v6
         crearBD("migracion-v6.db", 6)
         abrirConRoom(
             "migracion-v6.db",
             AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8,
-            AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10
+            AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10,
+            AppDatabase.MIGRATION_10_11
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -161,12 +181,13 @@ class MigracionesTest {
     }
 
     @Test
-    fun migrarV7RotaA_v10_reparaEsquema() {
+    fun migrarV7RotaA_v11_reparaEsquema() {
         // BD v7 dejada por la migración antigua (índices idx_* y sin FKs en pedidos/líneas)
         crearBD("migracion-v7rota.db", 7, rota = true)
         abrirConRoom(
             "migracion-v7rota.db",
-            AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10
+            AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10,
+            AppDatabase.MIGRATION_10_11
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -174,7 +195,7 @@ class MigracionesTest {
     }
 
     @Test
-    fun migrarV7LimpiaA_v10_conservaDatos() {
+    fun migrarV7LimpiaA_v11_conservaDatos() {
         // BD v7 creada directamente por Room (esquema correcto con FKs e índices)
         crearBD("migracion-v7limpia.db", 6)
         SQLiteDatabase.openOrCreateDatabase(ctx.getDatabasePath("migracion-v7limpia.db"), null).apply {
@@ -184,7 +205,8 @@ class MigracionesTest {
         }
         abrirConRoom(
             "migracion-v7limpia.db",
-            AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10
+            AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10,
+            AppDatabase.MIGRATION_10_11
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -192,7 +214,7 @@ class MigracionesTest {
     }
 
     @Test
-    fun migrarV8aV10_anadeIndiceZonaYSala() {
+    fun migrarV8aV11_anadeIndiceZonaYSala() {
         // BD canónica v8 (con FKs e índices pero sin indiceZona)
         crearBD("migracion-v8.db", 6)
         SQLiteDatabase.openOrCreateDatabase(ctx.getDatabasePath("migracion-v8.db"), null).apply {
@@ -202,7 +224,7 @@ class MigracionesTest {
         }
         abrirConRoom(
             "migracion-v8.db",
-            AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10
+            AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10, AppDatabase.MIGRATION_10_11
         ).apply {
             verificarDatosYEsquema()
             val db = openHelper.writableDatabase
@@ -216,7 +238,7 @@ class MigracionesTest {
     }
 
     @Test
-    fun migrarV9aV10_anadeBloqueadaYReservas() {
+    fun migrarV9aV11_anadeBloqueadaYSalas() {
         crearBD("migracion-v9.db", 6)
         SQLiteDatabase.openOrCreateDatabase(ctx.getDatabasePath("migracion-v9.db"), null).apply {
             promoverConFKs()
@@ -230,7 +252,7 @@ class MigracionesTest {
             version = 9
             close()
         }
-        abrirConRoom("migracion-v9.db", AppDatabase.MIGRATION_9_10).apply {
+        abrirConRoom("migracion-v9.db", AppDatabase.MIGRATION_9_10, AppDatabase.MIGRATION_10_11).apply {
             verificarDatosYEsquema()
             val db = openHelper.writableDatabase
             assertEquals(

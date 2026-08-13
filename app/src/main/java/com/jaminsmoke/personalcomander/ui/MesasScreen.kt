@@ -103,7 +103,10 @@ import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaForma
 import com.jaminsmoke.personalcomander.data.MesaVisualStatus
+import com.jaminsmoke.personalcomander.data.Sala
+import com.jaminsmoke.personalcomander.data.idZona
 import com.jaminsmoke.personalcomander.data.mesaVisualStatus
+import com.jaminsmoke.personalcomander.data.nombreVisible
 import com.jaminsmoke.personalcomander.ui.components.BrandHeaderDensity
 import com.jaminsmoke.personalcomander.ui.components.PcBrandHeader
 import com.jaminsmoke.personalcomander.ui.components.PcGoldFab
@@ -127,8 +130,10 @@ fun MesasScreen(
     viewModel: MesasViewModel = viewModel()
 ) {
     val mesas by viewModel.mesas.collectAsState(initial = emptyList())
+    val salas by viewModel.salas.collectAsState(initial = emptyList())
     val cargando by viewModel.cargando.collectAsState()
-    val zonaSeleccionada by viewModel.zona.collectAsState()
+    val salaSeleccionada by viewModel.salaId.collectAsState()
+    val mapaEditable by viewModel.mapaEditable.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var mesaEditando by remember { mutableStateOf<Mesa?>(null) }
@@ -138,6 +143,9 @@ fun MesasScreen(
     var aisladaFinalX by remember { mutableStateOf(0f) }
     var aisladaFinalY by remember { mutableStateOf(0f) }
     var crearVisible by remember { mutableStateOf(false) }
+    var crearSalaVisible by remember { mutableStateOf(false) }
+    var salaEditando by remember { mutableStateOf<Sala?>(null) }
+    var salaBorrando by remember { mutableStateOf<Sala?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val undoMsg = stringResource(R.string.mesas_undo_snackbar)
     val undoAct = stringResource(R.string.mesas_undo_move)
@@ -151,8 +159,8 @@ fun MesasScreen(
     var undoPrevY by remember { mutableFloatStateOf(0f) }
 
     // Toggle vista: lista de tarjetas (todas las mesas) vs canvas individual por zona
-    var vistaLista by remember { mutableStateOf(zonaSeleccionada == null) }
-    val mostrarLista = zonaSeleccionada == null || vistaLista
+    var vistaLista by remember { mutableStateOf(salaSeleccionada == null) }
+    val mostrarLista = salaSeleccionada == null || vistaLista
 
     // Zoom + pan state (cámara libre 2D)
     var scale by remember { mutableStateOf(1f) }
@@ -161,8 +169,8 @@ fun MesasScreen(
     var viewportSize by remember { mutableStateOf(IntSize.Zero) }
     var boardAutoFitado by remember { mutableStateOf(false) }
 
-    LaunchedEffect(zonaSeleccionada) {
-        if (zonaSeleccionada != null) vistaLista = false
+    LaunchedEffect(salaSeleccionada) {
+        if (salaSeleccionada != null) vistaLista = false
         // Reset de cámara al cambiar de zona (evita zoom/pan heredados)
         scale = 1f
         panX = 0f
@@ -186,16 +194,18 @@ fun MesasScreen(
         }
     }
 
-    val zonas = remember(mesas) { mesas.map { it.zona }.distinct().filter { it.isNotBlank() } }
-    val mesasFiltradas = remember(mesas, zonaSeleccionada) {
-        if (zonaSeleccionada == null) mesas
-        else mesas.filter { it.zona == zonaSeleccionada }
+    val salasById = remember(salas) { salas.associateBy { it.id } }
+    val mesasFiltradas = remember(mesas, salaSeleccionada) {
+        if (salaSeleccionada == null) mesas
+        else mesas.filter { it.salaId == salaSeleccionada }
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            PcGoldFab(onClick = { crearVisible = true })
+            if (mapaEditable) {
+                PcGoldFab(onClick = { crearVisible = true })
+            }
         },
         topBar = {
             PcBrandHeader(
@@ -209,7 +219,7 @@ fun MesasScreen(
                     }
                 } else null,
                 actions = {
-                    if (zonaSeleccionada != null) {
+                    if (salaSeleccionada != null) {
                         IconButton(onClick = { vistaLista = !vistaLista }) {
                             Icon(
                                 if (vistaLista) Icons.Default.GridView else Icons.AutoMirrored.Filled.List,
@@ -226,25 +236,69 @@ fun MesasScreen(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             Column(Modifier.fillMaxSize()) {
-                // Zone tabs
-                if (zonas.size > 1) {
+                if (!mapaEditable) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        ),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.sesion_banner_mapa_solo_lectura),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.padding(12.dp),
+                        )
+                    }
+                }
+                if (salas.isNotEmpty() || mapaEditable) {
                     PrimaryScrollableTabRow(
-                        selectedTabIndex = if (zonaSeleccionada != null) zonas.indexOf(zonaSeleccionada) + 1 else 0,
+                        selectedTabIndex = if (salaSeleccionada != null) {
+                            salas.indexOfFirst { it.id == salaSeleccionada }.let { if (it >= 0) it + 1 else 0 }
+                        } else 0,
                         modifier = Modifier.fillMaxWidth(),
                         edgePadding = 12.dp
                     ) {
                         val allLabel = stringResource(R.string.mesas_all_zones)
-                        Tab(selected = zonaSeleccionada == null, onClick = { viewModel.setZona(null) }) {
+                        Tab(selected = salaSeleccionada == null, onClick = { viewModel.setSala(null) }) {
                             Text(allLabel, Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                                fontWeight = if (zonaSeleccionada == null) FontWeight.Bold else FontWeight.Normal,
-                                color = if (zonaSeleccionada == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                fontWeight = if (salaSeleccionada == null) FontWeight.Bold else FontWeight.Normal,
+                                color = if (salaSeleccionada == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        zonas.forEach { zona ->
-                            val emoji = zonaEmoji(zona)
-                            Tab(selected = zonaSeleccionada == zona, onClick = { viewModel.setZona(if (zonaSeleccionada == zona) null else zona) }) {
-                                Text("$emoji $zona", Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                                    fontWeight = if (zonaSeleccionada == zona) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (zonaSeleccionada == zona) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        salas.forEach { sala ->
+                            val emoji = zonaEmoji(sala.nombre)
+                            Tab(
+                                selected = salaSeleccionada == sala.id,
+                                onClick = { viewModel.setSala(if (salaSeleccionada == sala.id) null else sala.id) },
+                            ) {
+                                Text("$emoji ${sala.nombre}", Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                    fontWeight = if (salaSeleccionada == sala.id) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (salaSeleccionada == sala.id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        if (mapaEditable) {
+                            Tab(selected = false, onClick = { crearSalaVisible = true }) {
+                                Text(
+                                    stringResource(R.string.mesas_nueva_sala),
+                                    Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                    color = MaterialTheme.colorScheme.secondary,
+                                )
+                            }
+                        }
+                    }
+                }
+                if (mapaEditable && salaSeleccionada != null) {
+                    val salaActiva = salasById[salaSeleccionada]
+                    if (salaActiva != null) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                            horizontalArrangement = Arrangement.End,
+                        ) {
+                            TextButton(onClick = { salaEditando = salaActiva }) {
+                                Text(stringResource(R.string.mesas_renombrar_sala))
+                            }
+                            TextButton(onClick = { salaBorrando = salaActiva }) {
+                                Text(stringResource(R.string.mesas_eliminar_sala), color = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -257,8 +311,8 @@ fun MesasScreen(
                         title = stringResource(R.string.empty_mesas_title),
                         subtitle = stringResource(R.string.empty_mesas_subtitle),
                         modifier = Modifier.weight(1f),
-                        actionLabel = stringResource(R.string.empty_mesas_action),
-                        onAction = { crearVisible = true }
+                        actionLabel = if (mapaEditable) stringResource(R.string.empty_mesas_action) else null,
+                        onAction = if (mapaEditable) ({ crearVisible = true }) else null
                     )
                 } else if (!mostrarLista) {
                 // Board fijo compartido por todas las zonas: ninguna mesa ni la
@@ -500,6 +554,8 @@ fun MesasScreen(
                                 val (mw, _) = mesaDims(mesa.forma, mesa.girada)
                                 MesaCard(
                                     mesa = mesa,
+                                    nombreSala = salasById[mesa.salaId]?.nombre.orEmpty(),
+                                    mapaEditable = mapaEditable,
                                     isDragging = isDragging,
                                     modifier = Modifier
                                         .offset(x = animX.dp, y = animY.dp)
@@ -619,7 +675,7 @@ fun MesasScreen(
                                     .width(ow.dp)
                                     .zIndex(10f)
                             ) {
-                                DragOverlayCard(mesa)
+                                DragOverlayCard(mesa, salasById[mesa.salaId]?.nombre.orEmpty())
                             }
                         }
                     }
@@ -660,6 +716,8 @@ fun MesasScreen(
                 } else {
                     MesasListaView(
                         mesas = mesasFiltradas,
+                        salasById = salasById,
+                        mapaEditable = mapaEditable,
                         onOpenMesa = { id ->
                             val m = mesasFiltradas.find { it.id == id }
                             if (m?.bloqueada == true) viewModel.avisarMesaBloqueada()
@@ -679,39 +737,40 @@ fun MesasScreen(
 
     // Create dialog
     if (crearVisible) {
-        var createZona by remember { mutableStateOf(zonaSeleccionada ?: zonas.firstOrNull() ?: "") }
+        var createSalaId by remember {
+            mutableStateOf(salaSeleccionada ?: salas.firstOrNull()?.id ?: 0L)
+        }
         var createForma by remember { mutableStateOf(MesaForma.CUADRADA) }
         var createCap by remember { mutableStateOf("4") }
         var createAlias by remember { mutableStateOf("") }
-        var zonaExpanded by remember { mutableStateOf(false) }
+        var salaExpanded by remember { mutableStateOf(false) }
         AlertDialog(
             onDismissRequest = { crearVisible = false },
             title = { Text(stringResource(R.string.mesas_create_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // Zone: dropdown with existing zones + free text for new ones
                     ExposedDropdownMenuBox(
-                        expanded = zonaExpanded,
-                        onExpandedChange = { zonaExpanded = it }
+                        expanded = salaExpanded,
+                        onExpandedChange = { salaExpanded = it }
                     ) {
+                        val salaNombre = salasById[createSalaId]?.nombre.orEmpty()
                         OutlinedTextField(
-                            value = createZona,
-                            onValueChange = { createZona = it; zonaExpanded = true },
+                            value = salaNombre,
+                            onValueChange = {},
+                            readOnly = true,
                             label = { Text(stringResource(R.string.mesas_zone_label)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true),
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = zonaExpanded) }
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = salaExpanded) }
                         )
-                        val filtered = if (createZona.isBlank()) zonas
-                            else zonas.filter { it.contains(createZona, ignoreCase = true) }
                         ExposedDropdownMenu(
-                            expanded = zonaExpanded && filtered.isNotEmpty(),
-                            onDismissRequest = { zonaExpanded = false }
+                            expanded = salaExpanded,
+                            onDismissRequest = { salaExpanded = false }
                         ) {
-                            filtered.forEach { zona ->
+                            salas.forEach { sala ->
                                 DropdownMenuItem(
-                                    text = { Text("${zonaEmoji(zona)} $zona") },
-                                    onClick = { createZona = zona; zonaExpanded = false }
+                                    text = { Text("${zonaEmoji(sala.nombre)} ${sala.nombre}") },
+                                    onClick = { createSalaId = sala.id; salaExpanded = false }
                                 )
                             }
                         }
@@ -728,10 +787,15 @@ fun MesasScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    viewModel.createMesa(createZona.ifBlank { "General" }, createForma, createCap.toIntOrNull() ?: 4, createAlias.ifBlank { null })
-                    crearVisible = false
-                }) { Text(stringResource(R.string.mesas_create_btn)) }
+                TextButton(
+                    onClick = {
+                        if (createSalaId != 0L) {
+                            viewModel.createMesa(createSalaId, createForma, createCap.toIntOrNull() ?: 4, createAlias.ifBlank { null })
+                            crearVisible = false
+                        }
+                    },
+                    enabled = createSalaId != 0L,
+                ) { Text(stringResource(R.string.mesas_create_btn)) }
             },
             dismissButton = { TextButton(onClick = { crearVisible = false }) { Text(stringResource(R.string.menu_cancel)) } }
         )
@@ -744,10 +808,10 @@ fun MesasScreen(
         var editForma by remember(mesa) { mutableStateOf(mesa.forma) }
         AlertDialog(
             onDismissRequest = { mesaEditando = null },
-            title = { Text(stringResource(R.string.mesas_alias_title, mesa.nombreVisible)) },
+            title = { Text(stringResource(R.string.mesas_alias_title, mesa.nombreVisible(salasById))) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(editAlias, { editAlias = it }, label = { Text(stringResource(R.string.mesas_alias_label)) }, placeholder = { Text(mesa.idZona) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(editAlias, { editAlias = it }, label = { Text(stringResource(R.string.mesas_alias_label)) }, placeholder = { Text(mesa.idZona(salasById)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(editCap, { editCap = it.filter { c -> c.isDigit() } }, label = { Text(stringResource(R.string.mesas_capacidad_label)) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
                     Text(stringResource(R.string.mesas_shape_label), style = MaterialTheme.typography.labelMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -775,7 +839,7 @@ fun MesasScreen(
     mesaAislada?.let { mesa ->
         AlertDialog(
             onDismissRequest = { mesaAislada = null },
-            title = { Text(stringResource(R.string.mesas_isolated_title, mesa.nombreVisible)) },
+            title = { Text(stringResource(R.string.mesas_isolated_title, mesa.nombreVisible(salasById))) },
             text = { Text(stringResource(R.string.mesas_isolated_body)) },
             confirmButton = {
                 TextButton(onClick = {
@@ -807,7 +871,7 @@ fun MesasScreen(
         AlertDialog(
             onDismissRequest = { mesaBorrando = null },
             title = { Text(stringResource(R.string.mesas_delete_title)) },
-            text = { Text(stringResource(R.string.mesas_delete_confirm, mesa.nombreVisible)) },
+            text = { Text(stringResource(R.string.mesas_delete_confirm, mesa.nombreVisible(salasById))) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteMesa(mesa)
@@ -822,7 +886,7 @@ fun MesasScreen(
         var nombreReserva by remember(mesa.id) { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { mesaReservando = null },
-            title = { Text(stringResource(R.string.mesas_reserve_title, mesa.nombreVisible)) },
+            title = { Text(stringResource(R.string.mesas_reserve_title, mesa.nombreVisible(salasById))) },
             text = {
                 OutlinedTextField(
                     value = nombreReserva,
@@ -848,15 +912,86 @@ fun MesasScreen(
             }
         )
     }
+
+    if (crearSalaVisible) {
+        var nombreSala by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { crearSalaVisible = false },
+            title = { Text(stringResource(R.string.mesas_nueva_sala)) },
+            text = {
+                OutlinedTextField(
+                    value = nombreSala,
+                    onValueChange = { nombreSala = it },
+                    label = { Text(stringResource(R.string.mesas_sala_nombre)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.crearSala(nombreSala)
+                        crearSalaVisible = false
+                    },
+                    enabled = nombreSala.isNotBlank(),
+                ) { Text(stringResource(R.string.mesas_create_btn)) }
+            },
+            dismissButton = { TextButton(onClick = { crearSalaVisible = false }) { Text(stringResource(R.string.menu_cancel)) } },
+        )
+    }
+
+    salaEditando?.let { sala ->
+        var nombreSala by remember(sala.id) { mutableStateOf(sala.nombre) }
+        AlertDialog(
+            onDismissRequest = { salaEditando = null },
+            title = { Text(stringResource(R.string.mesas_renombrar_sala)) },
+            text = {
+                OutlinedTextField(
+                    value = nombreSala,
+                    onValueChange = { nombreSala = it },
+                    label = { Text(stringResource(R.string.mesas_sala_nombre)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.renombrarSala(sala, nombreSala)
+                        salaEditando = null
+                    },
+                    enabled = nombreSala.isNotBlank(),
+                ) { Text(stringResource(R.string.menu_save)) }
+            },
+            dismissButton = { TextButton(onClick = { salaEditando = null }) { Text(stringResource(R.string.menu_cancel)) } },
+        )
+    }
+
+    salaBorrando?.let { sala ->
+        AlertDialog(
+            onDismissRequest = { salaBorrando = null },
+            title = { Text(stringResource(R.string.mesas_eliminar_sala)) },
+            text = { Text(stringResource(R.string.mesas_eliminar_sala_confirm, sala.nombre)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.eliminarSala(sala)
+                    salaBorrando = null
+                }) { Text(stringResource(R.string.btn_delete), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { salaBorrando = null }) { Text(stringResource(R.string.menu_cancel)) } },
+        )
+    }
 }
 
 /**
- * Vista de lista: todas las mesas organizadas por zona en tarjetas.
- * Muestra el ID de zona (B1, T2…) o el alias del usuario si existe.
+ * Vista de lista: todas las mesas organizadas por sala en tarjetas.
+ * Muestra el ID de sala (B1, T2…) o el alias del usuario si existe.
  */
 @Composable
 private fun MesasListaView(
     mesas: List<Mesa>,
+    salasById: Map<Long, Sala>,
+    mapaEditable: Boolean,
     onOpenMesa: (Long) -> Unit,
     onEdit: (Mesa) -> Unit,
     onDelete: (Mesa) -> Unit,
@@ -865,24 +1000,28 @@ private fun MesasListaView(
     onBloquear: (Mesa) -> Unit,
     onDesbloquear: (Mesa) -> Unit,
 ) {
-    val porZona = mesas.groupBy { it.zona }
+    val porSala = mesas.groupBy { it.salaId }
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        porZona.forEach { (zona, mesasZona) ->
-            item(key = "zona_$zona") {
+        porSala.forEach { (salaId, mesasSala) ->
+            val sala = salasById[salaId]
+            val nombre = sala?.nombre.orEmpty()
+            item(key = "sala_$salaId") {
                 Text(
-                    "${zonaEmoji(zona)} $zona",
+                    "${zonaEmoji(nombre)} $nombre",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 6.dp, bottom = 2.dp)
                 )
             }
-            items(mesasZona, key = { it.id }) { mesa ->
+            items(mesasSala, key = { it.id }) { mesa ->
                 MesaListaCard(
                     mesa = mesa,
+                    nombreSala = nombre,
+                    mapaEditable = mapaEditable,
                     onOpenMesa = onOpenMesa,
                     onEdit = onEdit,
                     onDelete = onDelete,
@@ -899,6 +1038,8 @@ private fun MesasListaView(
 @Composable
 private fun MesaListaCard(
     mesa: Mesa,
+    nombreSala: String,
+    mapaEditable: Boolean,
     onOpenMesa: (Long) -> Unit,
     onEdit: (Mesa) -> Unit,
     onDelete: (Mesa) -> Unit,
@@ -933,7 +1074,7 @@ private fun MesaListaCard(
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    mesa.nombreVisible,
+                    mesa.nombreVisible(nombreSala),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = onFill,
@@ -950,6 +1091,7 @@ private fun MesaListaCard(
                 Box(Modifier.size(8.dp).background(PcComandaDot, CircleShape))
             }
             Box {
+                if (mapaEditable) {
                 IconButton(onClick = { menuExpanded = true }) {
                     Icon(Icons.Default.Menu, stringResource(R.string.mesas_menu_more), tint = onFill)
                 }
@@ -991,6 +1133,7 @@ private fun MesaListaCard(
                         text = { Text(stringResource(R.string.mesas_menu_delete), color = MaterialTheme.colorScheme.error) },
                         onClick = { menuExpanded = false; onDelete(mesa) }
                     )
+                }
                 }
             }
         }

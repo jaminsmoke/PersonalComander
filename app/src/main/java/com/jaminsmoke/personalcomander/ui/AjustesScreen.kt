@@ -497,7 +497,7 @@ private fun SalaCard(
 ) {
     var barHost by remember {
         mutableStateOf(
-            if (modo is ModoSesion.Sala) modo.barHost else "10.0.2.2",
+            if (modo is ModoSesion.Establecimiento) modo.barHost else "10.0.2.2",
         )
     }
     GlassCard(modifier = Modifier.fillMaxWidth()) {
@@ -518,7 +518,7 @@ private fun SalaCard(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                is ModoSesion.Sala -> {
+                is ModoSesion.Establecimiento -> {
                     Text(
                         text = stringResource(
                             if (modo.admitido) R.string.sesion_modo_sala_admitido else R.string.sesion_modo_sala_pendiente,

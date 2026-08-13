@@ -12,6 +12,7 @@ import androidx.compose.ui.test.down
 import androidx.compose.ui.test.moveBy
 import androidx.compose.ui.test.up
 import com.jaminsmoke.personalcomander.data.Mesa
+import com.jaminsmoke.personalcomander.data.nombreVisible
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -23,7 +24,7 @@ class MesasBoardUiTest {
 
     @Test
     fun segundo_drag_usa_la_posicion_actualizada() {
-        val mesa = Mesa(numero = 1, zona = "Interior", indiceZona = 1)
+        val mesa = Mesa(numero = 1, salaId = 1, indiceZona = 1)
         var posicion by mutableFloatStateOf(40f)
         var baseCapturada = -1f
 
@@ -32,6 +33,7 @@ class MesasBoardUiTest {
             MaterialTheme {
                 MesaCard(
                     mesa = mesa,
+                    nombreSala = "Interior",
                     isDragging = false,
                     onClick = {},
                     onEditClick = {},
@@ -46,7 +48,7 @@ class MesasBoardUiTest {
         }
 
         fun dragLargo() {
-            composeRule.onNodeWithText(mesa.nombreVisible).performTouchInput {
+            composeRule.onNodeWithText(mesa.nombreVisible("Interior")).performTouchInput {
                 down(center)
                 advanceEventTime(700)
                 moveBy(Offset(24f, 0f))
