@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="docs/screenshots/home.png" alt="Personal Comander" width="180" style="border-radius: 24px;">
+<img src="docs/screenshots/home.png" alt="Personal Comander" width="180">
 
-# 🏰 Personal Comander
+# 🛎️ Personal Comander
 
 **Restaurant table & order management for waiters — fast, visual, voice-first.**
 
