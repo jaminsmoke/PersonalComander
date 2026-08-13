@@ -3,23 +3,35 @@ package com.jaminsmoke.personalcomander.data.sesion
 import android.content.Context
 import com.jaminsmoke.personalcomander.data.EscaneadorRed
 import com.jaminsmoke.personalcomander.data.ServidorDescubierto
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class SesionRepository(context: Context) {
+class SesionRepository(
+    context: Context,
+    scope: CoroutineScope,
+) {
     private val store = SesionStore(context)
 
     private val _modo = MutableStateFlow(store.cargar())
     val modo: StateFlow<ModoSesion> = _modo.asStateFlow()
+
+    private val _foto = MutableStateFlow<ByteArray?>(null)
+    val foto: StateFlow<ByteArray?> = _foto.asStateFlow()
 
     var identityBaseUrl: String
         get() = store.identityBaseUrl
         set(value) {
             store.identityBaseUrl = value
         }
+
+    init {
+        scope.launch { hidratar() }
+    }
 
     private fun cliente() = IdentityCliente(store.identityBaseUrl)
 
@@ -42,8 +54,94 @@ class SesionRepository(context: Context) {
             r
         }
 
+    suspend fun hidratar() {
+        val token = _modo.value.token ?: return
+        withContext(Dispatchers.IO) {
+            val me = cliente().me(token)
+            if (me.codigo == 401) {
+                withContext(Dispatchers.Main.immediate) { cerrarSesion() }
+                return@withContext
+            }
+            val perfil = me.valor ?: return@withContext
+            val qrResp = cliente().meQr(token)
+            val qr = when {
+                qrResp.codigo == 409 || qrResp.code == IdentityJson.CODE_CREDENTIAL_REVOKED -> null
+                qrResp.ok -> qrResp.valor
+                else -> _modo.value.qr
+            }
+            if (qr == null && _modo.value is ModoSesion.Sala) desconectarBar()
+            persistir(perfil, qr, token)
+            cargarFoto(token, perfil.fotoUrl)
+        }
+    }
+
+    suspend fun renovar(): IdentityRespuesta<String> {
+        val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
+        return withContext(Dispatchers.IO) {
+            val r = cliente().renovar(token)
+            if (r.ok && r.valor != null) {
+                desconectarBar()
+                val perfil = _modo.value.perfil ?: return@withContext r
+                persistir(perfil, r.valor, token)
+            }
+            r
+        }
+    }
+
+    suspend fun revocar(): IdentityRespuesta<Unit> {
+        val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
+        return withContext(Dispatchers.IO) {
+            val r = cliente().revocar(token)
+            if (r.ok) {
+                desconectarBar()
+                val perfil = _modo.value.perfil ?: return@withContext r
+                persistir(perfil, qr = null, token)
+            }
+            r
+        }
+    }
+
+    suspend fun subirFoto(bytes: ByteArray, mime: String): IdentityRespuesta<String?> {
+        val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
+        return withContext(Dispatchers.IO) {
+            val r = cliente().subirFoto(token, bytes, mime)
+            if (r.ok) {
+                val perfil = _modo.value.perfil?.copy(fotoUrl = r.valor ?: "/v1/camareros/me/foto")
+                    ?: return@withContext r
+                persistir(perfil, _modo.value.qr, token)
+                cargarFoto(token, perfil.fotoUrl)
+            }
+            r
+        }
+    }
+
+    suspend fun borrarFoto(): IdentityRespuesta<Unit> {
+        val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
+        return withContext(Dispatchers.IO) {
+            val r = cliente().borrarFoto(token)
+            if (r.ok) {
+                val perfil = _modo.value.perfil?.copy(fotoUrl = null) ?: return@withContext r
+                persistir(perfil, _modo.value.qr, token)
+                _foto.value = null
+            }
+            r
+        }
+    }
+
+    suspend fun borrarCuenta(password: String): IdentityRespuesta<Unit> {
+        val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
+        return withContext(Dispatchers.IO) {
+            val r = cliente().suprimirCuenta(token, password)
+            if (r.ok) {
+                withContext(Dispatchers.Main.immediate) { cerrarSesion() }
+            }
+            r
+        }
+    }
+
     fun cerrarSesion() {
         store.limpiarTodo()
+        _foto.value = null
         _modo.value = ModoSesion.Local
     }
 
@@ -81,11 +179,32 @@ class SesionRepository(context: Context) {
         EscaneadorRed.escanear(listOf(BarLanCliente.PUERTO))
     }
 
+    private fun persistir(perfil: PerfilCamarero, qr: String?, token: String) {
+        val actual = _modo.value
+        if (actual is ModoSesion.Sala) {
+            val sala = actual.copy(perfil = perfil, qr = qr, token = token)
+            store.guardarSala(sala)
+            _modo.value = sala
+        } else {
+            store.guardarIdentidad(perfil, qr, token)
+            _modo.value = ModoSesion.Identidad(perfil, qr, token)
+        }
+    }
+
     private fun aplicarSesion(r: IdentityRespuesta<IdentityJson.SesionIdentity>) {
         val sesion = r.valor ?: return
         val token = sesion.token ?: return
         if (!r.ok) return
-        store.guardarIdentidad(sesion.perfil, sesion.qr, token)
-        _modo.value = ModoSesion.Identidad(sesion.perfil, sesion.qr, token)
+        persistir(sesion.perfil, sesion.qr, token)
+        cargarFoto(token, sesion.perfil.fotoUrl)
+    }
+
+    private fun cargarFoto(token: String, fotoUrl: String?) {
+        if (fotoUrl.isNullOrBlank()) {
+            _foto.value = null
+            return
+        }
+        val r = cliente().foto(token)
+        _foto.value = if (r.ok) r.valor else null
     }
 }

@@ -60,6 +60,7 @@ fun AuthScreen(
     var apellidos by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var telefono by remember { mutableStateOf("") }
 
     LaunchedEffect(modo) {
         if (modo !is ModoSesion.Local) onAutenticado()
@@ -135,6 +136,16 @@ fun AuthScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
             )
+            if (registro) {
+                OutlinedTextField(
+                    value = telefono,
+                    onValueChange = { telefono = it },
+                    label = { Text(stringResource(R.string.sesion_telefono)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -149,7 +160,7 @@ fun AuthScreen(
             } else if (registro) {
                 PcPrimaryButton(
                     text = stringResource(R.string.sesion_crear_cuenta),
-                    onClick = { viewModel.registrar(nombre, apellidos, email, password) },
+                    onClick = { viewModel.registrar(nombre, apellidos, email, password, telefono.ifBlank { null }) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             } else {
