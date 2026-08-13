@@ -37,7 +37,7 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 │   ├── BackupJson.kt            # JSON import/export models
 │   ├── Tpv.kt / TpvCliente.kt   # POS sync adapters
 │   ├── CategoriaIcono.kt        # Category → emoji mapping
-│   └── sesion/                  # Modos Local/Identidad/Sala, Identity + Bar LAN
+│   └── sesion/                  # Modos Local/Identidad/Establecimiento, Identity + Bar LAN
 └── ui/
     ├── PersonalComanderApp.kt   # NavHost (home, mesas, menu, ajustes, auth, perfil, comanda/{id})
     ├── HomeScreen.kt / HomeViewModel.kt

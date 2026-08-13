@@ -15,9 +15,14 @@ import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.Pedido
 import com.jaminsmoke.personalcomander.data.PedidoEstado
 import com.jaminsmoke.personalcomander.data.Producto
+import com.jaminsmoke.personalcomander.data.sesion.BarLanCliente
+import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
+import com.jaminsmoke.personalcomander.data.sesion.RondaLanMapper
 import androidx.room.withTransaction
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -54,6 +59,7 @@ class ComandaViewModel(
 ) : AndroidViewModel(application) {
 
     private val db = (application as PersonalComanderApp).db
+    private val sesion = (application as PersonalComanderApp).sesion
     private val ctx = getApplication<Application>()
 
     private val mutex = Mutex()
@@ -366,17 +372,52 @@ class ComandaViewModel(
 
     fun enviarACocina() {
         viewModelScope.launch {
-            mutex.withLock {
-                db.withTransaction {
-                    try {
-                        val p = db.pedidoDao().getActivo(mesaId) ?: return@withTransaction
+            val envio = mutex.withLock {
+                try {
+                    db.withTransaction {
+                        val p = db.pedidoDao().getActivo(mesaId) ?: return@withTransaction null
+                        val mesa = db.mesaDao().getById(mesaId) ?: return@withTransaction null
+                        val nombreSala = db.salaDao().getById(mesa.salaId)?.nombre.orEmpty()
+                        val lineas = db.lineaPedidoDao().getForPedido(p.id)
                         db.pedidoDao().update(p.copy(estado = PedidoEstado.ENVIADA))
                         db.mesaDao().updateEstado(mesaId, MesaEstado.EN_COCINA, p.id)
-                    } catch (e: Exception) { _error.value = ctx.getString(R.string.error_send_to_kitchen, e.message ?: e.javaClass.simpleName) }
+                        EnvioLocal(p.id, mesa, nombreSala, lineas)
+                    }
+                } catch (e: Exception) {
+                    _error.value = ctx.getString(R.string.error_send_to_kitchen, e.message ?: e.javaClass.simpleName)
+                    null
                 }
-            }
+            } ?: return@launch
+            enviarRondaSiEstablecimiento(envio)
         }
     }
+
+    private suspend fun enviarRondaSiEstablecimiento(envio: EnvioLocal) {
+        val modo = sesion.modo.value
+        if (modo !is ModoSesion.Establecimiento) return
+        if (envio.lineas.isEmpty()) return
+        val ronda = RondaLanMapper.desdePedido(
+            pedidoId = envio.pedidoId,
+            mesa = envio.mesa,
+            nombreSala = envio.nombreSala,
+            lineas = envio.lineas,
+            camarero = modo.perfil.nombreCompleto,
+            creadoEn = System.currentTimeMillis(),
+        )
+        val resultado = withContext(Dispatchers.IO) {
+            BarLanCliente.postRonda(modo.barHost, modo.barPuerto, ronda)
+        }
+        if (!resultado.ok) {
+            _error.value = ctx.getString(R.string.error_send_ronda_bar)
+        }
+    }
+
+    private data class EnvioLocal(
+        val pedidoId: Long,
+        val mesa: Mesa,
+        val nombreSala: String,
+        val lineas: List<LineaPedido>,
+    )
 
     fun solicitarCierre() {
         _mostrarConfirmacionCierre.value = true

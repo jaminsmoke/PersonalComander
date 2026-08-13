@@ -189,6 +189,7 @@
     <string name="error_increase_quantity">Error al aumentar cantidad: %s</string>
     <string name="error_decrease_quantity">Error al disminuir cantidad: %s</string>
     <string name="error_send_to_kitchen">Error al enviar a cocina: %s</string>
+    <string name="error_send_ronda_bar">La comanda quedó en el tablet, pero el Bar no recibió la ronda</string>
     <string name="error_close_table">Error al cerrar mesa: %s</string>
 
     <!-- General -->
