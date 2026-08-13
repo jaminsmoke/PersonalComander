@@ -32,7 +32,7 @@ jobs:
       - name: Generate keystore.properties
         run: |
           cat > keystore.properties <<EOF
-          storeFile=release.keystore
+          storeFile=$GITHUB_WORKSPACE/app/release.keystore
           storePassword=${{ secrets.KEYSTORE_PASSWORD }}
           keyAlias=${{ secrets.KEY_ALIAS }}
           keyPassword=${{ secrets.KEY_PASSWORD }}
