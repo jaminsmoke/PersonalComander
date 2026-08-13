@@ -20,6 +20,8 @@ import androidx.navigation.navArgument
 import com.jaminsmoke.personalcomander.ui.components.PcBottomBar
 import com.jaminsmoke.personalcomander.ui.components.TopLevelDestination
 import com.jaminsmoke.personalcomander.ui.components.isTopLevelRoute
+import com.jaminsmoke.personalcomander.ui.sesion.AuthScreen
+import com.jaminsmoke.personalcomander.ui.sesion.PerfilScreen
 
 private const val ANIM_DURATION = 350
 
@@ -64,6 +66,8 @@ fun PersonalComanderApp() {
                     onOpenMesas = { navigateTopLevel(TopLevelDestination.MESAS) },
                     onOpenMenu = { navigateTopLevel(TopLevelDestination.MENU) },
                     onOpenAjustes = { navigateTopLevel(TopLevelDestination.AJUSTES) },
+                    onOpenAuth = { navController.navigate("auth") },
+                    onOpenPerfil = { navController.navigate("perfil") },
                 )
             }
             composable(
@@ -82,7 +86,11 @@ fun PersonalComanderApp() {
                 enterTransition = { fadeIn(animationSpec = tween(ANIM_DURATION)) },
                 exitTransition = { fadeOut(animationSpec = tween(ANIM_DURATION)) },
             ) {
-                AjustesScreen(onBack = null)
+                AjustesScreen(
+                    onBack = null,
+                    onOpenAuth = { navController.navigate("auth") },
+                    onOpenPerfil = { navController.navigate("perfil") },
+                )
             }
             composable(
                 route = TopLevelDestination.MENU.route,
@@ -102,6 +110,23 @@ fun PersonalComanderApp() {
                     mesaId = mesaId,
                     onBack = { navController.popBackStack() },
                 )
+            }
+            composable(
+                route = "auth",
+                enterTransition = { slideInHorizontally(tween(ANIM_DURATION)) { it } },
+                exitTransition = { slideOutHorizontally(tween(ANIM_DURATION)) { -it } },
+            ) {
+                AuthScreen(
+                    onBack = { navController.popBackStack() },
+                    onAutenticado = { navController.popBackStack() },
+                )
+            }
+            composable(
+                route = "perfil",
+                enterTransition = { slideInHorizontally(tween(ANIM_DURATION)) { it } },
+                exitTransition = { slideOutHorizontally(tween(ANIM_DURATION)) { -it } },
+            ) {
+                PerfilScreen(onBack = { navController.popBackStack() })
             }
         }
     }

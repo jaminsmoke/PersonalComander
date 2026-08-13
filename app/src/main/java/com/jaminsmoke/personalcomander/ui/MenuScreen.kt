@@ -70,6 +70,7 @@ fun MenuScreen(
     val productos by viewModel.productos.collectAsState(initial = emptyList())
     val cargando by viewModel.cargando.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
+    val cartaEditable by viewModel.cartaEditable.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var dialogVisible by remember { mutableStateOf(false) }
     var editando by remember { mutableStateOf<Producto?>(null) }
@@ -86,13 +87,15 @@ fun MenuScreen(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            PcGoldFab(
-                onClick = {
-                    editando = null
-                    dialogVisible = true
-                },
-                contentDescription = stringResource(R.string.menu_new_product),
-            )
+            if (cartaEditable) {
+                PcGoldFab(
+                    onClick = {
+                        editando = null
+                        dialogVisible = true
+                    },
+                    contentDescription = stringResource(R.string.menu_new_product),
+                )
+            }
         },
         topBar = {
             PcBrandHeader(
@@ -114,8 +117,8 @@ fun MenuScreen(
                 title = stringResource(R.string.empty_menu_title),
                 subtitle = stringResource(R.string.empty_menu_subtitle),
                 modifier = Modifier.padding(padding),
-                actionLabel = stringResource(R.string.empty_menu_action),
-                onAction = { editando = null; dialogVisible = true }
+                actionLabel = if (cartaEditable) stringResource(R.string.empty_menu_action) else null,
+                onAction = if (cartaEditable) ({ editando = null; dialogVisible = true }) else null,
             )
         } else {
             LazyColumn(
@@ -125,9 +128,27 @@ fun MenuScreen(
                 contentPadding = PaddingValues(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                if (!cartaEditable) {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            ),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.sesion_banner_solo_lectura),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.padding(12.dp),
+                            )
+                        }
+                    }
+                }
                 items(productos, key = { it.id }) { producto ->
                     MenuProductoRow(
                         producto = producto,
+                        editable = cartaEditable,
                         onEditar = {
                             editando = producto
                             dialogVisible = true
@@ -182,6 +203,7 @@ fun MenuScreen(
 @Composable
 private fun MenuProductoRow(
     producto: Producto,
+    editable: Boolean,
     onEditar: () -> Unit,
     onToggleDisponible: () -> Unit,
     onEliminar: () -> Unit
@@ -230,19 +252,21 @@ private fun MenuProductoRow(
                 color = if (producto.disponible) scheme.secondary else scheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
-            Checkbox(
-                checked = producto.disponible,
-                onCheckedChange = { onToggleDisponible() }
-            )
-            IconButton(onClick = onEditar) {
-                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.btn_edit))
-            }
-            IconButton(onClick = onEliminar) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.btn_delete),
-                    tint = scheme.error
+            if (editable) {
+                Checkbox(
+                    checked = producto.disponible,
+                    onCheckedChange = { onToggleDisponible() }
                 )
+                IconButton(onClick = onEditar) {
+                    Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.btn_edit))
+                }
+                IconButton(onClick = onEliminar) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.btn_delete),
+                        tint = scheme.error
+                    )
+                }
             }
         }
     }

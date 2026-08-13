@@ -37,14 +37,15 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 │   ├── BackupJson.kt            # JSON import/export models
 │   ├── Tpv.kt / TpvCliente.kt   # POS sync adapters
 │   ├── CategoriaIcono.kt        # Category → emoji mapping
-│   └── ...
+│   └── sesion/                  # Modos Local/Identidad/Sala, Identity + Bar LAN
 └── ui/
-    ├── PersonalComanderApp.kt   # NavHost (home → mesas | menu | ajustes | comanda/{id})
+    ├── PersonalComanderApp.kt   # NavHost (home, mesas, menu, ajustes, auth, perfil, comanda/{id})
     ├── HomeScreen.kt / HomeViewModel.kt
     ├── MesasScreen.kt / MesasViewModel.kt / MesasBoard.kt  # Board + list views
     ├── ComandaScreen.kt / ComandaViewModel.kt               # Order taking
     ├── MenuScreen.kt / MenuViewModel.kt                     # Product CRUD
-    ├── AjustesScreen.kt / AjustesViewModel.kt               # TPV sync, backup
+    ├── AjustesScreen.kt / AjustesViewModel.kt               # TPV sync, backup, sesión
+    ├── sesion/               # Auth, perfil QR (ZXing)
     ├── Voz.kt / VozParser.kt     # Voice recognition + NL parser
     ├── Formato.kt                # Double.formatoEuro() extension
     ├── ShimmerEffect.kt          # Loading skeleton
@@ -53,11 +54,15 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 
 ## Build & run
 
+La UI de **Comander** está pensada para **móvil en vertical** (AVD `Pixel_9a`, portrait). Sigue siendo responsive, pero las pruebas visuales van en ese emulador.
+
+Personal Bar (repo hermano) se prueba en **tablet apaisada**. Dos AVDs a la vez: el teléfono no ve el tablet por `10.0.2.2` a menos que el host reenvíe el puerto (`adb -s emulator-5556 forward tcp:8787 tcp:8787`) y Comander apunte a `10.0.2.2:8787`. Identity en Docker del host: `http://10.0.2.2:8080`.
+
 ```bash
 # Typecheck
 ./gradlew assembleDebug
 
-# Install on emulator (Pixel_9a AVD)
+# Install on emulator (Pixel_9a AVD, portrait)
 ./gradlew installDebug
 
 # Launch emulator

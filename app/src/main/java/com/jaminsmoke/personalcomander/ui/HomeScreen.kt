@@ -49,6 +49,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.ui.components.BrandHeaderDensity
 import com.jaminsmoke.personalcomander.ui.components.PcBrandHeader
+import com.jaminsmoke.personalcomander.ui.components.PcSesionChip
+import com.jaminsmoke.personalcomander.ui.sesion.SesionViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,9 +58,13 @@ fun HomeScreen(
     onOpenMesas: () -> Unit,
     onOpenMenu: () -> Unit,
     onOpenAjustes: () -> Unit,
-    viewModel: HomeViewModel = viewModel()
+    onOpenAuth: () -> Unit,
+    onOpenPerfil: () -> Unit,
+    viewModel: HomeViewModel = viewModel(),
+    sesionViewModel: SesionViewModel = viewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val modo by sesionViewModel.modo.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scheme = MaterialTheme.colorScheme
 
@@ -73,6 +79,13 @@ fun HomeScreen(
             PcBrandHeader(
                 title = stringResource(R.string.home_title),
                 density = BrandHeaderDensity.Hero,
+                actions = {
+                    PcSesionChip(
+                        modo = modo,
+                        onEntrar = onOpenAuth,
+                        onPerfil = onOpenPerfil,
+                    )
+                },
             )
         }
     ) { padding ->

@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import com.jaminsmoke.personalcomander.data.AppDatabase
 import com.jaminsmoke.personalcomander.data.Seed
+import com.jaminsmoke.personalcomander.data.sesion.SesionRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -28,6 +29,8 @@ class PersonalComanderApp : Application() {
             .build()
             .also { seedIfEmpty(it) }
     }
+
+    val sesion: SesionRepository by lazy { SesionRepository(this) }
 
     private fun seedIfEmpty(db: AppDatabase) {
         applicationScope.launch {
