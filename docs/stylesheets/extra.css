@@ -51,9 +51,3 @@
 .pc-features {
   margin-top: 1rem;
 }
-
-/* Ocultar elementos de navegación solo en la landing */
-.pc-landing .md-sidebar,
-.pc-landing .md-footer {
-  display: none;
-}
