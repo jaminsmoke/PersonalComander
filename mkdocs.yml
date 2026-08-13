@@ -1,0 +1,61 @@
+site_name: Personal Comander
+site_description: Gestión de mesas y comandas para restaurantes — rápida, visual y por voz.
+site_url: https://jaminsmoke.github.io/PersonalComander/
+repo_url: https://github.com/jaminsmoke/PersonalComander
+repo_name: jaminsmoke/PersonalComander
+copyright: Copyright &copy; 2026 jaminsmoke — MIT License
+
+theme:
+  name: material
+  logo: assets/logo.png
+  favicon: assets/favicon.png
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Cambiar a modo oscuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Cambiar a modo claro
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Inicio: index.md
+  - Documentación:
+    - Arquitectura: arquitectura.md
+    - Modelo de datos: data-model.md
+    - Voz: voz.md
+    - Sync TPV: sync-tpv.md
+    - Backup: backup.md
