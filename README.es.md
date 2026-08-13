@@ -99,4 +99,4 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 
 ## 📄 Licencia
 
-Ver [LICENSE](LICENSE) para más detalles.
+Publicado bajo la [licencia MIT](LICENSE).
