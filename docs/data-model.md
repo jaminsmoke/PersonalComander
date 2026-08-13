@@ -5,14 +5,16 @@ La base de datos Room (`personal_comander.db`) contiene la estructura central de
 ## Entidades y relaciones
 
 ```
-Mesa (table)  1──* Pedido (order)  1──* LineaPedido (line items)
-                    │
-                    └── linked via comandaActivaId on Mesa
+Sala (room)  1──* Mesa (table)  1──* Pedido (order)  1──* LineaPedido (line items)
+                        │
+                        └── linked via comandaActivaId on Mesa
 
 Producto (product) ─── referenced by LineaPedido.productoId
 ```
 
-- **Mesa**: la mesa física con posición en el board, zona, forma y alias.
+- **Sala**: recinto del mapa del establecimiento (barra, interior, terraza…). No es el modo de sesión.
+- **Establecimiento / local**: cuenta del Bar a la que el camarero se liga (`ModoSesion.Establecimiento`).
+- **Mesa**: la mesa física con posición en el board, `salaId`, forma y alias. El ID visible (B1, T2) sale del **nombre** de la sala.
 - **Pedido**: la comanda de una mesa (abierta, enviada a cocina o cerrada).
 - **LineaPedido**: cada línea del pedido (producto + cantidad + importe).
 - **Producto**: ítem del menú con precio, categoría e icono.

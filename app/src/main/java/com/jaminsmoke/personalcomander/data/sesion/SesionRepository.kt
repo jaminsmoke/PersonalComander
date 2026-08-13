@@ -69,7 +69,7 @@ class SesionRepository(
                 qrResp.ok -> qrResp.valor
                 else -> _modo.value.qr
             }
-            if (qr == null && _modo.value is ModoSesion.Sala) desconectarBar()
+            if (qr == null && _modo.value is ModoSesion.Establecimiento) desconectarBar()
             persistir(perfil, qr, token)
             cargarFoto(token, perfil.fotoUrl)
         }
@@ -153,7 +153,7 @@ class SesionRepository(
             val token = actual.token ?: return@withContext false
             val health = BarLanCliente.health(host, puerto)
             if (!BarLanCliente.esBar(health)) return@withContext false
-            val sala = ModoSesion.Sala(
+            val establecimiento = ModoSesion.Establecimiento(
                 perfil = perfil,
                 qr = qr,
                 token = token,
@@ -161,14 +161,14 @@ class SesionRepository(
                 barPuerto = puerto,
                 admitido = false,
             )
-            store.guardarSala(sala)
-            _modo.value = sala
+            store.guardarEstablecimiento(establecimiento)
+            _modo.value = establecimiento
             true
         }
 
     fun desconectarBar() {
         val actual = _modo.value
-        if (actual !is ModoSesion.Sala) return
+        if (actual !is ModoSesion.Establecimiento) return
         store.limpiarBar()
         val identidad = ModoSesion.Identidad(actual.perfil, actual.qr, actual.token)
         store.guardarIdentidad(identidad.perfil, identidad.qr, identidad.token)
@@ -181,10 +181,10 @@ class SesionRepository(
 
     private fun persistir(perfil: PerfilCamarero, qr: String?, token: String) {
         val actual = _modo.value
-        if (actual is ModoSesion.Sala) {
-            val sala = actual.copy(perfil = perfil, qr = qr, token = token)
-            store.guardarSala(sala)
-            _modo.value = sala
+        if (actual is ModoSesion.Establecimiento) {
+            val establecimiento = actual.copy(perfil = perfil, qr = qr, token = token)
+            store.guardarEstablecimiento(establecimiento)
+            _modo.value = establecimiento
         } else {
             store.guardarIdentidad(perfil, qr, token)
             _modo.value = ModoSesion.Identidad(perfil, qr, token)

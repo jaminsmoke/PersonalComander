@@ -51,7 +51,9 @@ import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaForma
 import com.jaminsmoke.personalcomander.data.MesaVisualStatus
+import com.jaminsmoke.personalcomander.data.idZona
 import com.jaminsmoke.personalcomander.data.mesaVisualStatus
+import com.jaminsmoke.personalcomander.data.nombreVisible
 import com.jaminsmoke.personalcomander.ui.theme.PcComandaDot
 import com.jaminsmoke.personalcomander.ui.theme.mesaStatusAccent
 import com.jaminsmoke.personalcomander.ui.theme.mesaStatusFill
@@ -156,6 +158,8 @@ internal fun MesaCard(
     mesa: Mesa,
     isDragging: Boolean,
     modifier: Modifier = Modifier,
+    nombreSala: String = "",
+    mapaEditable: Boolean = true,
     onClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -163,10 +167,10 @@ internal fun MesaCard(
     onDrag: (Offset) -> Unit,
     onDragEnd: () -> Unit,
     onRotateClick: () -> Unit,
-    onReservarClick: () -> Unit,
-    onCancelarReservaClick: () -> Unit,
-    onBloquearClick: () -> Unit,
-    onDesbloquearClick: () -> Unit,
+    onReservarClick: () -> Unit = {},
+    onCancelarReservaClick: () -> Unit = {},
+    onBloquearClick: () -> Unit = {},
+    onDesbloquearClick: () -> Unit = {},
     onPointerActive: (Boolean) -> Unit
 ) {
     val visual = mesaVisualStatus(mesa)
@@ -216,8 +220,9 @@ internal fun MesaCard(
             .pointerInput(mesa.id, "tap") {
                 detectTapGestures(onTap = { currentOnClick() })
             }
-            .pointerInput(mesa.id, "drag") {
-                detectDragGesturesAfterLongPress(
+            .then(
+                if (mapaEditable) Modifier.pointerInput(mesa.id, "drag") {
+                    detectDragGesturesAfterLongPress(
                     onDragStart = { _ ->
                         menuExpanded = true
                         dragArrancado = false
@@ -243,8 +248,9 @@ internal fun MesaCard(
                             dragArrancado = false
                         }
                     }
-                )
-            },
+                    )
+                } else Modifier
+            ),
         shape = RoundedCornerShape(shapeRadius),
         colors = CardDefaults.cardColors(containerColor = fill, contentColor = onFill),
         border = BorderStroke(1.5.dp, accent.copy(alpha = 0.55f)),
@@ -262,7 +268,7 @@ internal fun MesaCard(
                 horizontalAlignment = if (isRound) Alignment.CenterHorizontally else Alignment.Start
             ) {
                 Text(
-                    text = mesa.nombreVisible,
+                    text = mesa.nombreVisible(nombreSala),
                     style = if (isRound) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = onFill,
@@ -270,7 +276,7 @@ internal fun MesaCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 if (mesa.alias != null) {
-                    Text(mesa.idZona, style = MaterialTheme.typography.labelSmall, color = onFill.copy(alpha = 0.7f))
+                    Text(mesa.idZona(nombreSala), style = MaterialTheme.typography.labelSmall, color = onFill.copy(alpha = 0.7f))
                 }
                 if (isRound) {
                     Row(
@@ -296,6 +302,7 @@ internal fun MesaCard(
             }
 
             Box(Modifier.align(Alignment.TopEnd).size(24.dp)) {
+                if (mapaEditable) {
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.mesas_menu_edit)) },
@@ -344,13 +351,14 @@ internal fun MesaCard(
                         MesaVisualStatus.OCUPADA, MesaVisualStatus.EN_COCINA -> Unit
                     }
                 }
+                }
             }
         }
     }
 }
 
 @Composable
-internal fun DragOverlayCard(mesa: Mesa) {
+internal fun DragOverlayCard(mesa: Mesa, nombreSala: String = "") {
     val shapeRadius = mesaShapeRadius(mesa.forma)
     val (cardWf, cardHf) = mesaDims(mesa.forma, mesa.girada)
     val cardHeight = cardHf.dp
@@ -368,7 +376,7 @@ internal fun DragOverlayCard(mesa: Mesa) {
     ) {
         Box(Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {
             Text(
-                text = mesa.nombreVisible,
+                text = mesa.nombreVisible(nombreSala),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = onFill,

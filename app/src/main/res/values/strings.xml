@@ -38,7 +38,14 @@
     <string name="mesas_alias_title">Alias de %s</string>
     <string name="mesas_alias_label">Nombre (opcional)</string>
     <string name="mesas_capacidad_label">Capacidad (personas)</string>
-    <string name="mesas_zone_label">Zona</string>
+    <string name="mesas_zone_label">Sala</string>
+    <string name="mesas_nueva_sala">Nueva sala</string>
+    <string name="mesas_renombrar_sala">Renombrar sala</string>
+    <string name="mesas_eliminar_sala">Eliminar sala</string>
+    <string name="mesas_eliminar_sala_confirm">¿Eliminar la sala «%s»? Solo se puede si no tiene mesas.</string>
+    <string name="mesas_sala_nombre">Nombre de la sala</string>
+    <string name="mesas_sala_nombre_vacio">El nombre de la sala no puede estar vacío</string>
+    <string name="mesas_sala_no_vacia">No se puede eliminar una sala con mesas. Muévelas o bórralas primero.</string>
     <string name="mesas_shape_label">Forma</string>
     <string name="mesas_create_title">Nueva mesa</string>
     <string name="mesas_create_btn">Crear</string>
@@ -160,6 +167,9 @@
     <string name="mesas_undo_cell_occupied">La posición anterior está ocupada por otra mesa</string>
     <string name="error_rotate_table">Error al girar mesa: %s</string>
     <string name="error_create_table">Error al crear mesa: %s</string>
+    <string name="error_create_sala">Error al crear sala: %s</string>
+    <string name="error_rename_sala">Error al renombrar sala: %s</string>
+    <string name="error_delete_sala">Error al eliminar sala: %s</string>
     <string name="error_table_blocked">Mesa bloqueada: desbloquéala antes de abrir comanda</string>
     <string name="error_reserve_name">Indica un nombre o nota para la reserva</string>
     <string name="error_reserve_busy">No se puede reservar una mesa con comanda activa</string>
@@ -197,11 +207,11 @@
     <string name="lbl_access">Accesos</string>
     <string name="home_quick_access">Accesos rápidos</string>
 
-    <!-- Sesión Identity / Sala -->
+    <!-- Sesión Identity / Establecimiento -->
     <string name="sesion_entrar">Entrar</string>
     <string name="sesion_login_title">Iniciar sesión</string>
     <string name="sesion_registro_title">Crear cuenta</string>
-    <string name="sesion_auth_desc">Opcional. Con cuenta puedes mostrar tu QR de camarero y, más adelante, unirte a la sala del Bar.</string>
+    <string name="sesion_auth_desc">Opcional. Con cuenta puedes mostrar tu QR de camarero y, más adelante, ligarte a un establecimiento.</string>
     <string name="sesion_tab_login">Entrar</string>
     <string name="sesion_tab_registro">Registro</string>
     <string name="sesion_nombre">Nombre</string>
@@ -218,7 +228,7 @@
     <string name="sesion_qr_revocada">Clave revocada. Renueva para volver a tener QR.</string>
     <string name="sesion_renovar">Renovar clave</string>
     <string name="sesion_renovar_titulo">Renovar credencial</string>
-    <string name="sesion_renovar_confirm">Se emite un QR nuevo. El anterior deja de valer y saldrás de la sala si estabas unido a un Bar.</string>
+    <string name="sesion_renovar_confirm">Se emite un QR nuevo. El anterior deja de valer y te desligas del establecimiento si estabas conectado a un Bar.</string>
     <string name="sesion_renovar_ok">Clave renovada. Enseña el QR nuevo en barra.</string>
     <string name="sesion_revocar">Revocar clave</string>
     <string name="sesion_revocar_titulo">Revocar credencial</string>
@@ -236,25 +246,27 @@
     <string name="sesion_perfil_title">Mi perfil</string>
     <string name="sesion_sin_cuenta">No hay sesión. Entra o crea una cuenta.</string>
     <string name="sesion_modo_identidad">Modo identidad: carta y mapa locales.</string>
-    <string name="sesion_modo_sala_pendiente">Sala %1$s — pendiente de alta en el Bar. La carta local sigue siendo editable.</string>
-    <string name="sesion_modo_sala_admitido">Sala %1$s — admitido. La carta la marca el Bar.</string>
+    <string name="sesion_modo_sala_pendiente">Establecimiento %1$s — pendiente de alta en el Bar. Carta y mapa locales siguen editables.</string>
+    <string name="sesion_modo_sala_admitido">Establecimiento %1$s — admitido. Carta y mapa los marca el Bar.</string>
     <string name="sesion_qr_titulo">Credencial QR</string>
-    <string name="sesion_qr_desc">Enséñalo en barra para que te den de alta en la sala.</string>
+    <string name="sesion_qr_desc">Enséñalo en barra para que te den de alta en el establecimiento.</string>
     <string name="sesion_qr_desc_img">Código QR de credencial de camarero</string>
-    <string name="sesion_desconectar_bar">Salir de la sala</string>
+    <string name="sesion_desconectar_bar">Desligar del local</string>
     <string name="sesion_cerrar">Cerrar sesión</string>
     <string name="sesion_error_generico">No se pudo completar. Revisa la URL de Identity y la red.</string>
     <string name="sesion_bar_ninguno">No se encontró ningún Bar en el puerto 8787.</string>
     <string name="sesion_bar_conectado_pendiente">Bar encontrado. Pendiente de alta: enseña el QR. La carta local no se bloquea.</string>
     <string name="sesion_bar_no_health">No hay un Bar respondiendo en esa dirección.</string>
-    <string name="sesion_carta_solo_lectura">La carta la marca el Bar. No se puede editar en este tablet.</string>
-    <string name="sesion_banner_solo_lectura">Carta de la sala (solo lectura). Los cambios se hacen en el Bar.</string>
+    <string name="sesion_carta_solo_lectura">La carta la marca el Bar. No se puede editar en este dispositivo.</string>
+    <string name="sesion_mapa_solo_lectura">El mapa lo marca el Bar. No se puede editar en este dispositivo.</string>
+    <string name="sesion_banner_solo_lectura">Carta del establecimiento (solo lectura). Los cambios se hacen en el Bar.</string>
+    <string name="sesion_banner_mapa_solo_lectura">Mapa del establecimiento (solo lectura). Los cambios se hacen en el Bar.</string>
     <string name="sesion_cuenta_title">Cuenta de camarero</string>
     <string name="sesion_cuenta_desc">Identity en Internet o en el host (emulador: http://10.0.2.2:8080).</string>
     <string name="sesion_identity_url">URL de Identity</string>
-    <string name="sesion_sala_title">Sala (Personal Bar)</string>
-    <string name="sesion_sala_desc">Adherirse a un Bar en la red local (puerto 8787). Hace falta cuenta y QR.</string>
-    <string name="sesion_sala_login_primero">Entra con tu cuenta para mostrar el QR y unirte a una sala.</string>
+    <string name="sesion_sala_title">Establecimiento (Personal Bar)</string>
+    <string name="sesion_sala_desc">Ligarse a un Bar en la red local (puerto 8787). Hace falta cuenta y QR.</string>
+    <string name="sesion_sala_login_primero">Entra con tu cuenta para mostrar el QR y ligarte a un establecimiento.</string>
     <string name="sesion_buscar_bares">Buscar Bar</string>
     <string name="sesion_conectar_bar">Conectar</string>
     <string name="sesion_bar_host">Host del Bar</string>

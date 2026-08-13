@@ -6,11 +6,12 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [Mesa::class, Producto::class, Pedido::class, LineaPedido::class, Reserva::class],
-    version = 10,
+    entities = [Sala::class, Mesa::class, Producto::class, Pedido::class, LineaPedido::class, Reserva::class],
+    version = 11,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun salaDao(): SalaDao
     abstract fun mesaDao(): MesaDao
     abstract fun productoDao(): ProductoDao
     abstract fun pedidoDao(): PedidoDao
@@ -94,6 +95,70 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_reservas_mesaId` ON `reservas` (`mesaId`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_mesas_reservaActivaId` ON `mesas` (`reservaActivaId`)")
+            }
+        }
+
+        /**
+         * v10→v11: tabla `salas` (mapa del establecimiento) y `mesas.salaId` en lugar de `zona`.
+         * Las zonas distintas se convierten en filas; el prefijo B/T/I sigue saliendo del nombre.
+         */
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """CREATE TABLE IF NOT EXISTS `salas` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `nombre` TEXT NOT NULL,
+                        `orden` INTEGER NOT NULL
+                    )""".trimIndent()
+                )
+                val nombres = linkedSetOf<String>()
+                db.query("SELECT zona, MIN(id) FROM mesas GROUP BY zona ORDER BY MIN(id)").use { c ->
+                    while (c.moveToNext()) {
+                        val raw = c.getString(0) ?: ""
+                        nombres.add(raw.trim().ifBlank { "General" })
+                    }
+                }
+                nombres.forEachIndexed { i, nombre ->
+                    db.execSQL(
+                        "INSERT INTO `salas` (`nombre`, `orden`) VALUES (?, ?)",
+                        arrayOf<Any>(nombre, i),
+                    )
+                }
+                db.execSQL(
+                    """CREATE TABLE IF NOT EXISTS `mesas_new` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `numero` INTEGER NOT NULL,
+                        `alias` TEXT,
+                        `forma` TEXT NOT NULL,
+                        `salaId` INTEGER NOT NULL,
+                        `capacidad` INTEGER NOT NULL,
+                        `estado` TEXT NOT NULL,
+                        `comandaActivaId` INTEGER,
+                        `posX` REAL NOT NULL,
+                        `posY` REAL NOT NULL,
+                        `girada` INTEGER NOT NULL,
+                        `indiceZona` INTEGER NOT NULL,
+                        `bloqueada` INTEGER NOT NULL,
+                        `reservaActivaId` INTEGER,
+                        FOREIGN KEY(`comandaActivaId`) REFERENCES `pedidos`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL ,
+                        FOREIGN KEY(`salaId`) REFERENCES `salas`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT
+                    )""".trimIndent()
+                )
+                db.execSQL(
+                    """INSERT INTO `mesas_new` (
+                        `id`, `numero`, `alias`, `forma`, `salaId`, `capacidad`, `estado`,
+                        `comandaActivaId`, `posX`, `posY`, `girada`, `indiceZona`, `bloqueada`, `reservaActivaId`
+                    ) SELECT m.`id`, m.`numero`, m.`alias`, m.`forma`, s.`id`, m.`capacidad`, m.`estado`,
+                        m.`comandaActivaId`, m.`posX`, m.`posY`, m.`girada`, m.`indiceZona`, m.`bloqueada`, m.`reservaActivaId`
+                    FROM `mesas` m
+                    INNER JOIN `salas` s ON s.`nombre` = CASE WHEN TRIM(m.`zona`) = '' THEN 'General' ELSE TRIM(m.`zona`) END
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE `mesas`")
+                db.execSQL("ALTER TABLE `mesas_new` RENAME TO `mesas`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_mesas_comandaActivaId` ON `mesas` (`comandaActivaId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_mesas_reservaActivaId` ON `mesas` (`reservaActivaId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_mesas_salaId` ON `mesas` (`salaId`)")
             }
         }
 

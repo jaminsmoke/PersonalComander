@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 
 data class ComandaUiState(
     val mesa: Mesa? = null,
+    val salaNombre: String = "",
     val pedido: Pedido? = null,
     val lineas: List<LineaPedido> = emptyList(),
     val categorias: List<String> = emptyList(),
@@ -96,8 +97,14 @@ class ComandaViewModel(
             db.mesaDao().observeById(mesaId),
             pedido,
             lineas,
-            db.productoDao().observeAll()
-        ) { mesa, p, ls, prods -> ComandaData(mesa, p, ls, prods) }
+            db.productoDao().observeAll(),
+            db.salaDao().observeAll(),
+        ) { mesa, p, ls, prods, salas ->
+            ComandaData(
+                mesa, p, ls, prods,
+                salas.find { it.id == mesa?.salaId }?.nombre.orEmpty(),
+            )
+        }
             .distinctUntilChanged()
 
         val _snackState = combine(_feedbackVoz, _error, _procesandoVoz) { f, e, p -> SnackState(f, e, p) }
@@ -111,7 +118,7 @@ class ComandaViewModel(
                 .sortedWith(compareBy({ it.first }, { it.second.nombre }))
                 .map { it.second }
             ComandaUiState(
-                mesa = d.mesa, pedido = d.pedido, lineas = d.lineas,
+                mesa = d.mesa, salaNombre = d.salaNombre, pedido = d.pedido, lineas = d.lineas,
                 categorias = cats, productos = filtrados,
                 busqueda = busqueda, categoria = categoria,
                 escuchandoVoz = escuchando, procesandoVoz = ss.procesando, feedbackVoz = ss.feedbackVoz, error = ss.error
@@ -122,7 +129,8 @@ class ComandaViewModel(
     private data class SnackState(val feedbackVoz: String?, val error: String?, val procesando: Boolean = false)
     private data class ComandaData(
         val mesa: Mesa?, val pedido: Pedido?,
-        val lineas: List<LineaPedido>, val productos: List<Producto>
+        val lineas: List<LineaPedido>, val productos: List<Producto>,
+        val salaNombre: String,
     )
 
     fun setBusqueda(valor: String) { _busqueda.value = valor }

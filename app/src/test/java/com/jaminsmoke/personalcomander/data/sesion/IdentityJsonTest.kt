@@ -86,6 +86,15 @@ class BarLanClienteTest {
         val h = BarLanCliente.parseHealth("""{"ok":true,"role":"bar","sala":"vacia","version":"0.1"}""")
         assertTrue(BarLanCliente.esBar(h))
         assertEquals("bar", h!!.role)
+        assertEquals("vacia", h.establecimiento)
+    }
+
+    @Test
+    fun parseHealth_establecimiento_gana_a_sala() {
+        val h = BarLanCliente.parseHealth(
+            """{"ok":true,"role":"bar","establecimiento":"Casa Pepe","sala":"vacia","version":"0.2"}"""
+        )
+        assertEquals("Casa Pepe", h!!.establecimiento)
     }
 
     @Test

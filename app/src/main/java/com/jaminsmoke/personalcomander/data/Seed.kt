@@ -9,8 +9,12 @@ object Seed {
     private const val ROW_SPACING = 160f   // 4 cells per row
     private const val MARGIN = 40f         // margin from board edge
 
-    fun mesas(): List<Mesa> {
-        // Arrange mesas in a grid: 4 columns per row, grouped by zone
+    fun mesas(salaPorNombre: Map<String, Long> = mapOf(
+        "Terraza" to 1L,
+        "Interior" to 2L,
+        "Barra" to 3L,
+    )): List<Mesa> {
+        // Arrange mesas in a grid: 4 columns per row, grouped by sala
         // Row 0: Terraza (round, 2p) — 4 mesas
         // Row 1: Interior cuadradas (square, 4p) — 4 mesas
         // Row 2: Interior rectangulares (rectangular, 8p) — 4 mesas
@@ -18,38 +22,50 @@ object Seed {
         // Row 4: Barra (round, 3p) — 2 mesas
 
         val mesas = mutableListOf<Mesa>()
-        val indicePorZona = mutableMapOf<String, Int>()
+        fun salaId(nombre: String): Long =
+            salaPorNombre[nombre] ?: error("Falta sala '$nombre' en el seed")
+        val indicePorSala = mutableMapOf<Long, Int>()
 
-        fun add(numero: Int, forma: MesaForma, zona: String, capacidad: Int, posX: Float, posY: Float) {
-            val indice = (indicePorZona[zona] ?: 0) + 1
-            indicePorZona[zona] = indice
+        fun add(numero: Int, forma: MesaForma, salaId: Long, capacidad: Int, posX: Float, posY: Float) {
+            val indice = (indicePorSala[salaId] ?: 0) + 1
+            indicePorSala[salaId] = indice
             mesas.add(Mesa(
-                numero = numero, forma = forma, zona = zona, capacidad = capacidad,
+                numero = numero, forma = forma, salaId = salaId, capacidad = capacidad,
                 posX = posX, posY = posY, indiceZona = indice
             ))
         }
 
+        val terraza = salaId("Terraza")
+        val interior = salaId("Interior")
+        val barra = salaId("Barra")
+
         // Row 0 — Terraza (round, 2p): T1–T4
         for (i in 0..3) {
-            add(1 + i, MesaForma.REDONDA, "Terraza", 2, MARGIN + i * COL_SPACING, MARGIN)
+            add(1 + i, MesaForma.REDONDA, terraza, 2, MARGIN + i * COL_SPACING, MARGIN)
         }
         // Row 1 — Interior cuadradas (square, 4p): I1–I4
         for (i in 0..3) {
-            add(5 + i, MesaForma.CUADRADA, "Interior", 4, MARGIN + i * COL_SPACING, MARGIN + ROW_SPACING)
+            add(5 + i, MesaForma.CUADRADA, interior, 4, MARGIN + i * COL_SPACING, MARGIN + ROW_SPACING)
         }
         // Row 2 — Interior rectangulares (rect, 8p): I5–I8
         for (i in 0..3) {
-            add(9 + i, MesaForma.RECTANGULAR, "Interior", 8, MARGIN + i * COL_SPACING, MARGIN + 2 * ROW_SPACING)
+            add(9 + i, MesaForma.RECTANGULAR, interior, 8, MARGIN + i * COL_SPACING, MARGIN + 2 * ROW_SPACING)
         }
         // Row 3 — Interior XL (only 2): I9–I10
-        add(13, MesaForma.RECTANGULAR_XL, "Interior", 12, MARGIN, MARGIN + 3 * ROW_SPACING)
-        add(14, MesaForma.RECTANGULAR_XL, "Interior", 12, MARGIN + COL_SPACING, MARGIN + 3 * ROW_SPACING)
+        add(13, MesaForma.RECTANGULAR_XL, interior, 12, MARGIN, MARGIN + 3 * ROW_SPACING)
+        add(14, MesaForma.RECTANGULAR_XL, interior, 12, MARGIN + COL_SPACING, MARGIN + 3 * ROW_SPACING)
         // Row 4 — Barra (round, 3p): B1–B2
-        add(15, MesaForma.REDONDA, "Barra", 3, MARGIN, MARGIN + 4 * ROW_SPACING)
-        add(16, MesaForma.REDONDA, "Barra", 3, MARGIN + COL_SPACING, MARGIN + 4 * ROW_SPACING)
+        add(15, MesaForma.REDONDA, barra, 3, MARGIN, MARGIN + 4 * ROW_SPACING)
+        add(16, MesaForma.REDONDA, barra, 3, MARGIN + COL_SPACING, MARGIN + 4 * ROW_SPACING)
 
         return mesas
     }
+
+    fun salas(): List<Sala> = listOf(
+        Sala(nombre = "Terraza", orden = 0),
+        Sala(nombre = "Interior", orden = 1),
+        Sala(nombre = "Barra", orden = 2),
+    )
 
     fun productos(): List<Producto> = listOf(
         Producto(nombre = "Pan con tomate", categoria = "Entrantes", precio = 3.50),

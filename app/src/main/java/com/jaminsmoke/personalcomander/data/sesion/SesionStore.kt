@@ -25,7 +25,7 @@ class SesionStore(context: Context) {
         }
         val barHost = prefs.getString(KEY_BAR_HOST, null)
         if (!barHost.isNullOrBlank()) {
-            return ModoSesion.Sala(
+            return ModoSesion.Establecimiento(
                 perfil = perfil,
                 qr = qr,
                 token = token,
@@ -47,7 +47,7 @@ class SesionStore(context: Context) {
             .apply()
     }
 
-    fun guardarSala(modo: ModoSesion.Sala) {
+    fun guardarEstablecimiento(modo: ModoSesion.Establecimiento) {
         prefs.edit()
             .putString(KEY_TOKEN, modo.token)
             .putString(KEY_PERFIL, gson.toJson(modo.perfil))

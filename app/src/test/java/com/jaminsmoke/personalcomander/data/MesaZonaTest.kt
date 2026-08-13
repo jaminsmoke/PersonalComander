@@ -5,9 +5,8 @@ import org.junit.Test
 
 class MesaZonaTest {
 
-    private fun mesa(zona: String, indice: Int, alias: String? = null) = Mesa(
-        numero = 1, alias = alias, zona = zona, indiceZona = indice
-    )
+    private fun mesa(nombreSala: String, indice: Int, alias: String? = null) =
+        Mesa(numero = 1, alias = alias, salaId = 1, indiceZona = indice) to nombreSala
 
     // ── zonaPrefijo ──
 
@@ -50,38 +49,42 @@ class MesaZonaTest {
 
     @Test
     fun idZona_combina_prefijo_e_indice() {
-        assertEquals("B1", mesa("Barra", 1).idZona)
-        assertEquals("B3", mesa("Barra", 3).idZona)
-        assertEquals("T2", mesa("Terraza", 2).idZona)
-        assertEquals("I5", mesa("Interior", 5).idZona)
+        assertEquals("B1", mesa("Barra", 1).let { (m, n) -> m.idZona(n) })
+        assertEquals("B3", mesa("Barra", 3).let { (m, n) -> m.idZona(n) })
+        assertEquals("T2", mesa("Terraza", 2).let { (m, n) -> m.idZona(n) })
+        assertEquals("I5", mesa("Interior", 5).let { (m, n) -> m.idZona(n) })
     }
 
     // ── nombreVisible ──
 
     @Test
     fun nombreVisible_sin_alias_muestra_id_zona() {
-        assertEquals("B1", mesa("Barra", 1).nombreVisible)
+        assertEquals("B1", mesa("Barra", 1).let { (m, n) -> m.nombreVisible(n) })
     }
 
     @Test
     fun nombreVisible_con_alias_muestra_el_alias() {
-        assertEquals("Mesa de la esquina", mesa("Barra", 1, alias = "Mesa de la esquina").nombreVisible)
+        assertEquals(
+            "Mesa de la esquina",
+            mesa("Barra", 1, alias = "Mesa de la esquina").let { (m, n) -> m.nombreVisible(n) },
+        )
     }
 
     // ── Seed ──
 
     @Test
-    fun seed_asigna_indices_por_zona() {
-        val mesas = Seed.mesas()
-        val terraza = mesas.filter { it.zona == "Terraza" }
-        val barra = mesas.filter { it.zona == "Barra" }
-        val interior = mesas.filter { it.zona == "Interior" }
+    fun seed_asigna_indices_por_sala() {
+        val salas = mapOf("Terraza" to 1L, "Interior" to 2L, "Barra" to 3L)
+        val mesas = Seed.mesas(salas)
+        val terraza = mesas.filter { it.salaId == 1L }
+        val barra = mesas.filter { it.salaId == 3L }
+        val interior = mesas.filter { it.salaId == 2L }
 
         assertEquals(listOf(1, 2, 3, 4), terraza.map { it.indiceZona })
         assertEquals(listOf(1, 2), barra.map { it.indiceZona })
         assertEquals((1..10).toList(), interior.map { it.indiceZona })
-        assertEquals(listOf("T1", "T2", "T3", "T4"), terraza.map { it.idZona })
-        assertEquals(listOf("B1", "B2"), barra.map { it.idZona })
+        assertEquals(listOf("T1", "T2", "T3", "T4"), terraza.map { it.idZona("Terraza") })
+        assertEquals(listOf("B1", "B2"), barra.map { it.idZona("Barra") })
     }
 
     @Test

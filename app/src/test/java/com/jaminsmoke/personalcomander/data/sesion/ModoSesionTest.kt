@@ -44,8 +44,8 @@ class ModoSesionTest {
     }
 
     @Test
-    fun sala_pendiente_sigue_editable() {
-        val modo = ModoSesion.Sala(
+    fun establecimiento_pendiente_sigue_editable() {
+        val modo = ModoSesion.Establecimiento(
             perfil = perfil,
             qr = "phid1:a:b:sig",
             token = "tok",
@@ -53,12 +53,13 @@ class ModoSesionTest {
             admitido = false,
         )
         assertTrue(modo.cartaEditable)
+        assertTrue(modo.mapaEditable)
         assertTrue(modo.puedeAdherirseABar)
     }
 
     @Test
-    fun sala_admitida_no_editable() {
-        val modo = ModoSesion.Sala(
+    fun establecimiento_admitido_no_editable() {
+        val modo = ModoSesion.Establecimiento(
             perfil = perfil,
             qr = "phid1:a:b:sig",
             token = "tok",
@@ -66,5 +67,6 @@ class ModoSesionTest {
             admitido = true,
         )
         assertFalse(modo.cartaEditable)
+        assertFalse(modo.mapaEditable)
     }
 }

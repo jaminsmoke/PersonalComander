@@ -2,7 +2,7 @@ package com.jaminsmoke.personalcomander.data.sesion
 
 /**
  * Sesión de primer nivel del camarero. Local no exige cuenta.
- * Sala con [admitido] false = Bar visto por health, pendiente de lista blanca.
+ * [Establecimiento] con [admitido] false = Bar visto por health, pendiente de lista blanca.
  */
 sealed class ModoSesion {
     data object Local : ModoSesion()
@@ -13,7 +13,7 @@ sealed class ModoSesion {
         val token: String,
     ) : ModoSesion()
 
-    data class Sala(
+    data class Establecimiento(
         val perfil: PerfilCamarero,
         val qr: String?,
         val token: String,
@@ -43,47 +43,51 @@ data class PerfilCamarero(
 
 val ModoSesion.cartaEditable: Boolean
     get() = when (this) {
-        is ModoSesion.Sala -> !admitido
+        is ModoSesion.Establecimiento -> !admitido
         else -> true
     }
+
+/** Mismo candado que la carta: el mapa lo marca el Bar solo si hay alta. */
+val ModoSesion.mapaEditable: Boolean
+    get() = cartaEditable
 
 val ModoSesion.puedeAdherirseABar: Boolean
     get() = when (this) {
         is ModoSesion.Identidad -> qr != null
-        is ModoSesion.Sala -> qr != null
+        is ModoSesion.Establecimiento -> qr != null
         ModoSesion.Local -> false
     }
 
 val ModoSesion.credencialRevocada: Boolean
     get() = when (this) {
         is ModoSesion.Identidad -> qr == null
-        is ModoSesion.Sala -> qr == null
+        is ModoSesion.Establecimiento -> qr == null
         ModoSesion.Local -> false
     }
 
 val ModoSesion.token: String?
     get() = when (val m = this) {
         is ModoSesion.Identidad -> m.token
-        is ModoSesion.Sala -> m.token
+        is ModoSesion.Establecimiento -> m.token
         ModoSesion.Local -> null
     }
 
 val ModoSesion.perfil: PerfilCamarero?
     get() = when (val m = this) {
         is ModoSesion.Identidad -> m.perfil
-        is ModoSesion.Sala -> m.perfil
+        is ModoSesion.Establecimiento -> m.perfil
         ModoSesion.Local -> null
     }
 
 val ModoSesion.qr: String?
     get() = when (val m = this) {
         is ModoSesion.Identidad -> m.qr
-        is ModoSesion.Sala -> m.qr
+        is ModoSesion.Establecimiento -> m.qr
         ModoSesion.Local -> null
     }
 
 fun ModoSesion.etiquetaHeader(): String? = when (this) {
     ModoSesion.Local -> null
     is ModoSesion.Identidad -> perfil.nombre
-    is ModoSesion.Sala -> perfil.nombre
+    is ModoSesion.Establecimiento -> perfil.nombre
 }

@@ -11,7 +11,7 @@ object BarLanCliente {
     data class Health(
         val ok: Boolean,
         val role: String,
-        val sala: String? = null,
+        val establecimiento: String? = null,
         val version: String? = null,
     )
 
@@ -37,7 +37,8 @@ object BarLanCliente {
         Health(
             ok = o.get("ok")?.asBoolean == true,
             role = role,
-            sala = o.get("sala")?.takeUnless { it.isJsonNull }?.asString,
+            establecimiento = o.get("establecimiento")?.takeUnless { it.isJsonNull }?.asString
+                ?: o.get("sala")?.takeUnless { it.isJsonNull }?.asString,
             version = o.get("version")?.takeUnless { it.isJsonNull }?.asString,
         )
     } catch (_: Exception) {

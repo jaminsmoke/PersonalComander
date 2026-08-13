@@ -46,7 +46,8 @@ class VozIntegrationTest {
             .build()
         runBlocking {
             db.productoDao().insertAll(productos)
-            db.mesaDao().insertMesa(Mesa(numero = 1))
+            val salaId = db.salaDao().insert(com.jaminsmoke.personalcomander.data.Sala(nombre = "Interior", orden = 0))
+            db.mesaDao().insertMesa(Mesa(numero = 1, salaId = salaId))
         }
     }
 
