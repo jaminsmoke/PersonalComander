@@ -31,8 +31,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,12 +42,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.R
+import com.jaminsmoke.personalcomander.ui.components.BrandHeaderDensity
+import com.jaminsmoke.personalcomander.ui.components.PcBrandHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,29 +70,9 @@ fun HomeScreen(
         containerColor = scheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.ic_logo),
-                            contentDescription = stringResource(R.string.app_logo_desc),
-                            tint = scheme.secondary,
-                            modifier = Modifier.size(24.dp),
-                        )
-                        Text(
-                            stringResource(R.string.home_title),
-                            color = scheme.secondary,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = scheme.surfaceContainerLowest,
-                    titleContentColor = scheme.secondary,
-                ),
+            PcBrandHeader(
+                title = stringResource(R.string.home_title),
+                density = BrandHeaderDensity.Hero,
             )
         }
     ) { padding ->

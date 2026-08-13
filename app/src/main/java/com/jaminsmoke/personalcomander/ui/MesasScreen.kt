@@ -66,7 +66,6 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -97,7 +96,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -106,6 +104,8 @@ import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaForma
 import com.jaminsmoke.personalcomander.data.MesaVisualStatus
 import com.jaminsmoke.personalcomander.data.mesaVisualStatus
+import com.jaminsmoke.personalcomander.ui.components.BrandHeaderDensity
+import com.jaminsmoke.personalcomander.ui.components.PcBrandHeader
 import com.jaminsmoke.personalcomander.ui.components.PcGoldFab
 import com.jaminsmoke.personalcomander.ui.components.StatusChip
 import com.jaminsmoke.personalcomander.ui.theme.PcBoardCanvas
@@ -198,28 +198,16 @@ fun MesasScreen(
             PcGoldFab(onClick = { crearVisible = true })
         },
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.ic_logo),
-                            contentDescription = stringResource(R.string.app_logo_desc),
-                            tint = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.size(24.dp),
-                        )
-                        Text(stringResource(R.string.mesas_title))
-                    }
-                },
-                navigationIcon = {
-                    if (onBack != null) {
+            PcBrandHeader(
+                title = stringResource(R.string.mesas_title),
+                density = BrandHeaderDensity.Compact,
+                navigationIcon = if (onBack != null) {
+                    {
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.btn_back))
                         }
                     }
-                },
+                } else null,
                 actions = {
                     if (zonaSeleccionada != null) {
                         IconButton(onClick = { vistaLista = !vistaLista }) {
@@ -232,7 +220,7 @@ fun MesasScreen(
                     IconButton(onClick = onOpenMenu) {
                         Icon(Icons.Default.RestaurantMenu, stringResource(R.string.mesas_manage_menu))
                     }
-                }
+                },
             )
         }
     ) { padding ->
