@@ -99,4 +99,4 @@ We welcome contributions! Check out the [contributing guide](CONTRIBUTING.md) to
 
 ## 📄 License
 
-See [LICENSE](LICENSE) for details.
+Released under the [MIT License](LICENSE).

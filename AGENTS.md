@@ -362,6 +362,12 @@ Key enums: `MesaEstado` (LIBRE, OCUPADA, EN_COCINA), `MesaForma` (REDONDA, CUADR
 - `cleartextTraffic=true` for LAN POS sync — revisit if app goes beyond local network
 - GraphQL token for kanban CLI uses `GH_TOKEN` / `GITHUB_TOKEN` from `gh auth`
 
+## License & business model
+
+- **License**: [MIT](LICENSE) (repo público). Permisiva: cualquiera puede usar el código comercialmente sin obligación de compartir.
+- **Open core en evaluación** (modelo de negocio): si se introducen features premium de pago, el código premium debe vivir en un **módulo `:pro` privado** (repo/submodule aparte, fuera de este repo público) con validación por licencia (key o servidor). **NO escribir código premium en el repo público.**
+- Relicenciar a futuro es posible pero solo aplica a versiones nuevas; el código ya publicado bajo MIT queda disponible bajo MIT.
+
 ## Dev tools
 
 ```
