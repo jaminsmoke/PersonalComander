@@ -70,6 +70,20 @@ En el primer arranque la app crea un menú de demostración y un plano de mesas 
 4. **Menú** — gestiona productos, precios, categorías e iconos.
 5. **Ajustes** — configura el servidor TPV, importa/exporta copias y sincroniza el catálogo.
 
+## 🖼️ Regenerar capturas y assets de marca
+
+Los assets públicos (logo, favicon y capturas) se generan con scripts versionados:
+
+```bash
+# Logo y favicon del sitio (desde el escudo de marca ic_brand_shield.webp)
+python scripts/generate_assets.py
+
+# Capturas de pantalla (requiere un emulador activo)
+bash scripts/capture_screens.sh
+```
+
+Ejecútalos tras cualquier cambio de marca o rediseño de UI para mantener coherentes el README, el sitio y la wiki.
+
 ## 🏗️ Arquitectura
 
 | Capa | Tecnología |

@@ -409,4 +409,15 @@ emulador.bat                  # launches Pixel_9a AVD
 .kanbanrc.json.template       # versioned reproducible reference
 ```
 
+### Assets de marca y capturas (pipeline reproducible)
+
+Los assets públicos (`docs/assets/logo.png`, `docs/assets/favicon.png`, `docs/screenshots/*.png`) se regeneran con scripts versionados, NO a mano:
+
+```bash
+python scripts/generate_assets.py   # logo + favicon desde ic_brand_shield.webp (Pillow)
+bash scripts/capture_screens.sh     # 4 capturas desde emulador (adb + uiautomator)
+```
+
+Ejecutarlos tras cada rebranding/rediseño de UI para no desincronizar README/sitio/wiki.
+
 `.agents/skills/` contains installed skills (via `npx skills`). `.claude/`, `skills-lock.json` are agent-specific — all gitignored.

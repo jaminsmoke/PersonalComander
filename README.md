@@ -70,6 +70,20 @@ The first launch seeds a demo menu and a default table layout, so you can explor
 4. **Menu** — manage products, prices, categories and icons.
 5. **Settings** — configure the TPV server, import/export backups, and sync the catalog.
 
+## 🖼️ Regenerar capturas y assets de marca
+
+Los assets públicos (logo, favicon y capturas de pantalla) se generan con scripts versionados:
+
+```bash
+# Logo y favicon del sitio (desde el escudo de marca ic_brand_shield.webp)
+python scripts/generate_assets.py
+
+# Capturas de pantalla (requiere un emulador activo)
+bash scripts/capture_screens.sh
+```
+
+Ejecútalos después de cualquier cambio de marca o rediseño de UI para mantener coherentes el README, el sitio y la wiki.
+
 ## 🏗️ Architecture
 
 | Layer | Technology |
