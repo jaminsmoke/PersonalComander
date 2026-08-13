@@ -16,7 +16,8 @@ class SesionStore(context: Context) {
     fun cargar(): ModoSesion {
         val token = prefs.getString(KEY_TOKEN, null) ?: return ModoSesion.Local
         val perfilJson = prefs.getString(KEY_PERFIL, null) ?: return ModoSesion.Local
-        val qr = prefs.getString(KEY_QR, null) ?: return ModoSesion.Local
+        val qrRaw = prefs.getString(KEY_QR, null) ?: return ModoSesion.Local
+        val qr = qrRaw.ifBlank { null }
         val perfil = try {
             gson.fromJson(perfilJson, PerfilCamarero::class.java)
         } catch (_: Exception) {
@@ -36,11 +37,11 @@ class SesionStore(context: Context) {
         return ModoSesion.Identidad(perfil, qr, token)
     }
 
-    fun guardarIdentidad(perfil: PerfilCamarero, qr: String, token: String) {
+    fun guardarIdentidad(perfil: PerfilCamarero, qr: String?, token: String) {
         prefs.edit()
             .putString(KEY_TOKEN, token)
             .putString(KEY_PERFIL, gson.toJson(perfil))
-            .putString(KEY_QR, qr)
+            .putString(KEY_QR, qr.orEmpty())
             .remove(KEY_BAR_HOST)
             .remove(KEY_BAR_ADMITIDO)
             .apply()
@@ -50,7 +51,7 @@ class SesionStore(context: Context) {
         prefs.edit()
             .putString(KEY_TOKEN, modo.token)
             .putString(KEY_PERFIL, gson.toJson(modo.perfil))
-            .putString(KEY_QR, modo.qr)
+            .putString(KEY_QR, modo.qr.orEmpty())
             .putString(KEY_BAR_HOST, modo.barHost)
             .putInt(KEY_BAR_PUERTO, modo.barPuerto)
             .putBoolean(KEY_BAR_ADMITIDO, modo.admitido)

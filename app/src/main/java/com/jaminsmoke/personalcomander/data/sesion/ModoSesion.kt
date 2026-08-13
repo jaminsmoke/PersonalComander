@@ -9,13 +9,13 @@ sealed class ModoSesion {
 
     data class Identidad(
         val perfil: PerfilCamarero,
-        val qr: String,
+        val qr: String?,
         val token: String,
     ) : ModoSesion()
 
     data class Sala(
         val perfil: PerfilCamarero,
-        val qr: String,
+        val qr: String?,
         val token: String,
         val barHost: String,
         val barPuerto: Int = BarLanCliente.PUERTO,
@@ -29,6 +29,7 @@ data class PerfilCamarero(
     val apellidos: String,
     val email: String,
     val telefono: String? = null,
+    val fotoUrl: String? = null,
 ) {
     val nombreCompleto: String
         get() = "$nombre $apellidos".trim()
@@ -47,7 +48,18 @@ val ModoSesion.cartaEditable: Boolean
     }
 
 val ModoSesion.puedeAdherirseABar: Boolean
-    get() = this is ModoSesion.Identidad || this is ModoSesion.Sala
+    get() = when (this) {
+        is ModoSesion.Identidad -> qr != null
+        is ModoSesion.Sala -> qr != null
+        ModoSesion.Local -> false
+    }
+
+val ModoSesion.credencialRevocada: Boolean
+    get() = when (this) {
+        is ModoSesion.Identidad -> qr == null
+        is ModoSesion.Sala -> qr == null
+        ModoSesion.Local -> false
+    }
 
 val ModoSesion.token: String?
     get() = when (val m = this) {

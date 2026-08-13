@@ -65,6 +65,7 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val modo by sesionViewModel.modo.collectAsState()
+    val fotoSesion by sesionViewModel.foto.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scheme = MaterialTheme.colorScheme
 
@@ -82,6 +83,7 @@ fun HomeScreen(
                 actions = {
                     PcSesionChip(
                         modo = modo,
+                        fotoBytes = fotoSesion,
                         onEntrar = onOpenAuth,
                         onPerfil = onOpenPerfil,
                     )

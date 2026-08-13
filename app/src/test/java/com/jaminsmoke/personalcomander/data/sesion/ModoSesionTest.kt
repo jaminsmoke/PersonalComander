@@ -31,6 +31,16 @@ class ModoSesionTest {
         assertEquals("AG", perfil.iniciales)
         assertEquals("tok", modo.token)
         assertEquals("phid1:a:b:sig", modo.qr)
+        assertFalse(modo.credencialRevocada)
+    }
+
+    @Test
+    fun identidad_qr_revocada_no_adhiere() {
+        val modo = ModoSesion.Identidad(perfil, qr = null, token = "tok")
+        assertTrue(modo.credencialRevocada)
+        assertFalse(modo.puedeAdherirseABar)
+        assertNull(modo.qr)
+        assertTrue(modo.cartaEditable)
     }
 
     @Test

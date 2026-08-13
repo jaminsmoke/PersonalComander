@@ -30,7 +30,7 @@ class PersonalComanderApp : Application() {
             .also { seedIfEmpty(it) }
     }
 
-    val sesion: SesionRepository by lazy { SesionRepository(this) }
+    val sesion: SesionRepository by lazy { SesionRepository(this, applicationScope) }
 
     private fun seedIfEmpty(db: AppDatabase) {
         applicationScope.launch {

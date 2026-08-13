@@ -84,6 +84,7 @@ fun AjustesScreen(
     val mensaje by viewModel.mensaje.collectAsState()
     val sesionMensaje by sesionViewModel.mensaje.collectAsState()
     val modo by sesionViewModel.modo.collectAsState()
+    val fotoSesion by sesionViewModel.foto.collectAsState()
     val identityUrl by sesionViewModel.identityUrl.collectAsState()
     val bares by sesionViewModel.bares.collectAsState()
     val escaneandoBares by sesionViewModel.escaneando.collectAsState()
@@ -165,6 +166,7 @@ fun AjustesScreen(
                 actions = {
                     PcSesionChip(
                         modo = modo,
+                        fotoBytes = fotoSesion,
                         onEntrar = onOpenAuth,
                         onPerfil = onOpenPerfil,
                     )
@@ -532,6 +534,13 @@ private fun SalaCard(
                     )
                 }
                 is ModoSesion.Identidad -> {
+                    if (modo.qr == null) {
+                        Text(
+                            text = stringResource(R.string.sesion_qr_revocada),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                     OutlinedTextField(
                         value = barHost,
                         onValueChange = { barHost = it },
@@ -552,7 +561,7 @@ private fun SalaCard(
                         PcPrimaryButton(
                             text = stringResource(R.string.sesion_conectar_bar),
                             onClick = { onConectar(barHost.trim(), BarLanCliente.PUERTO) },
-                            enabled = barHost.isNotBlank() && !busy,
+                            enabled = barHost.isNotBlank() && !busy && modo.qr != null,
                             modifier = Modifier.weight(1f),
                         )
                     }

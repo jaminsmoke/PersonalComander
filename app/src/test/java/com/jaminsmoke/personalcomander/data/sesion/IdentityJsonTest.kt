@@ -22,7 +22,7 @@ class IdentityJsonTest {
     @Test
     fun parseLogin() {
         val body = """
-            {"token":"abc","camarero":{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com","telefono":null},"qr":"phid1:u1:c1:sig"}
+            {"token":"abc","camarero":{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com","telefono":null,"foto_url":"/v1/camareros/me/foto"},"qr":"phid1:u1:c1:sig"}
         """.trimIndent()
         val sesion = IdentityJson.parseLogin(body)
         assertEquals("abc", sesion.token)
@@ -30,6 +30,45 @@ class IdentityJsonTest {
         assertEquals("Ana", sesion.perfil.nombre)
         assertEquals("phid1:u1:c1:sig", sesion.qr)
         assertEquals(4, sesion.qr.split(":").size)
+        assertEquals("/v1/camareros/me/foto", sesion.perfil.fotoUrl)
+    }
+
+    @Test
+    fun parsePerfil_sin_foto() {
+        val perfil = IdentityJson.parsePerfil(
+            com.google.gson.JsonParser.parseString(
+                """{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com","telefono":null,"foto_url":null}""",
+            ),
+        )
+        assertEquals(null, perfil.fotoUrl)
+        assertEquals(null, perfil.telefono)
+    }
+
+    @Test
+    fun parseError_incluye_code() {
+        val err = IdentityJson.parseError(
+            """{"detail":"Clave revocada. Renueva la clave","code":"identity.credential_revoked"}""",
+        )
+        assertEquals("Clave revocada. Renueva la clave", err.detail)
+        assertEquals(IdentityJson.CODE_CREDENTIAL_REVOKED, err.code)
+    }
+
+    @Test
+    fun parseError_password_incorrecta() {
+        val err = IdentityJson.parseError(
+            """{"detail":"Contraseña incorrecta","code":"identity.password_incorrecta"}""",
+        )
+        assertEquals(IdentityJson.CODE_PASSWORD_INCORRECTA, err.code)
+    }
+
+    @Test
+    fun parseFotoUrl_null() {
+        assertEquals(null, IdentityJson.parseFotoUrl("""{"foto_url":null}"""))
+    }
+
+    @Test
+    fun parseFotoUrl_path() {
+        assertEquals("/v1/camareros/me/foto", IdentityJson.parseFotoUrl("""{"foto_url":"/v1/camareros/me/foto"}"""))
     }
 
     @Test

@@ -6,27 +6,43 @@ import com.google.gson.JsonParser
 /** Parseo puro del contrato Identity `/v1`. Sin red. */
 object IdentityJson {
 
+    const val CODE_CREDENTIAL_REVOKED = "identity.credential_revoked"
+    const val CODE_PASSWORD_INCORRECTA = "identity.password_incorrecta"
+    const val CODE_FOTO_INVALIDA = "identity.foto_invalida"
+    const val CODE_FOTO_INEXISTENTE = "identity.foto_inexistente"
+    const val CODE_TOKEN_INVALIDO = "identity.token_invalido"
+
     data class SesionIdentity(
         val token: String?,
         val perfil: PerfilCamarero,
         val qr: String,
     )
 
-    fun parseErrorDetail(body: String): String {
+    data class IdentityError(
+        val detail: String,
+        val code: String? = null,
+    )
+
+    fun parseError(body: String): IdentityError {
         return try {
             val root = JsonParser.parseString(body).asJsonObject
-            val detail = root.get("detail") ?: return body.take(200)
-            when {
-                detail.isJsonPrimitive -> detail.asString
-                detail.isJsonArray -> detail.asJsonArray.joinToString(" ") { el ->
+            val detailEl = root.get("detail")
+            val detail = when {
+                detailEl == null -> body.take(200)
+                detailEl.isJsonPrimitive -> detailEl.asString
+                detailEl.isJsonArray -> detailEl.asJsonArray.joinToString(" ") { el ->
                     if (el.isJsonPrimitive) el.asString else el.toString()
                 }
-                else -> detail.toString()
+                else -> detailEl.toString()
             }
+            val code = root.get("code")?.takeUnless { it.isJsonNull }?.asString
+            IdentityError(detail, code)
         } catch (_: Exception) {
-            body.take(200)
+            IdentityError(body.take(200))
         }
     }
+
+    fun parseErrorDetail(body: String): String = parseError(body).detail
 
     fun parseRegistro(body: String): Pair<String, String> {
         val o = JsonParser.parseString(body).asJsonObject
@@ -41,6 +57,7 @@ object IdentityJson {
             apellidos = o.get("apellidos").asString,
             email = o.get("email").asString,
             telefono = o.get("telefono")?.takeUnless { it.isJsonNull }?.asString,
+            fotoUrl = o.get("foto_url")?.takeUnless { it.isJsonNull }?.asString,
         )
     }
 
@@ -55,4 +72,9 @@ object IdentityJson {
 
     fun parseQr(body: String): String =
         JsonParser.parseString(body).asJsonObject.get("qr").asString
+
+    fun parseFotoUrl(body: String): String? {
+        val el = JsonParser.parseString(body).asJsonObject.get("foto_url")
+        return el?.takeUnless { it.isJsonNull }?.asString
+    }
 }
