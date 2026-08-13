@@ -22,7 +22,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -78,9 +78,10 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Icon(
-                            Icons.Default.RestaurantMenu,
-                            contentDescription = null,
-                            tint = scheme.primary,
+                            painterResource(R.drawable.ic_logo),
+                            contentDescription = stringResource(R.string.app_logo_desc),
+                            tint = scheme.secondary,
+                            modifier = Modifier.size(24.dp),
                         )
                         Text(
                             stringResource(R.string.home_title),

@@ -97,6 +97,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -198,7 +199,20 @@ fun MesasScreen(
         },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.mesas_title)) },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.ic_logo),
+                            contentDescription = stringResource(R.string.app_logo_desc),
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(24.dp),
+                        )
+                        Text(stringResource(R.string.mesas_title))
+                    }
+                },
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) {

@@ -3,6 +3,7 @@
     <string name="mesas_zoom_in">Acercar</string>
     <string name="mesas_fit_grid">Ver todo el grid</string>
     <string name="app_name">Personal Comander</string>
+    <string name="app_logo_desc">Logo Personal Comander</string>
 
     <!-- Bottom navigation -->
     <string name="nav_resumen">Resumen</string>
