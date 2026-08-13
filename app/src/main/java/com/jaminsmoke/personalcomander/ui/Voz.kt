@@ -2,9 +2,12 @@ package com.jaminsmoke.personalcomander.ui
 
 import android.content.Context
 import android.content.Intent
+import android.media.AudioFormat
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.ParcelFileDescriptor
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -31,6 +34,9 @@ class VozRecognizer(private val appContext: Context) {
     private var rmsMax = 0f
     private var inicioMs = 0L
     private var vozDetectada = false
+
+    /** Pico de RMS (dB) visto en esta sesión de escucha. */
+    val rmsPico: Float get() = rmsMax
 
     /** true si el nivel máximo de voz captado sugiere un camarero cerca del dispositivo. */
     val vozCercana: Boolean get() = rmsMax >= RMS_UMBRAL_CERCANIA
@@ -120,7 +126,16 @@ class VozRecognizer(private val appContext: Context) {
         })
     }
 
-    fun empezar(idioma: String = "es-ES") {
+    /**
+     * @param audioSource PCM 16-bit (API 33+). Si el motor lo soporta, no abre el micro.
+     *                    El llamador cierra el descriptor tras el resultado.
+     */
+    fun empezar(
+        idioma: String = "es-ES",
+        audioSource: ParcelFileDescriptor? = null,
+        audioSampleRateHz: Int = 16000,
+        audioChannelCount: Int = 1,
+    ) {
         if (!SpeechRecognizer.isRecognitionAvailable(appContext)) {
             onError?.invoke(SpeechRecognizer.ERROR_CLIENT)
             return
@@ -131,7 +146,7 @@ class VozRecognizer(private val appContext: Context) {
         }
         activo = true
         rmsMax = 0f
-        vozDetectada = false
+        vozDetectada = audioSource != null
         inicioMs = System.currentTimeMillis()
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -142,6 +157,12 @@ class VozRecognizer(private val appContext: Context) {
             // Más permisivo con el silencio en ambientes ruidosos
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 2000L)
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
+            if (audioSource != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE, audioSource)
+                putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_CHANNEL_COUNT, audioChannelCount)
+                putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_ENCODING, AudioFormat.ENCODING_PCM_16BIT)
+                putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_SAMPLING_RATE, audioSampleRateHz)
+            }
         }
         try {
             speech.startListening(intent)

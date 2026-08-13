@@ -348,4 +348,56 @@ class VozParserTest {
         val r = parsearQuitar("un cafes con leche", lineas)
         assertEquals(listOf(LineaQuitar("Café con leche", 1)), r.lineas)
     }
+
+    // ── Fugas de sala / babble (eval voz) ──
+
+    @Test
+    fun parsear_para_cuatro_no_es_pizza_cuatro_quesos() {
+        val catalogo = com.jaminsmoke.personalcomander.data.Seed.productos()
+        val r = parsearComanda("tres croquetas caseras para cuatro", catalogo)
+        assertEquals(1, r.lineas.size)
+        assertEquals("Croquetas caseras", r.lineas[0].producto.nombre)
+        assertEquals(3, r.lineas[0].cantidad)
+        assertTrue(r.lineas.none { it.producto.nombre.contains("Cuatro") })
+    }
+
+    @Test
+    fun parsear_pizza_cuatro_quesos_sigue_matcheando() {
+        val catalogo = com.jaminsmoke.personalcomander.data.Seed.productos()
+        val r = parsearComanda("una pizza cuatro quesos", catalogo)
+        assertEquals(1, r.lineas.size)
+        assertEquals("Pizza Cuatro Quesos", r.lineas[0].producto.nombre)
+        assertEquals(1, r.lineas[0].cantidad)
+    }
+
+    @Test
+    fun parsear_para_cuatro_pizzas_es_cantidad() {
+        val catalogo = com.jaminsmoke.personalcomander.data.Seed.productos()
+        val r = parsearComanda("para cuatro pizzas margarita", catalogo)
+        assertEquals(1, r.lineas.size)
+        assertEquals("Pizza Margarita", r.lineas[0].producto.nombre)
+        assertEquals(4, r.lineas[0].cantidad)
+    }
+
+    @Test
+    fun parsear_babble_la_cuenta_no_anade_producto() {
+        val catalogo = com.jaminsmoke.personalcomander.data.Seed.productos()
+        val r = parsearComanda("la cuenta por favor", catalogo)
+        assertTrue(r.lineas.isEmpty())
+    }
+
+    @Test
+    fun parsear_babble_hace_mucho_calor_no_anade_producto() {
+        val catalogo = com.jaminsmoke.personalcomander.data.Seed.productos()
+        val r = parsearComanda("hace mucho calor", catalogo)
+        assertTrue(r.lineas.isEmpty())
+    }
+
+    @Test
+    fun parsear_hamburguesas_para_cuatro_no_anade_pizza() {
+        val catalogo = com.jaminsmoke.personalcomander.data.Seed.productos()
+        val r = parsearComanda("las dos hamburguesas para cuatro", catalogo)
+        assertTrue(r.lineas.none { it.producto.nombre.contains("Pizza") })
+        assertTrue(r.lineas.any { it.producto.nombre.startsWith("Hamburguesa") })
+    }
 }

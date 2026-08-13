@@ -1,0 +1,201 @@
+{
+  "catalog": "seed",
+  "cases": [
+    {
+      "id": "clean_cafe_leche_qty",
+      "utterance": "dos cafés con leche",
+      "action": "anadir",
+      "expected": [{ "nombre": "Café con leche", "cantidad": 2 }],
+      "tags": ["clean", "qty"]
+    },
+    {
+      "id": "clean_cafe_solo",
+      "utterance": "un café solo",
+      "action": "anadir",
+      "expected": [{ "nombre": "Café solo", "cantidad": 1 }],
+      "tags": ["clean", "ambiguous"]
+    },
+    {
+      "id": "clean_cafe_solo_y_leche",
+      "utterance": "un café solo y un café con leche",
+      "action": "anadir",
+      "expected": [
+        { "nombre": "Café solo", "cantidad": 1 },
+        { "nombre": "Café con leche", "cantidad": 1 }
+      ],
+      "tags": ["clean", "multi", "ambiguous"]
+    },
+    {
+      "id": "clean_agua_refresco",
+      "utterance": "un agua mineral y un refresco",
+      "action": "anadir",
+      "expected": [
+        { "nombre": "Agua mineral", "cantidad": 1 },
+        { "nombre": "Refresco", "cantidad": 1 }
+      ],
+      "tags": ["clean", "multi"]
+    },
+    {
+      "id": "clean_croquetas",
+      "utterance": "tres croquetas caseras",
+      "action": "anadir",
+      "expected": [{ "nombre": "Croquetas caseras", "cantidad": 3 }],
+      "tags": ["clean", "qty"]
+    },
+    {
+      "id": "clean_pizza_margarita",
+      "utterance": "una pizza margarita",
+      "action": "anadir",
+      "expected": [{ "nombre": "Pizza Margarita", "cantidad": 1 }],
+      "tags": ["clean", "ambiguous"]
+    },
+    {
+      "id": "clean_pizza_cuatro",
+      "utterance": "una pizza cuatro quesos",
+      "action": "anadir",
+      "expected": [{ "nombre": "Pizza Cuatro Quesos", "cantidad": 1 }],
+      "tags": ["clean", "ambiguous"]
+    },
+    {
+      "id": "clean_burger_clasica",
+      "utterance": "dos hamburguesas clásicas",
+      "action": "anadir",
+      "expected": [{ "nombre": "Hamburguesa Clásica", "cantidad": 2 }],
+      "tags": ["clean", "qty", "ambiguous"]
+    },
+    {
+      "id": "clean_burger_queso",
+      "utterance": "una hamburguesa con queso",
+      "action": "anadir",
+      "expected": [{ "nombre": "Hamburguesa con Queso", "cantidad": 1 }],
+      "tags": ["clean", "ambiguous"]
+    },
+    {
+      "id": "clean_burger_completa",
+      "utterance": "una hamburguesa completa",
+      "action": "anadir",
+      "expected": [{ "nombre": "Hamburguesa Completa", "cantidad": 1 }],
+      "tags": ["clean", "ambiguous"]
+    },
+    {
+      "id": "clean_tarta",
+      "utterance": "una tarta de queso",
+      "action": "anadir",
+      "expected": [{ "nombre": "Tarta de queso", "cantidad": 1 }],
+      "tags": ["clean"]
+    },
+    {
+      "id": "clean_bravas_pan",
+      "utterance": "patatas bravas y pan con tomate",
+      "action": "anadir",
+      "expected": [
+        { "nombre": "Patatas bravas", "cantidad": 1 },
+        { "nombre": "Pan con tomate", "cantidad": 1 }
+      ],
+      "tags": ["clean", "multi"]
+    },
+    {
+      "id": "clean_ensalada_cesar",
+      "utterance": "una ensalada césar",
+      "action": "anadir",
+      "expected": [{ "nombre": "Ensalada César", "cantidad": 1 }],
+      "tags": ["clean", "ambiguous"]
+    },
+    {
+      "id": "clean_ensalada_casa",
+      "utterance": "una ensalada de la casa",
+      "action": "anadir",
+      "expected": [{ "nombre": "Ensalada de la casa", "cantidad": 1 }],
+      "tags": ["clean", "ambiguous"]
+    },
+    {
+      "id": "clean_cerveza",
+      "utterance": "dos cervezas caña",
+      "action": "anadir",
+      "expected": [{ "nombre": "Cerveza caña", "cantidad": 2 }],
+      "tags": ["clean", "qty"]
+    },
+    {
+      "id": "clean_tinto",
+      "utterance": "un tinto de verano",
+      "action": "anadir",
+      "expected": [{ "nombre": "Tinto de verano", "cantidad": 1 }],
+      "tags": ["clean"]
+    },
+    {
+      "id": "clean_vino_casa",
+      "utterance": "una copa de vino de la casa",
+      "action": "anadir",
+      "expected": [{ "nombre": "Vino de la casa (copa)", "cantidad": 1 }],
+      "tags": ["clean"]
+    },
+    {
+      "id": "clean_bacalao",
+      "utterance": "un bacalao a la plancha",
+      "action": "anadir",
+      "expected": [{ "nombre": "Bacalao a la plancha", "cantidad": 1 }],
+      "tags": ["clean"]
+    },
+    {
+      "id": "clean_pollo",
+      "utterance": "un pollo asado",
+      "action": "anadir",
+      "expected": [{ "nombre": "Pollo asado", "cantidad": 1 }],
+      "tags": ["clean"]
+    },
+    {
+      "id": "clean_flan",
+      "utterance": "un flan de huevo",
+      "action": "anadir",
+      "expected": [{ "nombre": "Flan de huevo", "cantidad": 1 }],
+      "tags": ["clean"]
+    },
+    {
+      "id": "relleno_vale_gracias",
+      "utterance": "vale un café con leche gracias",
+      "action": "anadir",
+      "expected": [{ "nombre": "Café con leche", "cantidad": 1 }],
+      "tags": ["relleno"]
+    },
+    {
+      "id": "relleno_dame_apunta",
+      "utterance": "dame tres aguas minerales y apunta una tarta de queso",
+      "action": "anadir",
+      "expected": [
+        { "nombre": "Agua mineral", "cantidad": 3 },
+        { "nombre": "Tarta de queso", "cantidad": 1 }
+      ],
+      "tags": ["relleno", "multi", "qty"]
+    },
+    {
+      "id": "qty_compuesto",
+      "utterance": "doce croquetas caseras",
+      "action": "anadir",
+      "expected": [{ "nombre": "Croquetas caseras", "cantidad": 12 }],
+      "tags": ["qty"]
+    },
+    {
+      "id": "quitar_cafe",
+      "utterance": "quita un café con leche",
+      "action": "quitar",
+      "comandaActual": [
+        { "nombre": "Café con leche", "cantidad": 2 },
+        { "nombre": "Agua mineral", "cantidad": 1 }
+      ],
+      "expected": [{ "nombre": "Café con leche", "cantidad": 1 }],
+      "tags": ["quitar"]
+    },
+    {
+      "id": "long_mesa",
+      "utterance": "dos cafés con leche una coca no un refresco patatas bravas y una tarta de queso",
+      "action": "anadir",
+      "expected": [
+        { "nombre": "Café con leche", "cantidad": 2 },
+        { "nombre": "Refresco", "cantidad": 1 },
+        { "nombre": "Patatas bravas", "cantidad": 1 },
+        { "nombre": "Tarta de queso", "cantidad": 1 }
+      ],
+      "tags": ["long", "multi", "qty"]
+    }
+  ]
+}

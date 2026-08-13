@@ -93,8 +93,31 @@ internal val palabrasRelleno = setOf(
     "dame", "poner", "anadir", "anade", "anadime", "apunta", "apuntame",
     "vamos", "a", "ver", "pues", "entonces", "va", "venga", "bueno",
     "porfi", "todo", "nada", "ok", "valevale",
-    "mira", "oye", "eh", "umm", "esto", "ahi"
+    "mira", "oye", "eh", "umm", "esto", "ahi",
+    // Sala / babble: no son productos
+    "cuenta", "calor", "ronda", "aqui", "casa", "favor",
+    "personas", "gente", "mesa",
 )
+
+internal fun esCantidad(tok: String): Boolean =
+    tok.toIntOrNull() != null || numerosTexto.containsKey(tok)
+
+/**
+ * "para cuatro" = cubiertos, no "Pizza Cuatro Quesos".
+ * Si después del número viene un producto ("para cuatro pizzas"), solo se salta "para"
+ * y el número queda como cantidad.
+ * @return nuevo índice, o null si no hay idioma de sala.
+ */
+internal fun indiceTrasParaComensales(
+    tokens: List<String>,
+    i: Int,
+    hayProductoDesde: (Int) -> Boolean,
+): Int? {
+    if (tokens[i] != "para" || i + 1 >= tokens.size || !esCantidad(tokens[i + 1])) return null
+    val after = i + 2
+    if (after >= tokens.size || !hayProductoDesde(after)) return after
+    return i + 1
+}
 
 // ── Tipos de datos ──
 
@@ -162,6 +185,11 @@ fun parsearComanda(texto: String, productos: List<Producto>): ResultadoVoz {
     while (i < tokens.size) {
         val tok = tokens[i]
 
+        indiceTrasParaComensales(tokens, i) { j ->
+            buscarExactoGen(tokens, j, productosTokens) != null ||
+                buscarDifusoGen(tokens, j, productosTokens) != null
+        }?.let { i = it; continue }
+
         val compuesto = numeroCompuesto(tokens, i)
         if (compuesto != null) { qty = compuesto; i += 3; continue }
 
@@ -205,6 +233,11 @@ fun parsearQuitar(texto: String, lineas: List<LineaPedido>): ResultadoQuitar {
 
     while (i < tokens.size) {
         val tok = tokens[i]
+
+        indiceTrasParaComensales(tokens, i) { j ->
+            buscarExactoGen(tokens, j, lineaTokens) != null ||
+                buscarDifusoGen(tokens, j, lineaTokens) != null
+        }?.let { i = it; continue }
 
         val compuesto = numeroCompuesto(tokens, i)
         if (compuesto != null) { qty = compuesto; i += 3; continue }
@@ -289,13 +322,25 @@ internal fun <T> buscarDifusoGen(
     var mejorLen = 0
     for ((tokensItem, item) in items) {
         // Consumir todos los tokens del producto (o los que queden si son menos)
-        val len = minOf(tokensItem.size, tokens.size - i)
+        var len = minOf(tokensItem.size, tokens.size - i)
+        // "hamburguesas para cuatro": no comer "para"/cantidad como si fueran el resto del nombre
+        val headIn = tokens[i].let { t -> if (t.length > 1 && t.endsWith("s")) t.dropLast(1) else t }
+        val headOk = levenshtein(headIn, tokensItem.first()) <= 1 || levenshtein(tokens[i], tokensItem.first()) <= 1
+        while (len > 1 && headOk) {
+            val last = tokens[i + len - 1]
+            val prev = tokens[i + len - 2]
+            val colaSala = last in palabrasRelleno || (esCantidad(last) && prev == "para")
+            if (!colaSala) break
+            len--
+        }
 
         // Si el match es parcial y quedan más tokens, verificar que continúen el producto
         if (len < tokensItem.size && i + len < tokens.size) {
             val nextInput = tokens[i + len]
             val nextProduct = tokensItem[len]
-            if (levenshtein(nextInput, nextProduct) > 2) {
+            val nextEsSala = nextInput in palabrasRelleno ||
+                (nextInput == "para" && i + len + 1 < tokens.size && esCantidad(tokens[i + len + 1]))
+            if (!nextEsSala && levenshtein(nextInput, nextProduct) > 2) {
                 continue // Match parcial espurio: el siguiente token no pertenece a este producto
             }
         }
@@ -310,9 +355,33 @@ internal fun <T> buscarDifusoGen(
             levenshtein(subSingular, objetivoFull)
         )
         val tolerancia = if (len == 1) 1 else len + 1
-        if (d <= tolerancia && (d < mejorDist || (d == mejorDist && len > mejorLen))) {
+        if (d > tolerancia) continue
+        if (!cubreNombreProducto(tokens.subList(i, i + len), tokensItem)) continue
+        if (d < mejorDist || (d == mejorDist && len > mejorLen)) {
             mejorDist = d; mejorLen = len; mejor = len to item
         }
     }
     return mejor
+}
+
+/**
+ * Un producto de 2+ palabras de contenido no puede matchear solo con un número o
+ * relleno ("para cuatro" ↛ Pizza Cuatro Quesos). Excepciones: el token es la
+ * cabeza del nombre ("pizza", "croquetas") o un pegado tipo "cocacolas".
+ */
+internal fun cubreNombreProducto(input: List<String>, producto: List<String>): Boolean {
+    val prodContent = producto.filter { it !in palabrasRelleno }
+    val inputContent = input.filter { it !in palabrasRelleno }
+    if (prodContent.size < 2) return true
+    if (inputContent.size >= 2) return true
+    val tok = inputContent.singleOrNull() ?: return false
+    val tokSing = if (tok.length > 1 && tok.endsWith("s")) tok.dropLast(1) else tok
+    val head = prodContent.first()
+    if (levenshtein(tok, head) <= 1 || levenshtein(tokSing, head) <= 1) return true
+    val concat = producto.joinToString("")
+    val concatContent = prodContent.joinToString("")
+    return levenshtein(tok, concat) <= 1 ||
+        levenshtein(tokSing, concat) <= 1 ||
+        levenshtein(tok, concatContent) <= 1 ||
+        levenshtein(tokSing, concatContent) <= 1
 }
