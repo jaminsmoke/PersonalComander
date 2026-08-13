@@ -13,7 +13,7 @@
 [![License](https://img.shields.io/github/license/jaminsmoke/PersonalComander?color=%23E9C349)](LICENSE)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 
-**v1.5** · Android 7.0+ (API 24)
+**v1.5** · Android 7.0+ (API 24) · [🌐 Site](https://jaminsmoke.github.io/PersonalComander/) · [📖 Wiki](https://github.com/jaminsmoke/PersonalComander/wiki)
 
 </div>
 
