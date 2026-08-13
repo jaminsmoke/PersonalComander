@@ -151,7 +151,7 @@ Con la decisión ya tomada y acordada en la fase anterior, detallar **mucho más
 - Al entrar: convertir draft → issue, añadir labels (1 Tipo + 1 Área). **Aquí empieza el código.**
 - Implementar siguiendo el plan detallado de Roadmap.
 - Si algo difiere del plan original, **documentarlo** en el body (sección `Implementación`) explicando el porqué del cambio.
-- Hacer commits locales con mensajes descriptivos.
+- Hacer commits locales con mensajes descriptivos en una **rama de trabajo** (`feature/...`, `infra/...`). Ver [Branch protection](#branch-protection-rulesets).
 
 #### 5. Verificando — Tests, lint y comprobaciones exhaustivas
 
@@ -186,18 +186,19 @@ Con la decisión ya tomada y acordada en la fase anterior, detallar **mucho más
 **Antes de pasar a Changelog**:
 - Documentar TODO en el body: sección `Verificación` con checklist de lo ejecutado y resultados
 - Si se encontraron y corrigieron errores preexistentes, documentarlos
-- Hacer commit con los fixes de verificación
-- Solo cuando todo esté verificado, pasar a Changelog
+- Hacer commit con los fixes de verificación en la rama de trabajo
+- **Abrir PR a `main`** y esperar los checks verdes (el CI corre en cada PR; `main` está protegido — ver [Branch protection](#branch-protection-rulesets))
+- Solo cuando el PR tenga los checks verdes y esté listo, mergear y pasar a Changelog
 
 #### 6. Changelog — Cerrar, fechar y publicar
 
-1. **Commit final** con mensaje descriptivo (si no se hizo ya en Verificando).
-2. Anotar el **SHA del commit** en el body (sección `Commit`).
-3. Mover status a `Changelog`.
-4. Setear `Completado` (fecha) y `Completado exacto` (ISO-8601).
-5. Añadir ✅ al título del issue.
-6. Cerrar el issue (`gh issue close -r completed`).
-7. **Push** a la rama de trabajo (normalmente `main`).
+1. **Commit final** con mensaje descriptivo (si no se hizo ya en Verificando) en la rama de trabajo.
+2. **Merge del PR a `main`** (con los checks verdes; nunca push directo a `main`).
+3. Anotar el **SHA del commit mergeado** en el body (sección `Commit`).
+4. Mover status a `Changelog`.
+5. Setear `Completado` (fecha) y `Completado exacto` (ISO-8601).
+6. Añadir ✅ al título del issue.
+7. Cerrar el issue (`gh issue close -r completed`).
 
 ### CLI (all commands from project root)
 
@@ -232,15 +233,19 @@ gh issue edit <N> --add-label "tipo:bug,area:ui-ux"
 # 5. Revisión visual en emulador si hay cambios UI
 # Añadir comprobaciones específicas según área (UI, Datos, Voz, Sync...)
 
-# Changelog: commit con SHA referenciable, cerrar, push
-git add <files> && git commit -m "..."
+# Changelog: merge PR → SHA → cerrar → push de la rama
+# (main está protegido: los cambios entran SOLO por PR con checks verdes)
+git checkout -b feature/<nombre> && git add <files> && git commit -m "..."
+git push -u origin feature/<nombre>
+gh pr create --base main --head feature/<nombre> --title "..." --body "Cierra el item kanban #N..."
+# Esperar checks verdes (Lint, Unit tests, Assemble debug) y mergear
+gh pr merge <PR> --squash --delete-branch
 $KANBAN body <itemId> --append "Commit" --content "SHA: \`$(git rev-parse --short HEAD)\`"
 $KANBAN set-field <itemId> --field "Status" --option "Changelog"
 $KANBAN set-field <itemId> --field "Completado" --date "YYYY-MM-DD"
 $KANBAN set-field <itemId> --field "Completado exacto" --text "YYYY-MM-DDTHH:MM:SSZ"
 gh issue edit <N> --title "✅ ..."
 gh issue close <N> -r completed
-git push
 
 # Delete (IRREVERSIBLE, requires --yes)
 $KANBAN delete <itemId> --yes
@@ -257,7 +262,7 @@ Each item's body evolves through the lifecycle. The CLI generates a template at 
 | **Roadmap** | + Decisión acordada, Plan aprobado, Criterios de aceptación, Plan de verificación, Riesgos y recuperación | Investigar a fondo. Añadir lo que falte al plan. |
 | **Ejecutando** | + Implementación (qué se hizo realmente, diferencias con el plan si las hay) | Convertir draft→issue al ENTRAR. Documentar cambios sobre el plan. |
 | **Verificando** | + Verificación (checklist de tests, typecheck, lint, comprobaciones específicas) | Ejecutar TODO lo aplicable. Arreglar errores preexistentes si se encuentran. |
-| **Changelog** | + Commit (SHA). Setear `Completado`, `Completado exacto`. ✅ en título. | Commit → SHA al body → cerrar issue → push a main. |
+| **Changelog** | + Commit (SHA). Setear `Completado`, `Completado exacto`. ✅ en título. | Merge PR (checks verdes) → SHA al body → cerrar issue → push rama. |
 
 ### Fields reference
 
@@ -321,6 +326,23 @@ $KANBAN config validate
 Después, comprobar que ningún ítem perdió el valor del campo modificado, reponerlo
 por nombre si fuera necesario y actualizar `.kanbanrc.json.template` con los IDs
 nuevos. Nunca ejecutar `convert-draft` mientras `repoId` sea `REPLACE_ME`.
+
+## Branch protection (rulesets)
+
+`main` está protegido con **rulesets** (GitHub, no classic protection):
+
+- **`main-protegida`** (branch `main`): requiere **PR a `main`** (pull_request, 0 approvals — evita deadlock con 1 solo colaborador), **required status checks** (`Lint`, `Unit tests`, `Assemble debug`), bloquea **force-push** y **borrado**.
+- **`tags-protegidos`** (tags `v*`): bloquea **force-push** y **borrado** (protege las releases publicadas).
+- **`deleteBranchOnMerge=true`**: las ramas se borran solas al mergear el PR.
+- **Bypass**: solo `jaminsmoke` (admin) puede saltarse las reglas (emergencias). **Los agentes NUNCA deben pushear directo a `main`** aunque su token lo permita — todo entra por PR con checks verdes.
+
+Flujo estándar de cualquier cambio: rama de trabajo → commits → push → **PR a `main`** → esperar checks → merge (`gh pr merge --squash --delete-branch`).
+
+Para ver la config actual:
+
+```bash
+gh api repos/jaminsmoke/PersonalComander/rulesets --jq '.[] | {name, target, enforcement}'
+```
 
 ## Code conventions
 
