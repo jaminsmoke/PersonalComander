@@ -42,7 +42,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -56,12 +55,13 @@ import androidx.compose.ui.res.stringResource
 import com.jaminsmoke.personalcomander.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.data.ServidorDescubierto
 import com.jaminsmoke.personalcomander.data.TpvPrograma
+import com.jaminsmoke.personalcomander.ui.components.BrandHeaderDensity
 import com.jaminsmoke.personalcomander.ui.components.GlassCard
+import com.jaminsmoke.personalcomander.ui.components.PcBrandHeader
 import com.jaminsmoke.personalcomander.ui.components.PcPrimaryButton
 import com.jaminsmoke.personalcomander.ui.components.PcSecondaryButton
 
@@ -130,28 +130,16 @@ fun AjustesScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Icon(
-                            painterResource(R.drawable.ic_logo),
-                            contentDescription = stringResource(R.string.app_logo_desc),
-                            tint = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.size(24.dp),
-                        )
-                        Text(stringResource(R.string.ajustes_title))
-                    }
-                },
-                navigationIcon = {
-                    if (onBack != null) {
+            PcBrandHeader(
+                title = stringResource(R.string.ajustes_title),
+                density = BrandHeaderDensity.Compact,
+                navigationIcon = if (onBack != null) {
+                    {
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back))
                         }
                     }
-                }
+                } else null,
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
