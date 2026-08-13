@@ -54,6 +54,7 @@ markdown_extensions:
 
 nav:
   - Inicio: index.md
+  - Wiki: https://github.com/jaminsmoke/PersonalComander/wiki
   - Documentación:
     - Arquitectura: arquitectura.md
     - Modelo de datos: data-model.md

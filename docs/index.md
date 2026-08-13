@@ -16,8 +16,8 @@ title: Personal Comander
 El board visual de mesas, la toma de comandas por voz y el control de caja en una sola app Android, pensada para camareros.
 
 [📥 Descargar APK](https://github.com/jaminsmoke/PersonalComander/releases/latest){ .md-button .md-button--primary }
-[📖 Manual de usuario](https://github.com/jaminsmoke/PersonalComander/wiki){ .md-button }
-[🚀 Empezar](arquitectura.md){ .md-button }
+[📖 Wiki](https://github.com/jaminsmoke/PersonalComander/wiki){ .md-button }
+[📚 Documentación](arquitectura.md){ .md-button }
 
 </div>
 
@@ -102,8 +102,7 @@ El board visual de mesas, la toma de comandas por voz y el control de caja en un
 
 ## Comunidad y ayuda
 
-- [📖 Wiki — manual de usuario](https://github.com/jaminsmoke/PersonalComander/wiki)
-- [🗺️ Documentación técnica](arquitectura.md)
+- [💬 Discussions](https://github.com/jaminsmoke/PersonalComander/discussions)
 - [🐛 Reportar un bug](https://github.com/jaminsmoke/PersonalComander/issues/new)
 - [🤝 Contribuir](https://github.com/jaminsmoke/PersonalComander/blob/main/CONTRIBUTING.md)
 - [🔒 Reportar una vulnerabilidad](https://github.com/jaminsmoke/PersonalComander/security/policy)
