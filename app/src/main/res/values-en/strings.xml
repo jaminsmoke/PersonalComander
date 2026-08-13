@@ -197,6 +197,46 @@
     <string name="lbl_access">Shortcuts</string>
     <string name="home_quick_access">Quick access</string>
 
+    <!-- Identity / Room session -->
+    <string name="sesion_entrar">Sign in</string>
+    <string name="sesion_login_title">Sign in</string>
+    <string name="sesion_registro_title">Create account</string>
+    <string name="sesion_auth_desc">Optional. With an account you can show your waiter QR and later join the Bar room.</string>
+    <string name="sesion_tab_login">Sign in</string>
+    <string name="sesion_tab_registro">Register</string>
+    <string name="sesion_nombre">First name</string>
+    <string name="sesion_apellidos">Last name</string>
+    <string name="sesion_email">Email</string>
+    <string name="sesion_password">Password</string>
+    <string name="sesion_crear_cuenta">Create account</string>
+    <string name="sesion_ir_registro">Create an account</string>
+    <string name="sesion_perfil_title">My profile</string>
+    <string name="sesion_sin_cuenta">No session. Sign in or create an account.</string>
+    <string name="sesion_modo_identidad">Identity mode: local menu and floor plan.</string>
+    <string name="sesion_modo_sala_pendiente">Room %1$s — pending Bar approval. The local menu stays editable.</string>
+    <string name="sesion_modo_sala_admitido">Room %1$s — admitted. The Bar owns the menu.</string>
+    <string name="sesion_qr_titulo">QR credential</string>
+    <string name="sesion_qr_desc">Show this at the bar so they can add you to the room.</string>
+    <string name="sesion_qr_desc_img">Waiter credential QR code</string>
+    <string name="sesion_desconectar_bar">Leave room</string>
+    <string name="sesion_cerrar">Sign out</string>
+    <string name="sesion_error_generico">Could not complete. Check the Identity URL and the network.</string>
+    <string name="sesion_bar_ninguno">No Bar found on port 8787.</string>
+    <string name="sesion_bar_conectado_pendiente">Bar found. Pending approval: show your QR. The local menu is not locked.</string>
+    <string name="sesion_bar_no_health">No Bar is responding at that address.</string>
+    <string name="sesion_carta_solo_lectura">The Bar owns the menu. It cannot be edited on this device.</string>
+    <string name="sesion_banner_solo_lectura">Room menu (read-only). Changes are made on the Bar.</string>
+    <string name="sesion_cuenta_title">Waiter account</string>
+    <string name="sesion_cuenta_desc">Identity on the internet or host (emulator: http://10.0.2.2:8080).</string>
+    <string name="sesion_identity_url">Identity URL</string>
+    <string name="sesion_sala_title">Room (Personal Bar)</string>
+    <string name="sesion_sala_desc">Join a Bar on the local network (port 8787). Requires an account and QR.</string>
+    <string name="sesion_sala_login_primero">Sign in to show your QR and join a room.</string>
+    <string name="sesion_buscar_bares">Find Bar</string>
+    <string name="sesion_conectar_bar">Connect</string>
+    <string name="sesion_bar_host">Bar host</string>
+    <string name="sesion_tpv_bloqueado">POS sync and menu import are disabled: the Bar owns the menu.</string>
+
     <!-- Empty States -->
     <string name="empty_mesas_title">No tables</string>
     <string name="empty_mesas_subtitle">Create your first table to start managing orders</string>

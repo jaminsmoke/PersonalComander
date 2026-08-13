@@ -197,6 +197,46 @@
     <string name="lbl_access">Accesos</string>
     <string name="home_quick_access">Accesos rápidos</string>
 
+    <!-- Sesión Identity / Sala -->
+    <string name="sesion_entrar">Entrar</string>
+    <string name="sesion_login_title">Iniciar sesión</string>
+    <string name="sesion_registro_title">Crear cuenta</string>
+    <string name="sesion_auth_desc">Opcional. Con cuenta puedes mostrar tu QR de camarero y, más adelante, unirte a la sala del Bar.</string>
+    <string name="sesion_tab_login">Entrar</string>
+    <string name="sesion_tab_registro">Registro</string>
+    <string name="sesion_nombre">Nombre</string>
+    <string name="sesion_apellidos">Apellidos</string>
+    <string name="sesion_email">Correo</string>
+    <string name="sesion_password">Contraseña</string>
+    <string name="sesion_crear_cuenta">Crear cuenta</string>
+    <string name="sesion_ir_registro">Crear una cuenta</string>
+    <string name="sesion_perfil_title">Mi perfil</string>
+    <string name="sesion_sin_cuenta">No hay sesión. Entra o crea una cuenta.</string>
+    <string name="sesion_modo_identidad">Modo identidad: carta y mapa locales.</string>
+    <string name="sesion_modo_sala_pendiente">Sala %1$s — pendiente de alta en el Bar. La carta local sigue siendo editable.</string>
+    <string name="sesion_modo_sala_admitido">Sala %1$s — admitido. La carta la marca el Bar.</string>
+    <string name="sesion_qr_titulo">Credencial QR</string>
+    <string name="sesion_qr_desc">Enséñalo en barra para que te den de alta en la sala.</string>
+    <string name="sesion_qr_desc_img">Código QR de credencial de camarero</string>
+    <string name="sesion_desconectar_bar">Salir de la sala</string>
+    <string name="sesion_cerrar">Cerrar sesión</string>
+    <string name="sesion_error_generico">No se pudo completar. Revisa la URL de Identity y la red.</string>
+    <string name="sesion_bar_ninguno">No se encontró ningún Bar en el puerto 8787.</string>
+    <string name="sesion_bar_conectado_pendiente">Bar encontrado. Pendiente de alta: enseña el QR. La carta local no se bloquea.</string>
+    <string name="sesion_bar_no_health">No hay un Bar respondiendo en esa dirección.</string>
+    <string name="sesion_carta_solo_lectura">La carta la marca el Bar. No se puede editar en este tablet.</string>
+    <string name="sesion_banner_solo_lectura">Carta de la sala (solo lectura). Los cambios se hacen en el Bar.</string>
+    <string name="sesion_cuenta_title">Cuenta de camarero</string>
+    <string name="sesion_cuenta_desc">Identity en Internet o en el host (emulador: http://10.0.2.2:8080).</string>
+    <string name="sesion_identity_url">URL de Identity</string>
+    <string name="sesion_sala_title">Sala (Personal Bar)</string>
+    <string name="sesion_sala_desc">Adherirse a un Bar en la red local (puerto 8787). Hace falta cuenta y QR.</string>
+    <string name="sesion_sala_login_primero">Entra con tu cuenta para mostrar el QR y unirte a una sala.</string>
+    <string name="sesion_buscar_bares">Buscar Bar</string>
+    <string name="sesion_conectar_bar">Conectar</string>
+    <string name="sesion_bar_host">Host del Bar</string>
+    <string name="sesion_tpv_bloqueado">Sincronizar TPV e importar carta está desactivado: la carta la marca el Bar.</string>
+
     <!-- Empty States -->
     <string name="empty_mesas_title">Sin mesas</string>
     <string name="empty_mesas_subtitle">Crea tu primera mesa para empezar a gestionar comandas</string>

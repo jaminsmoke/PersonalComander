@@ -15,11 +15,15 @@ import com.jaminsmoke.personalcomander.data.TpvPrograma
 import com.jaminsmoke.personalcomander.data.fusionarProductos
 import com.jaminsmoke.personalcomander.data.mapFilaProducto
 import com.jaminsmoke.personalcomander.data.mapearCategoria
+import com.jaminsmoke.personalcomander.data.sesion.cartaEditable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -45,7 +49,12 @@ data class ImportPreview(
 
 class AjustesViewModel(application: Application) : AndroidViewModel(application) {
     private val ctx = getApplication<Application>()
-    private val db = (application as PersonalComanderApp).db
+    private val app = application as PersonalComanderApp
+    private val db = app.db
+
+    val cartaEditable: StateFlow<Boolean> = app.sesion.modo
+        .map { it.cartaEditable }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     private val _sync = MutableStateFlow(AjustesSyncState())
     val sync: StateFlow<AjustesSyncState> = _sync.asStateFlow()
@@ -72,7 +81,14 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
 
     fun limpiarMensaje() { _mensaje.value = null }
 
+    private fun exigirCartaEditable(): Boolean {
+        if (cartaEditable.value) return true
+        _mensaje.value = ctx.getString(R.string.sesion_carta_solo_lectura)
+        return false
+    }
+
     fun exportar(uri: Uri) {
+        if (!exigirCartaEditable()) return
         viewModelScope.launch {
             try {
                 val productos = db.productoDao().getAllIncluyendoOcultos()
@@ -86,6 +102,7 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun importar(uri: Uri) {
+        if (!exigirCartaEditable()) return
         viewModelScope.launch {
             try {
                 val texto = ctx.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
@@ -129,6 +146,7 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun confirmarImportacion(uri: Uri) {
+        if (!exigirCartaEditable()) return
         viewModelScope.launch {
             try {
                 _importPreview.value = null
@@ -160,6 +178,7 @@ class AjustesViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun sincronizar() {
+        if (!exigirCartaEditable()) return
         val estado = _sync.value
         if (estado.host.isBlank()) { _mensaje.value = ctx.getString(R.string.sync_need_ip); return }
         viewModelScope.launch {

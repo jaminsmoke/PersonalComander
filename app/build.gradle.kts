@@ -89,6 +89,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.gson)
+    implementation(libs.zxing.core)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     testImplementation(libs.junit)
     testImplementation(libs.sqlite.jdbc)

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.jaminsmoke.personalcomander.PersonalComanderApp
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Producto
+import com.jaminsmoke.personalcomander.data.sesion.cartaEditable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,9 +17,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class MenuViewModel(application: Application) : AndroidViewModel(application) {
-    private val db = (application as PersonalComanderApp).db
+    private val app = application as PersonalComanderApp
+    private val db = app.db
     private val ctx = getApplication<Application>()
     val productos: Flow<List<Producto>> = db.productoDao().observeAllIncluyendoOcultos()
+
+    val cartaEditable: StateFlow<Boolean> = app.sesion.modo
+        .map { it.cartaEditable }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     val cargando: StateFlow<Boolean> = db.productoDao().observeAllIncluyendoOcultos()
         .map { false }
@@ -30,6 +36,10 @@ class MenuViewModel(application: Application) : AndroidViewModel(application) {
     fun limpiarMensaje() { _mensaje.value = null }
 
     fun addProducto(nombre: String, categoria: String, precio: Double) {
+        if (!cartaEditable.value) {
+            _mensaje.value = ctx.getString(R.string.sesion_carta_solo_lectura)
+            return
+        }
         val n = nombre.trim()
         val c = categoria.trim()
         if (n.isBlank()) { _mensaje.value = ctx.getString(R.string.menu_validation_name_required); return }
@@ -45,6 +55,10 @@ class MenuViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateProducto(producto: Producto, nombre: String, categoria: String, precio: Double) {
+        if (!cartaEditable.value) {
+            _mensaje.value = ctx.getString(R.string.sesion_carta_solo_lectura)
+            return
+        }
         val n = nombre.trim()
         val c = categoria.trim()
         if (n.isBlank()) { _mensaje.value = ctx.getString(R.string.menu_validation_name_required); return }
@@ -60,6 +74,10 @@ class MenuViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun toggleDisponible(producto: Producto) {
+        if (!cartaEditable.value) {
+            _mensaje.value = ctx.getString(R.string.sesion_carta_solo_lectura)
+            return
+        }
         viewModelScope.launch {
             try {
                 db.productoDao().updateDisponible(producto.id, !producto.disponible)
@@ -70,6 +88,10 @@ class MenuViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deleteProducto(producto: Producto) {
+        if (!cartaEditable.value) {
+            _mensaje.value = ctx.getString(R.string.sesion_carta_solo_lectura)
+            return
+        }
         viewModelScope.launch {
             try {
                 val activas = db.lineaPedidoDao().countActiveLinesForProduct(producto.id)
