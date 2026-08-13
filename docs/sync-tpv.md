@@ -24,6 +24,6 @@ La app puede importar el catálogo de productos desde un **servidor TPV en la re
 !!! warning "Seguridad"
     El tráfico LAN **no está cifrado**. Usa la app solo en redes de confianza. Consulta la [política de seguridad](https://github.com/jaminsmoke/PersonalComander/blob/main/SECURITY.md) para más detalles.
 
-## Roadmap relacionado
+## Protocolo de sala
 
-El item #18 del kanban plantea **Personal Bar como nodo de sala**: sincronización multi-dispositivo por LAN con identidad permanente. Cuando se implemente, esta sección se ampliará con el protocolo de sala.
+El catálogo TPV y el nodo Bar son canales distintos. Las rondas hacia Personal Bar están en [Protocolo LAN](sala-protocol.md) (issue #44). El establecimiento es el negocio; las salas son las zonas del mapa.

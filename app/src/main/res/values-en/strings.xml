@@ -189,6 +189,7 @@
     <string name="error_increase_quantity">Error increasing quantity: %s</string>
     <string name="error_decrease_quantity">Error decreasing quantity: %s</string>
     <string name="error_send_to_kitchen">Error sending to kitchen: %s</string>
+    <string name="error_send_ronda_bar">The order stayed on the tablet, but the Bar did not get the round</string>
     <string name="error_close_table">Error closing table: %s</string>
 
     <!-- General -->

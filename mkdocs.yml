@@ -60,4 +60,5 @@ nav:
     - Modelo de datos: data-model.md
     - Voz: voz.md
     - Sync TPV: sync-tpv.md
+    - Protocolo LAN: sala-protocol.md
     - Backup: backup.md

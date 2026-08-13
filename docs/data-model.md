@@ -14,7 +14,7 @@ Producto (product) ─── referenced by LineaPedido.productoId
 
 - **Sala**: recinto del mapa del establecimiento (barra, interior, terraza…). No es el modo de sesión.
 - **Establecimiento / local**: cuenta del Bar a la que el camarero se liga (`ModoSesion.Establecimiento`).
-- **Mesa**: la mesa física con posición en el board, `salaId`, forma y alias. El ID visible (B1, T2) sale del **nombre** de la sala.
+- **Mesa**: la mesa física con posición en el board, `salaId`, forma y alias. El ID visible y de red (B1, T2) sale del **nombre** de la sala (`idZona`). No es el id Room.
 - **Pedido**: la comanda de una mesa (abierta, enviada a cocina o cerrada).
 - **LineaPedido**: cada línea del pedido (producto + cantidad + importe).
 - **Producto**: ítem del menú con precio, categoría e icono.
