@@ -1,0 +1,17 @@
+# Propietarios por defecto: jaminsmoke revisa todo el repo
+* @jaminsmoke
+
+# Configuración sensible de GitHub y CI
+/.github/ @jaminsmoke
+
+# Build y dependencias
+/gradle/ @jaminsmoke
+build.gradle* @jaminsmoke
+settings.gradle* @jaminsmoke
+gradle.properties @jaminsmoke
+
+# Documentación de agentes y convenciones
+/AGENTS.md @jaminsmoke
+
+# Datos y migraciones (integridad de la BD)
+/app/schemas/ @jaminsmoke

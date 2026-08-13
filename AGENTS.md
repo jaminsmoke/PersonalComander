@@ -362,6 +362,11 @@ Key enums: `MesaEstado` (LIBRE, OCUPADA, EN_COCINA), `MesaForma` (REDONDA, CUADR
 - `cleartextTraffic=true` for LAN POS sync — revisit if app goes beyond local network
 - GraphQL token for kanban CLI uses `GH_TOKEN` / `GITHUB_TOKEN` from `gh auth`
 
+## Community & contribution
+
+- Public-facing guides live in the repo: [`CONTRIBUTING.md`](CONTRIBUTING.md) (human/AI contribution guide), [`SECURITY.md`](SECURITY.md) (private vulnerability reporting) and `.github/CODEOWNERS` (single owner `@jaminsmoke` + sensitive paths). PR template at `.github/pull_request_template.md`.
+- All agents must keep these files in sync with AGENTS.md when conventions change.
+
 ## License & business model
 
 - **License**: [MIT](LICENSE) (repo público). Permisiva: cualquiera puede usar el código comercialmente sin obligación de compartir.
