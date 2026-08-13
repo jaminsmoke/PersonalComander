@@ -151,7 +151,7 @@ abstract class AppDatabase : RoomDatabase() {
                     ) SELECT m.`id`, m.`numero`, m.`alias`, m.`forma`, s.`id`, m.`capacidad`, m.`estado`,
                         m.`comandaActivaId`, m.`posX`, m.`posY`, m.`girada`, m.`indiceZona`, m.`bloqueada`, m.`reservaActivaId`
                     FROM `mesas` m
-                    INNER JOIN `salas` s ON s.`nombre` = CASE WHEN TRIM(m.`zona`) = '' THEN 'General' ELSE m.`zona` END
+                    INNER JOIN `salas` s ON s.`nombre` = CASE WHEN TRIM(m.`zona`) = '' THEN 'General' ELSE TRIM(m.`zona`) END
                     """.trimIndent()
                 )
                 db.execSQL("DROP TABLE `mesas`")
