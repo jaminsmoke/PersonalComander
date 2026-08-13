@@ -11,6 +11,7 @@ Antes de empezar, lee el [README](README.md) para conocer el proyecto.
    - `feature/<descripción>` para nuevas funcionalidades
    - `fix/<descripción>` para correcciones
    - `chore/<descripción>` para tareas técnicas
+   - `infra/<descripción>` para infraestructura (CI, docs del repo, GitHub)
 3. **Abre un Pull Request** contra `main` cuando tu cambio esté listo.
 
 ## Issues

@@ -12,7 +12,6 @@ gradle.properties @jaminsmoke
 
 # Documentación de agentes y convenciones
 /AGENTS.md @jaminsmoke
-/CODE_REVIEW_CHECKLIST.md @jaminsmoke
 
 # Datos y migraciones (integridad de la BD)
 /app/schemas/ @jaminsmoke

@@ -4,7 +4,7 @@
 
 **No abras un issue público para vulnerabilidades de seguridad.**
 
-Usa el **reporte privado de vulnerabilidades** de GitHub (Private Vulnerability Reporting) desde la pestaña *Security* del repositorio, o contacta con el mantenedor por correo a través del perfil de GitHub.
+Usa el **reporte privado de vulnerabilidades** de GitHub (Private Vulnerability Reporting) directamente en [security/advisories/new](https://github.com/jaminsmoke/PersonalComander/security/advisories/new), o contacta con el mantenedor por correo a través del perfil de GitHub.
 
 Proceso:
 
