@@ -20,6 +20,11 @@
   --md-typeset-a-color: #E9C349;
 }
 
+/* Navegación por pestañas: visibles también por debajo del breakpoint nativo */
+.md-tabs {
+  display: block;
+}
+
 /* Hero de la landing */
 .pc-hero {
   text-align: center;
@@ -48,6 +53,122 @@
   margin: 0.25rem;
 }
 
+/* CTA única destacada en el hero */
+.pc-cta {
+  margin-top: 1.25rem;
+}
+
+.pc-cta .md-button--primary {
+  font-size: 1.05rem;
+  padding: 0.75rem 2rem;
+  box-shadow: 0 4px 16px rgba(233, 195, 73, 0.35);
+}
+
+/* Grupo de features */
 .pc-features {
   margin-top: 1rem;
+}
+
+.pc-features h2 {
+  margin-top: 2.5rem;
+}
+
+.pc-features h2:first-child {
+  margin-top: 0;
+}
+
+/* Galería de capturas */
+.pc-shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.pc-shots figure {
+  margin: 0;
+  text-align: center;
+  min-width: 0;
+}
+
+.pc-shots img {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.pc-shots figcaption {
+  font-size: 0.85rem;
+  color: var(--md-default-fg-color--light);
+  margin-top: 0.4rem;
+}
+
+/* Aviso v1.6 discreto */
+.pc-aviso {
+  margin-top: 2rem;
+  opacity: 0.85;
+}
+
+/* Responsive móvil */
+@media screen and (max-width: 76.2344em) {
+  .pc-hero {
+    padding: 1.5rem 0 0.5rem;
+  }
+
+  .pc-hero img {
+    width: 96px;
+    border-radius: 16px;
+  }
+
+  .pc-hero h1 {
+    font-size: 1.6rem;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .pc-hero .tagline {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    padding: 0 0.5rem;
+  }
+
+  .pc-hero p {
+    padding: 0 0.5rem;
+  }
+
+  .pc-cta .md-button--primary {
+    font-size: 0.95rem;
+    padding: 0.65rem 1.5rem;
+    border-radius: 6px;
+  }
+
+  .pc-aviso {
+    margin-top: 1.25rem;
+    font-size: 0.85rem;
+  }
+
+  .pc-shots {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .pc-shots figcaption {
+    font-size: 0.75rem;
+  }
+
+  .md-tabs {
+    font-size: 0.82rem;
+  }
+}
+
+/* Accesibilidad: sin animaciones si el usuario las desactiva */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

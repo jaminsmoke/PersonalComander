@@ -15,18 +15,24 @@ title: Personal Comander
 
 El board visual de mesas, la toma de comandas por voz y el control de caja en una sola app Android, pensada para camareros.
 
-[📥 Descargar APK](https://github.com/jaminsmoke/PersonalComander/releases/latest){ .md-button .md-button--primary }
-[📖 Wiki](https://github.com/jaminsmoke/PersonalComander/wiki){ .md-button }
-[📚 Documentación](arquitectura.md){ .md-button }
+<div class="pc-cta" markdown>
 
-!!! warning "v1.6 en desarrollo"
-    El APK descargable actual es **v1.5**. Los flujos de cuenta de camarero, establecimiento, salas y Personal Bar están evolucionando en `main` para v1.6. Consulta el [detalle de flujos](flujos-v16.md) antes de probarlos desde código.
+[📥 Descargar APK](https://github.com/jaminsmoke/PersonalComander/releases/latest){ .md-button .md-button--primary }
+
+Manual en la [Wiki](https://github.com/jaminsmoke/PersonalComander/wiki) · [Documentación técnica](arquitectura.md)
 
 </div>
 
----
+</div>
 
-## Características
+<div class="pc-aviso" markdown>
+
+!!! info "v1.6 en desarrollo"
+    El APK actual es **v1.5**. Los flujos de cuenta de camarero, establecimiento, salas y Personal Bar llegan en v1.6. [Detalle de flujos](flujos-v16.md).
+
+</div>
+
+## Para el camarero
 
 <div class="grid cards" markdown>
 
@@ -45,6 +51,12 @@ El board visual de mesas, la toma de comandas por voz y el control de caja en un
 - :material-hamburger: **Gestión de menú**
 
     Productos, precios, categorías e iconos emoji, totalmente offline.
+
+</div>
+
+## Para el local
+
+<div class="grid cards" markdown>
 
 - :material-server-network: **Sync TPV**
 
@@ -68,44 +80,36 @@ El board visual de mesas, la toma de comandas por voz y el control de caja en un
 
 </div>
 
-## Capturas
+## Así se ve en acción
 
-<div class="grid cards" markdown>
+<div class="pc-shots">
 
-- ![Resumen](screenshots/home.png){ width="200" }
+<figure>
+![Resumen del día](screenshots/home.png)
+<figcaption>Resumen: mesas ocupadas, pedidos activos y facturado.</figcaption>
+</figure>
 
-    **Resumen del día** — mesas ocupadas, pedidos activos y facturado.
+<figure>
+![Board de mesas](screenshots/mesas_board.png)
+<figcaption>El plano de la sala con el semáforo de estados.</figcaption>
+</figure>
 
-- ![Board de mesas](screenshots/mesas_board.png){ width="200" }
+<figure>
+![Gestión del menú](screenshots/menu.png)
+<figcaption>Productos, precios y categorías.</figcaption>
+</figure>
 
-    **Board de mesas** — el plano de la sala con el semáforo de estados.
+<figure>
+![Comanda](screenshots/comanda.png)
+<figcaption>Toma de pedidos táctil y por voz.</figcaption>
+</figure>
 
-- ![Menú](screenshots/menu.png){ width="200" }
-
-    **Gestión del menú** — productos, precios y categorías.
-
-- ![Comanda](screenshots/comanda.png){ width="200" }
-
-    **Comanda** — toma de pedidos táctil y por voz.
-
-- ![Ajustes](screenshots/ajustes.png){ width="200" }
-
-    **Ajustes** — cuenta, conexión TPV, sincronización y backup.
+<figure>
+![Ajustes](screenshots/ajustes.png)
+<figcaption>Cuenta, TPV, sincronización y backup.</figcaption>
+</figure>
 
 </div>
-
-## ¿Qué puedes hacer con Personal Comander?
-
-- Tomar comandas **por voz o con el dedo** en segundos
-- Ver la **sala completa** en un board visual con estados por colores
-- Mover mesas **entre zonas** con arrastrar y soltar
-- **Reservar y bloquear** mesas sin mezclarlo con el estado de la comanda
-- Gestionar el **menú** (productos, precios, categorías) sin conexión
-- **Sincronizar el catálogo** desde tu TPV por la red local
-- Llevar el **control de caja**: facturado hoy, pedidos activos
-- **Exportar e importar** copias de seguridad JSON
-
-Los flujos de cuenta, establecimiento y Personal Bar están documentados como **v1.6 en desarrollo** y no se incluyen todavía en el APK v1.5 descargable.
 
 ## Requisitos
 
