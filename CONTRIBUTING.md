@@ -2,7 +2,7 @@
 
 ¡Gracias por tu interés en contribuir! 🛎️ Este proyecto es mantenido principalmente por **jaminsmoke** con ayuda de agentes de IA. Tu contribución — humana o asistida por IA — es bienvenida.
 
-Antes de empezar, lee el [README](README.md) para conocer el proyecto.
+Antes de empezar, lee el [README](README.md) y [`AGENTS.md`](AGENTS.md) (sección **Oficios**): este repo es la app **del camarero**. El puesto del negocio vive en Personal Bar; no conviertas Commander en expo de barra.
 
 ## Cómo empezar
 

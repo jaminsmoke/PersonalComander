@@ -4,7 +4,7 @@
 
 # 🛎️ Personal Comander
 
-**Gestión de mesas y comandas para restaurantes — rápida, visual y por voz.**
+**La herramienta del camarero** en la familia PersonalHostel: mesas, comandas táctiles y por voz. Personal Bar (repo hermano) es el puesto del **negocio** — colas y nodo LAN — no un segundo Commander.
 
 Español · [English](README.md)
 
