@@ -7,9 +7,14 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -17,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.jaminsmoke.personalcomander.PersonalComanderApp as App
 import com.jaminsmoke.personalcomander.ui.components.PcBottomBar
 import com.jaminsmoke.personalcomander.ui.components.TopLevelDestination
 import com.jaminsmoke.personalcomander.ui.components.isTopLevelRoute
@@ -42,7 +48,16 @@ fun PersonalComanderApp() {
         }
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val app = LocalContext.current.applicationContext as App
+    LaunchedEffect(app) {
+        app.recoger.avisos.collect { aviso ->
+            snackbarHostState.showSnackbar(aviso.texto)
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (showBottomBar) {
                 PcBottomBar(

@@ -198,6 +198,14 @@ interface LineaPedidoDao {
     @Update
     suspend fun update(linea: LineaPedido)
 
+    @Query("SELECT * FROM lineas_pedido WHERE ticketId = :ticketId")
+    suspend fun getByTicketId(ticketId: String): List<LineaPedido>
+
+    @Query(
+        "UPDATE lineas_pedido SET estado = :nuevo WHERE ticketId = :ticketId AND estado = :desde"
+    )
+    suspend fun updateEstadoSi(ticketId: String, desde: LineaEstado, nuevo: LineaEstado): Int
+
     @Query("SELECT COUNT(*) FROM lineas_pedido lp INNER JOIN pedidos p ON lp.pedidoId = p.id WHERE lp.productoId = :productoId AND p.estado != 'CERRADA'")
     suspend fun countActiveLinesForProduct(productoId: Long): Int
 

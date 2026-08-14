@@ -46,6 +46,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.SearchOff
@@ -97,7 +98,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.data.CategoriaIcono
+import com.jaminsmoke.personalcomander.data.LineaEstado
 import com.jaminsmoke.personalcomander.data.LineaPedido
+import com.jaminsmoke.personalcomander.data.esEditable
+import com.jaminsmoke.personalcomander.data.sesion.RecogerLogica
 import com.jaminsmoke.personalcomander.data.MesaVisualStatus
 import com.jaminsmoke.personalcomander.data.PedidoEstado
 import com.jaminsmoke.personalcomander.data.Producto
@@ -532,7 +536,18 @@ fun ComandaScreen(
             }
 
             // Bottom comanda panel
-            ComandaPanel(state.lineas, state.total, state.pedido?.estado, viewModel::aumentarLinea, viewModel::disminuirLinea, viewModel::enviarACocina, viewModel::solicitarCierre)
+            ComandaPanel(
+                state.lineas,
+                state.total,
+                state.pedido?.estado,
+                state.ligadoAlBar,
+                viewModel::aumentarLinea,
+                viewModel::disminuirLinea,
+                viewModel::marcarServida,
+                viewModel::marcarTodasListasServidas,
+                viewModel::enviarACocina,
+                viewModel::solicitarCierre,
+            )
         }
     }
 
@@ -598,20 +613,102 @@ private fun ProductoGridCard(producto: Producto, onClick: () -> Unit) {
 
 @Composable
 private fun ComandaPanel(
-    lineas: List<LineaPedido>, total: Double, pedidoEstado: PedidoEstado?,
-    onAumentar: (LineaPedido) -> Unit, onDisminuir: (LineaPedido) -> Unit,
-    onEnviarACocina: () -> Unit, onCerrarMesa: () -> Unit
+    lineas: List<LineaPedido>,
+    total: Double,
+    pedidoEstado: PedidoEstado?,
+    ligadoAlBar: Boolean,
+    onAumentar: (LineaPedido) -> Unit,
+    onDisminuir: (LineaPedido) -> Unit,
+    onServir: (LineaPedido) -> Unit,
+    onServirTodas: () -> Unit,
+    onEnviarACocina: () -> Unit,
+    onCerrarMesa: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
     val scheme = MaterialTheme.colorScheme
+    val bloques = RecogerLogica.bloques(lineas)
+    val hayPendientes = RecogerLogica.lineasAEnviar(lineas).isNotEmpty()
     Surface(color = scheme.surfaceContainerLowest, shadowElevation = 8.dp) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
             Text(stringResource(R.string.comanda_panel_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = scheme.onSurface)
             if (lineas.isEmpty()) {
                 Text(stringResource(R.string.comanda_empty), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 8.dp))
             } else {
-                LazyColumn(Modifier.heightIn(max = 160.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    items(lineas, key = { it.id }) { linea -> LineaRow(linea, { onAumentar(linea) }, { onDisminuir(linea) }) }
+                LazyColumn(Modifier.heightIn(max = 280.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (bloques.estaRonda.isNotEmpty()) {
+                        item(key = "hdr-ronda") {
+                            Text(
+                                stringResource(R.string.comanda_section_esta_ronda),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = scheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 4.dp, bottom = 2.dp),
+                            )
+                        }
+                        items(bloques.estaRonda, key = { "r-${it.id}" }) { linea ->
+                            LineaRow(
+                                linea = linea,
+                                editable = linea.estado.esEditable(),
+                                enCola = linea.estado == LineaEstado.ENVIADA,
+                                sePuedeServir = RecogerLogica.puedeMarcarServida(linea, ligadoAlBar),
+                                onAumentar = { onAumentar(linea) },
+                                onDisminuir = { onDisminuir(linea) },
+                                onServir = { onServir(linea) },
+                            )
+                        }
+                    }
+                    if (bloques.paraRecoger.isNotEmpty()) {
+                        item(key = "hdr-recoger") {
+                            Row(
+                                Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    stringResource(R.string.comanda_section_para_recoger),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = scheme.secondary,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                TextButton(onClick = onServirTodas, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                                    Text(stringResource(R.string.comanda_mark_all_served))
+                                }
+                            }
+                        }
+                        items(bloques.paraRecoger, key = { "p-${it.id}" }) { linea ->
+                            LineaRow(
+                                linea = linea,
+                                editable = false,
+                                enCola = false,
+                                sePuedeServir = true,
+                                onAumentar = {},
+                                onDisminuir = {},
+                                onServir = { onServir(linea) },
+                            )
+                        }
+                    }
+                    if (bloques.servido.isNotEmpty()) {
+                        item(key = "hdr-servido") {
+                            Text(
+                                stringResource(R.string.comanda_section_servido),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = scheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 6.dp, bottom = 2.dp),
+                            )
+                        }
+                        items(bloques.servido, key = { "s-${it.id}" }) { linea ->
+                            LineaRow(
+                                linea = linea,
+                                editable = false,
+                                enCola = false,
+                                sePuedeServir = false,
+                                onAumentar = {},
+                                onDisminuir = {},
+                                onServir = {},
+                            )
+                        }
+                    }
                 }
             }
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -622,9 +719,10 @@ private fun ComandaPanel(
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val hay = pedidoEstado != null && lineas.isNotEmpty()
                 PcPrimaryButton(
-                    text = if (pedidoEstado == PedidoEstado.ENVIADA) stringResource(R.string.comanda_in_kitchen) else stringResource(R.string.comanda_send_to_kitchen),
+                    text = if (hayPendientes) stringResource(R.string.comanda_send_to_kitchen)
+                    else stringResource(R.string.comanda_in_kitchen),
                     onClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onEnviarACocina() },
-                    enabled = hay && pedidoEstado == PedidoEstado.ABIERTA,
+                    enabled = hay && hayPendientes,
                     modifier = Modifier.weight(1f),
                 )
                 PcSecondaryButton(
@@ -639,14 +737,55 @@ private fun ComandaPanel(
 }
 
 @Composable
-private fun LineaRow(linea: LineaPedido, onAumentar: () -> Unit, onDisminuir: () -> Unit) {
+private fun LineaRow(
+    linea: LineaPedido,
+    editable: Boolean,
+    enCola: Boolean,
+    sePuedeServir: Boolean,
+    onAumentar: () -> Unit,
+    onDisminuir: () -> Unit,
+    onServir: () -> Unit,
+) {
     val scheme = MaterialTheme.colorScheme
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text("${linea.cantidad}×", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = scheme.secondary)
-        Text(linea.nombreProducto, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, color = scheme.onSurface, modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
-        Text((linea.precioUnitario * linea.cantidad).formatoEuro(), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = scheme.onSurface)
-        IconButton(onClick = onDisminuir, Modifier.size(32.dp)) { Icon(Icons.Default.Clear, stringResource(R.string.btn_remove), Modifier.size(18.dp)) }
-        IconButton(onClick = onAumentar, Modifier.size(32.dp)) { Icon(Icons.Default.Add, stringResource(R.string.btn_add), Modifier.size(18.dp), tint = scheme.secondary) }
+        Text(
+            linea.nombreProducto,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color = scheme.onSurface,
+            modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+        )
+        if (enCola) {
+            Text(
+                stringResource(R.string.comanda_en_cola),
+                style = MaterialTheme.typography.labelSmall,
+                color = scheme.onSurfaceVariant,
+                modifier = Modifier.padding(end = 4.dp),
+            )
+        }
+        Text(
+            (linea.precioUnitario * linea.cantidad).formatoEuro(),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = scheme.onSurface,
+        )
+        when {
+            editable -> {
+                IconButton(onClick = onDisminuir, Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Clear, stringResource(R.string.btn_remove), Modifier.size(18.dp))
+                }
+                IconButton(onClick = onAumentar, Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Add, stringResource(R.string.btn_add), Modifier.size(18.dp), tint = scheme.secondary)
+                }
+            }
+            sePuedeServir -> {
+                IconButton(onClick = onServir, Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Check, stringResource(R.string.comanda_mark_served), Modifier.size(18.dp), tint = scheme.secondary)
+                }
+            }
+        }
     }
 }
 

@@ -115,8 +115,22 @@
     <string name="comanda_voice_remove_unrecognized">«%1$s» → No reconocí: %2$s</string>
     <string name="comanda_voice_removed_all">Comanda vaciada por voz</string>
     <string name="comanda_voice_no_order">No hay comanda activa para quitar productos</string>
-    <string name="comanda_voice_sent_cant_remove">La comanda ya está en cocina, no se puede modificar</string>
+    <string name="comanda_voice_sent_cant_remove">Lo ya enviado no se puede quitar; sí las líneas pendientes</string>
     <string name="comanda_voice_far">«%1$s» → Voz lejana. Usa un manos libres o acerca el dispositivo.</string>
+    <string name="comanda_section_esta_ronda">Esta ronda</string>
+    <string name="comanda_section_para_recoger">Para recoger</string>
+    <string name="comanda_section_servido">Servido</string>
+    <string name="comanda_en_cola">En cola</string>
+    <string name="comanda_mark_served">Marcar servido</string>
+    <string name="comanda_mark_all_served">Todo servido</string>
+    <string name="recoger_destino_bebida">Bebida</string>
+    <string name="recoger_destino_comida">Comida</string>
+    <string name="recoger_aviso_preparado">%1$s · Cola %2$d %3$s lista</string>
+    <string name="recoger_aviso_preparado_mesa">%1$s lista para recoger</string>
+    <string name="recoger_aviso_preparado_sin_mesa">Hay un ticket listo para recoger</string>
+    <string name="recoger_notif_channel">Recoger</string>
+    <string name="recoger_notif_channel_desc">Avisos cuando barra o cocina marcan un ticket preparado</string>
+    <string name="recoger_notif_titulo">Listo para recoger</string>
 
     <!-- Ajustes Screen -->
     <string name="ajustes_title">Ajustes</string>

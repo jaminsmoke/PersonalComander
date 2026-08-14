@@ -115,8 +115,22 @@
     <string name="comanda_voice_remove_unrecognized">«%1$s» → Could not recognize: %2$s</string>
     <string name="comanda_voice_removed_all">Order cleared by voice</string>
     <string name="comanda_voice_no_order">No active order to remove products from</string>
-    <string name="comanda_voice_sent_cant_remove">Order already sent to kitchen, cannot modify</string>
+    <string name="comanda_voice_sent_cant_remove">Sent items cannot be removed; pending lines still can</string>
     <string name="comanda_voice_far">«%1$s» → Distant voice. Use a headset or move closer.</string>
+    <string name="comanda_section_esta_ronda">This round</string>
+    <string name="comanda_section_para_recoger">Ready to pick up</string>
+    <string name="comanda_section_servido">Served</string>
+    <string name="comanda_en_cola">In queue</string>
+    <string name="comanda_mark_served">Mark served</string>
+    <string name="comanda_mark_all_served">All served</string>
+    <string name="recoger_destino_bebida">Drinks</string>
+    <string name="recoger_destino_comida">Food</string>
+    <string name="recoger_aviso_preparado">%1$s · Queue %2$d %3$s ready</string>
+    <string name="recoger_aviso_preparado_mesa">%1$s ready to pick up</string>
+    <string name="recoger_aviso_preparado_sin_mesa">A ticket is ready to pick up</string>
+    <string name="recoger_notif_channel">Pick up</string>
+    <string name="recoger_notif_channel_desc">Alerts when the bar or kitchen marks a ticket ready</string>
+    <string name="recoger_notif_titulo">Ready to pick up</string>
 
     <!-- Settings Screen -->
     <string name="ajustes_title">Settings</string>

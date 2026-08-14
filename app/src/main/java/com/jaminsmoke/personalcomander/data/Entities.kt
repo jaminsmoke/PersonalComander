@@ -19,10 +19,17 @@ enum class MesaForma(val capacidadDefecto: Int) { REDONDA(2), CUADRADA(4), RECTA
 enum class PedidoEstado { ABIERTA, ENVIADA, CERRADA }
 
 enum class LineaEstado {
+    /** Aún no enviada al Bar / cocina. Editable. */
     PENDIENTE,
-    /** Reservado para feature futura: marcar líneas como servidas en el panel de comanda */
-    SERVIDA
+    /** En cola de expo (POST ronda ok). */
+    ENVIADA,
+    /** Bar marcó el ticket preparado; pendiente de servir en mesa. */
+    LISTA,
+    /** Servida en mesa (cierre local del ciclo). */
+    SERVIDA,
 }
+
+fun LineaEstado.esEditable(): Boolean = this == LineaEstado.PENDIENTE
 
 @Entity(tableName = "salas")
 data class Sala(
@@ -177,7 +184,11 @@ data class Pedido(
             onDelete = ForeignKey.NO_ACTION
         )
     ],
-    indices = [Index(value = ["pedidoId"]), Index(value = ["productoId"])]
+    indices = [
+        Index(value = ["pedidoId"]),
+        Index(value = ["productoId"]),
+        Index(value = ["ticketId"]),
+    ]
 )
 data class LineaPedido(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -187,5 +198,7 @@ data class LineaPedido(
     val precioUnitario: Double,
     val cantidad: Int,
     val creadoEn: Long = 0L,
-    val estado: LineaEstado = LineaEstado.PENDIENTE
+    val estado: LineaEstado = LineaEstado.PENDIENTE,
+    /** Id del ticket Bar (`{rondaId}-barra` / `-cocina`) tras el POST de ronda. */
+    val ticketId: String? = null,
 )

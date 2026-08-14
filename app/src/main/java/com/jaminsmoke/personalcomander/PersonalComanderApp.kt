@@ -6,6 +6,7 @@ import androidx.room.withTransaction
 import com.jaminsmoke.personalcomander.data.AppDatabase
 import com.jaminsmoke.personalcomander.data.Sala
 import com.jaminsmoke.personalcomander.data.Seed
+import com.jaminsmoke.personalcomander.data.sesion.RecogerServicio
 import com.jaminsmoke.personalcomander.data.sesion.SesionRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +28,7 @@ class PersonalComanderApp : Application() {
                 AppDatabase.MIGRATION_8_9,
                 AppDatabase.MIGRATION_9_10,
                 AppDatabase.MIGRATION_10_11,
+                AppDatabase.MIGRATION_11_12,
             )
             .fallbackToDestructiveMigration(false)
             .build()
@@ -34,6 +36,15 @@ class PersonalComanderApp : Application() {
     }
 
     val sesion: SesionRepository by lazy { SesionRepository(this, applicationScope) }
+
+    val recoger: RecogerServicio by lazy {
+        RecogerServicio(this, db, sesion, applicationScope)
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        recoger
+    }
 
     private fun seedIfEmpty(db: AppDatabase) {
         applicationScope.launch {
