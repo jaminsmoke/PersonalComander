@@ -5,6 +5,10 @@
 
 Esta página conecta la documentación técnica con el [manual de usuario de la wiki](https://github.com/jaminsmoke/PersonalComander/wiki). Describe qué ocurre en la aplicación cuando se usa identidad de camarero y cuando el dispositivo se liga a un establecimiento.
 
+## Oficios
+
+**Commander** es la app del camarero (sala, comanda, cuenta). **Personal Bar** es el puesto del negocio (nodo LAN, colas, lista blanca). Bar no crea cuentas de camarero: las asigna al establecimiento. El nick visible en los locales se define aquí, en registro/perfil (ítem kanban `PVTI_lAHOBM87Yc4BgJWOzg2gWTY`).
+
 ## Cuenta del camarero
 
 1. Desde **Ajustes**, abre **Cuenta**.

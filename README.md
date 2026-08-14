@@ -4,7 +4,7 @@
 
 # 🛎️ Personal Comander
 
-**Restaurant table & order management for waiters — fast, visual, voice-first.**
+**The waiter’s tool** in the PersonalHostel family: table board, touch and voice orders, fast and visual. Personal Bar (sibling) is the **venue** station — queues and LAN node — not a second Commander.
 
 [Español](README.es.md) · English
 

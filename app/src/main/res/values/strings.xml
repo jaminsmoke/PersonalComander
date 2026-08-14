@@ -217,6 +217,10 @@
     <string name="sesion_tab_registro">Registro</string>
     <string name="sesion_nombre">Nombre</string>
     <string name="sesion_apellidos">Apellidos</string>
+    <string name="sesion_nick">Nick</string>
+    <string name="sesion_nick_hint">Así te llamarán en barra y en las colas</string>
+    <string name="sesion_nick_guardar">Guardar nick</string>
+    <string name="sesion_nick_ok">Nick actualizado</string>
     <string name="sesion_email">Correo</string>
     <string name="sesion_telefono">Teléfono (opcional)</string>
     <string name="sesion_avatar_desc">Foto de perfil del camarero</string>

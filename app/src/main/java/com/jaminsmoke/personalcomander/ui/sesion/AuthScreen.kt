@@ -58,6 +58,7 @@ fun AuthScreen(
     var registro by remember { mutableStateOf(false) }
     var nombre by remember { mutableStateOf("") }
     var apellidos by remember { mutableStateOf("") }
+    var nick by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
@@ -127,6 +128,14 @@ fun AuthScreen(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                OutlinedTextField(
+                    value = nick,
+                    onValueChange = { nick = it },
+                    label = { Text(stringResource(R.string.sesion_nick)) },
+                    supportingText = { Text(stringResource(R.string.sesion_nick_hint)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
             OutlinedTextField(
                 value = email,
@@ -160,7 +169,12 @@ fun AuthScreen(
             } else if (registro) {
                 PcPrimaryButton(
                     text = stringResource(R.string.sesion_crear_cuenta),
-                    onClick = { viewModel.registrar(nombre, apellidos, email, password, telefono.ifBlank { null }) },
+                    onClick = { viewModel.registrar(nombre, apellidos, email, password, telefono.ifBlank { null }, nick.trim()) },
+                    enabled = nick.trim().isNotEmpty() &&
+                        nombre.isNotBlank() &&
+                        apellidos.isNotBlank() &&
+                        email.isNotBlank() &&
+                        password.length >= 8,
                     modifier = Modifier.fillMaxWidth(),
                 )
             } else {

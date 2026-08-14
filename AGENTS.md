@@ -2,7 +2,9 @@
 
 ## Project
 
-**Personal Comander** is an Android app for restaurant table & order management. Camareros manage tables on a visual board, take orders via touch or voice, sync products from POS systems, and track daily revenue.
+**Personal Comander** is the **waiter-facing** Android app of the PersonalHostel family: table board, touch/voice orders, POS catalog sync, and daily revenue. It is the specialized tool for **camareros** — one waiter, one phone, one floor shift.
+
+It is **not** the venue back office. That job belongs to **Personal Bar** (sibling repo): LAN room node, expo queues, whitelist of the establishment, canonical map. Bar assigns existing waiter accounts to the business; it does not create or edit waiter identity. Identity (Docker) is the professional registry. The nick shown in venues is owned here (`PVTI_lAHOBM87Yc4BgJWOzg2gWTY`).
 
 - Package: `com.jaminsmoke.personalcomander`
 - Min SDK: 24 · Target SDK: 36 · Compile SDK: 37
@@ -72,6 +74,16 @@ emulador.bat   # Windows; or: emulator -avd Pixel_9a
 ./gradlew test                         # unit
 ./gradlew connectedAndroidTest         # instrumentation
 ```
+
+## Oficios (familia PersonalHostel)
+
+Acordado con Bar (14-08-2026). No convertir Commander en expo de barra ni Bar en un segundo Commander.
+
+| App | Oficio | Quién | Qué no hace |
+|---|---|---|---|
+| **Commander** (este repo) | Herramienta **del camarero**: mesas, comanda (toque y voz), cuenta profesional (registro, perfil, QR, nick). | Un camarero en sala, móvil vertical. | No gestiona el negocio, no es el nodo LAN, no es la cola de expo. |
+| **Personal Bar** | Puesto del **negocio**: nodo LAN, colas bebida/comida, lista blanca, mapa canónico. | Tablet apaisada; **varios** camareros de servicio a la vez. | No crea ni edita la cuenta del camarero; solo **asigna** cuentas ya existentes al establecimiento y consume Identity. |
+| **Identity** | Registro de profesionales (QR `phid1`). | Docker en el host. | No es el nodo de sala. |
 
 ## 🎯 Kanban workflow — GitHub Project
 
