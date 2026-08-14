@@ -105,21 +105,60 @@ class RecogerLogicaTest {
     }
 
     @Test
-    fun parseSalaEvent_ciego_y_enriquecido() {
+    fun parseSalaEvent_ciego() {
         val ciego = RecogerLogica.parseSalaEvent(
             """{"tipo":"ticket.preparado","ticketId":"p1-barra","preparadoPor":"Ana"}"""
         )!!
         assertEquals(RecogerLogica.TIPO_PREPARADO, ciego.tipo)
         assertEquals("p1-barra", ciego.ticketId)
         assertNull(ciego.mesaId)
+        assertEquals(PlantillaAviso.SIN_MESA, RecogerLogica.plantillaAviso(ciego))
+    }
 
+    @Test
+    fun parseSalaEvent_bar_v1_anida_destino_y_cola_en_ticket() {
+        val json = """
+            {
+              "version": 1,
+              "tipo": "ticket.preparado",
+              "ticketId": "r-123-barra",
+              "preparadoPor": "Ana",
+              "mesaId": "T3",
+              "camarero": "Lucía",
+              "resumen": "2× Caña",
+              "ticket": {
+                "id": "r-123-barra",
+                "rondaId": "r-123",
+                "destino": "BARRA",
+                "estado": "PREPARADO",
+                "preparadoPor": "Ana",
+                "numeroCola": 1,
+                "lineas": [{"productoId":"cana","nombreProducto":"Caña","cantidad":2}]
+              }
+            }
+        """.trimIndent()
+        val e = RecogerLogica.parseSalaEvent(json)!!
+        assertEquals("T3", e.mesaId)
+        assertEquals("BARRA", e.destino)
+        assertEquals(1, e.numeroCola)
+        assertEquals("r-123", e.rondaId)
+        assertEquals(PlantillaAviso.COMPLETO, RecogerLogica.plantillaAviso(e))
+    }
+
+    @Test
+    fun parseSalaEvent_planos_siguen_valiendo() {
         val rico = RecogerLogica.parseSalaEvent(
             """{"tipo":"ticket.preparado","ticketId":"p1-barra","rondaId":"p1","mesaId":"T3","destino":"BARRA","numeroCola":1}""",
-            eventType = "ticket.preparado",
         )!!
-        assertEquals("T3", rico.mesaId)
-        assertEquals(1, rico.numeroCola)
-        assertEquals("BARRA", rico.destino)
+        assertEquals(PlantillaAviso.COMPLETO, RecogerLogica.plantillaAviso(rico))
+    }
+
+    @Test
+    fun plantillaAviso_solo_mesa_si_falta_cola() {
+        val e = RecogerLogica.parseSalaEvent(
+            """{"tipo":"ticket.preparado","ticketId":"p1-barra","mesaId":"T3"}""",
+        )!!
+        assertEquals(PlantillaAviso.SOLO_MESA, RecogerLogica.plantillaAviso(e))
     }
 
     @Test
