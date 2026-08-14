@@ -1,0 +1,11 @@
+# Rutas públicas del servicio camareros de Identity que usa IdentityCliente.
+# Commander no llama al servicio negocio (:8082).
+# Una ruta por línea. El test IdentityContratoTest falla si el cliente se desvía.
+/v1/camareros/registro
+/v1/auth/login
+/v1/camareros/me
+/v1/camareros/me/qr
+/v1/camareros/me/renovar
+/v1/camareros/me/revocar
+/v1/camareros/me/foto
+/v1/camareros/me/establecimientos

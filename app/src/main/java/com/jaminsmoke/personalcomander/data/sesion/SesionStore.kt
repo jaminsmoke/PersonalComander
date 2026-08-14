@@ -2,6 +2,8 @@ package com.jaminsmoke.personalcomander.data.sesion
 
 import android.content.Context
 import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
 
 class SesionStore(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -58,6 +60,26 @@ class SesionStore(context: Context) {
             .apply()
     }
 
+    fun cargarMembresias(): List<MembresiaEstablecimiento> {
+        val json = prefs.getString(KEY_MEMBRESIAS, null) ?: return emptyList()
+        return IdentityJson.parseEstablecimientos(json) ?: emptyList()
+    }
+
+    fun guardarMembresias(lista: List<MembresiaEstablecimiento>) {
+        val arr = JsonArray()
+        lista.forEach { m ->
+            arr.add(
+                JsonObject().apply {
+                    addProperty("id", m.id)
+                    addProperty("nombre", m.nombre)
+                    addProperty("cuenta_negocio_id", m.cuentaNegocioId)
+                    addProperty("rol", m.rol)
+                },
+            )
+        }
+        prefs.edit().putString(KEY_MEMBRESIAS, arr.toString()).apply()
+    }
+
     fun limpiarBar() {
         prefs.edit()
             .remove(KEY_BAR_HOST)
@@ -73,6 +95,7 @@ class SesionStore(context: Context) {
     }
 
     companion object {
+        /** Servicio camareros de Identity (no el de negocio `:8082`). */
         const val DEFAULT_IDENTITY_URL = "http://10.0.2.2:8080"
         private const val PREFS = "pc_sesion"
         private const val KEY_URL = "identity_base_url"
@@ -82,5 +105,6 @@ class SesionStore(context: Context) {
         private const val KEY_BAR_HOST = "bar_host"
         private const val KEY_BAR_PUERTO = "bar_puerto"
         private const val KEY_BAR_ADMITIDO = "bar_admitido"
+        private const val KEY_MEMBRESIAS = "membresias_identity"
     }
 }

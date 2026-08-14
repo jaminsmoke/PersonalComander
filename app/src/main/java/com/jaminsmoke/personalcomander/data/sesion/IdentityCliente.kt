@@ -14,11 +14,37 @@ data class IdentityRespuesta<T>(
 )
 
 /**
- * Cliente HTTP de PersonalHostel Identity. Misma pila que [com.jaminsmoke.personalcomander.data.TpvCliente].
+ * Cliente HTTP del **servicio camareros** de PersonalHostel Identity
+ * (`:8080` en local / emulador). Misma pila que [com.jaminsmoke.personalcomander.data.TpvCliente].
+ *
+ * No apunta al servicio negocio (`:8082`). Las membresías llegan por
+ * [Rutas.ME_ESTABLECIMIENTOS], que Identity consulta internamente a la BD de negocio.
  */
 class IdentityCliente(
     private val baseUrl: String,
 ) {
+    object Rutas {
+        const val REGISTRO = "/v1/camareros/registro"
+        const val LOGIN = "/v1/auth/login"
+        const val ME = "/v1/camareros/me"
+        const val ME_QR = "/v1/camareros/me/qr"
+        const val ME_RENOVAR = "/v1/camareros/me/renovar"
+        const val ME_REVOCAR = "/v1/camareros/me/revocar"
+        const val ME_FOTO = "/v1/camareros/me/foto"
+        const val ME_ESTABLECIMIENTOS = "/v1/camareros/me/establecimientos"
+
+        fun todas(): List<String> = listOf(
+            REGISTRO,
+            LOGIN,
+            ME,
+            ME_QR,
+            ME_RENOVAR,
+            ME_REVOCAR,
+            ME_FOTO,
+            ME_ESTABLECIMIENTOS,
+        )
+    }
+
     fun registrar(
         nombre: String,
         apellidos: String,
@@ -35,7 +61,7 @@ class IdentityCliente(
             addProperty("nick", nick)
             if (!telefono.isNullOrBlank()) addProperty("telefono", telefono)
         }
-        val http = post("/v1/camareros/registro", payload.toString())
+        val http = post(Rutas.REGISTRO, payload.toString())
         if (http.codigo !in 200..299) return errorDe(http)
         val (id, qr) = IdentityJson.parseRegistro(http.cuerpo)
         val login = login(email, password)
@@ -56,14 +82,14 @@ class IdentityCliente(
             addProperty("email", email)
             addProperty("password", password)
         }
-        val http = post("/v1/auth/login", payload.toString())
+        val http = post(Rutas.LOGIN, payload.toString())
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(true, IdentityJson.parseLogin(http.cuerpo), codigo = http.codigo)
     }
 
     fun actualizarPerfil(token: String, nick: String): IdentityRespuesta<PerfilCamarero> {
         val payload = JsonObject().apply { addProperty("nick", nick) }
-        val http = patch("/v1/camareros/me", payload.toString(), token)
+        val http = patch(Rutas.ME, payload.toString(), token)
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(
             true,
@@ -73,7 +99,7 @@ class IdentityCliente(
     }
 
     fun me(token: String): IdentityRespuesta<PerfilCamarero> {
-        val http = get("/v1/camareros/me", token)
+        val http = get(Rutas.ME, token)
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(
             true,
@@ -83,13 +109,21 @@ class IdentityCliente(
     }
 
     fun meQr(token: String): IdentityRespuesta<String> {
-        val http = get("/v1/camareros/me/qr", token)
+        val http = get(Rutas.ME_QR, token)
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(true, IdentityJson.parseQr(http.cuerpo), codigo = http.codigo)
     }
 
+    fun meEstablecimientos(token: String): IdentityRespuesta<List<MembresiaEstablecimiento>> {
+        val http = get(Rutas.ME_ESTABLECIMIENTOS, token)
+        if (http.codigo !in 200..299) return errorDe(http)
+        val lista = IdentityJson.parseEstablecimientos(http.cuerpo)
+            ?: return IdentityRespuesta(false, error = "Respuesta inválida", codigo = http.codigo)
+        return IdentityRespuesta(true, lista, codigo = http.codigo)
+    }
+
     fun renovar(token: String): IdentityRespuesta<String> {
-        val http = post("/v1/camareros/me/renovar", "{}", token)
+        val http = post(Rutas.ME_RENOVAR, "{}", token)
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(true, IdentityJson.parseQr(http.cuerpo), codigo = http.codigo)
     }
@@ -98,14 +132,14 @@ class IdentityCliente(
         val payload = JsonObject().apply {
             if (!motivo.isNullOrBlank()) addProperty("motivo", motivo)
         }
-        val http = post("/v1/camareros/me/revocar", payload.toString(), token)
+        val http = post(Rutas.ME_REVOCAR, payload.toString(), token)
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(true, Unit, codigo = http.codigo)
     }
 
     fun subirFoto(token: String, bytes: ByteArray, mime: String): IdentityRespuesta<String?> {
         val boundary = "----PcFoto${System.currentTimeMillis()}"
-        val conexion = open("/v1/camareros/me/foto")
+        val conexion = open(Rutas.ME_FOTO)
         return try {
             conexion.requestMethod = "POST"
             conexion.doOutput = true
@@ -139,7 +173,7 @@ class IdentityCliente(
     }
 
     fun foto(token: String): IdentityRespuesta<ByteArray> {
-        val conexion = open("/v1/camareros/me/foto")
+        val conexion = open(Rutas.ME_FOTO)
         return try {
             conexion.requestMethod = "GET"
             conexion.setRequestProperty("Authorization", "Bearer $token")
@@ -159,14 +193,14 @@ class IdentityCliente(
     }
 
     fun borrarFoto(token: String): IdentityRespuesta<Unit> {
-        val http = delete("/v1/camareros/me/foto", token)
+        val http = delete(Rutas.ME_FOTO, token)
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(true, Unit, codigo = http.codigo)
     }
 
     fun suprimirCuenta(token: String, password: String): IdentityRespuesta<Unit> {
         val payload = JsonObject().apply { addProperty("password", password) }
-        val http = delete("/v1/camareros/me", token, payload.toString())
+        val http = delete(Rutas.ME, token, payload.toString())
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(true, Unit, codigo = http.codigo)
     }

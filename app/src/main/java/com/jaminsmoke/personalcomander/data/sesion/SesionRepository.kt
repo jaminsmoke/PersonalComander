@@ -23,6 +23,9 @@ class SesionRepository(
     private val _foto = MutableStateFlow<ByteArray?>(null)
     val foto: StateFlow<ByteArray?> = _foto.asStateFlow()
 
+    private val _membresias = MutableStateFlow(store.cargarMembresias())
+    val membresias: StateFlow<List<MembresiaEstablecimiento>> = _membresias.asStateFlow()
+
     var identityBaseUrl: String
         get() = store.identityBaseUrl
         set(value) {
@@ -73,6 +76,7 @@ class SesionRepository(
             if (qr == null && _modo.value is ModoSesion.Establecimiento) desconectarBar()
             persistir(perfil, qr, token)
             cargarFoto(token, perfil.fotoUrl)
+            refrescarMembresias(token)
         }
     }
 
@@ -156,17 +160,18 @@ class SesionRepository(
     fun cerrarSesion() {
         store.limpiarTodo()
         _foto.value = null
+        _membresias.value = emptyList()
         _modo.value = ModoSesion.Local
     }
 
-    suspend fun conectarBar(host: String, puerto: Int = BarLanCliente.PUERTO): Boolean =
+    suspend fun conectarBar(host: String, puerto: Int = BarLanCliente.PUERTO): ConectarBarResult =
         withContext(Dispatchers.IO) {
             val actual = _modo.value
-            val perfil = actual.perfil ?: return@withContext false
-            val qr = actual.qr ?: return@withContext false
-            val token = actual.token ?: return@withContext false
+            val perfil = actual.perfil ?: return@withContext ConectarBarResult(ok = false)
+            val qr = actual.qr ?: return@withContext ConectarBarResult(ok = false)
+            val token = actual.token ?: return@withContext ConectarBarResult(ok = false)
             val health = BarLanCliente.health(host, puerto)
-            if (!BarLanCliente.esBar(health)) return@withContext false
+            if (!BarLanCliente.esBar(health)) return@withContext ConectarBarResult(ok = false)
             val establecimiento = ModoSesion.Establecimiento(
                 perfil = perfil,
                 qr = qr,
@@ -177,7 +182,11 @@ class SesionRepository(
             )
             store.guardarEstablecimiento(establecimiento)
             _modo.value = establecimiento
-            true
+            ConectarBarResult(
+                ok = true,
+                contraste = IdentityJson.contrastarHealth(health?.establecimiento, _membresias.value),
+                nombreBar = health?.establecimiento,
+            )
         }
 
     fun desconectarBar() {
@@ -211,6 +220,15 @@ class SesionRepository(
         if (!r.ok) return
         persistir(sesion.perfil, sesion.qr, token)
         cargarFoto(token, sesion.perfil.fotoUrl)
+        refrescarMembresias(token)
+    }
+
+    /** Identity gana si responde; red caída o cuerpo inválido conservan la cache. */
+    private fun refrescarMembresias(token: String) {
+        val r = cliente().meEstablecimientos(token)
+        if (!r.ok || r.valor == null) return
+        store.guardarMembresias(r.valor)
+        _membresias.value = r.valor
     }
 
     private fun cargarFoto(token: String, fotoUrl: String?) {
