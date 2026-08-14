@@ -94,6 +94,7 @@ jobs:
           path: .family/identity
           sparse-checkout: |
             docs/openapi-camareros.json
+            docs/openapi-negocio.json
           sparse-checkout-cone-mode: false
 
       - name: Checkout Bar LAN module
@@ -117,4 +118,5 @@ jobs:
         run: >
           python scripts/check_family_contracts.py
           --identity-openapi .family/identity/docs/openapi-camareros.json
+          --negocio-openapi .family/identity/docs/openapi-negocio.json
           --bar-module .family/bar/app/src/main/java/com/jaminsmoke/personalbar/lan/BarLanModule.kt
