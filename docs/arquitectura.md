@@ -37,7 +37,8 @@ app/src/main/java/com/jaminsmoke/personalcomander/
     ├── MesasScreen.kt / MesasViewModel.kt / MesasBoard.kt  # Board + list views
     ├── ComandaScreen.kt / ComandaViewModel.kt              # Order taking
     ├── MenuScreen.kt / MenuViewModel.kt                    # Product CRUD
-    ├── AjustesScreen.kt / AjustesViewModel.kt              # TPV sync, backup
+    ├── AjustesScreen.kt / AjustesViewModel.kt              # TPV sync, backup, cuenta y sala
+    ├── sesion/                                             # Auth, perfil, QR y conexión al establecimiento
     ├── Voz.kt / VozParser.kt     # Voice recognition + NL parser
     ├── Formato.kt                # Double.formatoEuro() extension
     └── theme/                    # Color.kt, Theme.kt, Type.kt
@@ -49,12 +50,15 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 UI (Compose) → ViewModel (StateFlow) → Repository → Room (SQLite)
                     ↑                        ↓
                  VozParser (NLP)        Sync TPV (Gson/LAN)
-                 Backup JSON (import/export)
+                  Backup JSON (import/export)
+                  Identity / Personal Bar (v1.6)
 ```
 
 - Los ViewModels exponen `StateFlow` que la UI consume con `collectAsState()`.
 - Las operaciones que tocan 2+ tablas usan `@Transaction` o `db.withTransaction {}`.
 - El catálogo TPV se importa como JSON sobre TCP en la red local y se inserta con `replace`.
+- La identidad del camarero y la adhesión al establecimiento son opcionales; el modo Local conserva el funcionamiento offline.
+- En modo Establecimiento, una comanda enviada conserva primero el estado local y después intenta publicar una ronda a Personal Bar.
 
 ## Voz
 

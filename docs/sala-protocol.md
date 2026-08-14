@@ -9,15 +9,15 @@ No confundir con Identity (`:8080`, HTTPS en producción): eso es el DNI del cam
 | Término | Qué es | Qué no es |
 |---|---|---|
 | **Establecimiento** | Negocio / local. Cuenta del Bar. El camarero se **liga al establecimiento** (`ModoSesion.Establecimiento`). | Una sala del mapa. |
-| **Sala** | Zona del mapa del establecimiento (barra, interior, terraza…). En Commander: entidad Room `Sala` + `Mesa.salaId` (antes «zona»). | El modo de sesión ni el host LAN. |
+| **Sala** | Zona del mapa del establecimiento (barra, interior, terraza…). En Comander: entidad Room `Sala` + `Mesa.salaId` (antes «zona»). | El modo de sesión ni el host LAN. |
 | **idZona** | Identidad de mesa **en red**: prefijo del **nombre de la sala** + `indiceZona` (`T3` = Terraza 3). | El `id` autoincrement de Room ni el alias visible. |
-| **Ronda** | Lo que Commander envía al Bar al «enviar a cocina» ligado. Bar la parte en tickets BARRA / COCINA. | El pedido Room completo como modelo de red. |
+| **Ronda** | Lo que Comander envía al Bar al «enviar a cocina» ligado. Bar la parte en tickets BARRA / COCINA. | El pedido Room completo como modelo de red. |
 
 `GET /health` trae `establecimiento` (nombre del negocio) y `sala` como **alias deprecado del mismo valor**. `sala` en health **no** es una sala del mapa.
 
 ## Endpoints (Bar)
 
-| Método | Ruta | Uso en Commander 0.1 |
+| Método | Ruta | Uso en Comander 0.1 |
 |---|---|---|
 | `GET /health` | liveness `{ok, role:"bar", establecimiento, sala, version}` | Sí (ligar) |
 | `POST /v1/rondas` | recibe una ronda → 201 o 200 idempotente | Sí (enviar) |
@@ -27,6 +27,16 @@ No confundir con Identity (`:8080`, HTTPS en producción): eso es el DNI del cam
 | `SSE /v1/eventos` | `ticket.listo` / `ticket.servido` | No (ítem recoger) |
 
 Sin autenticación en 0.1 (lista blanca QR de Bar aún no).
+
+## Flujo de usuario
+
+1. El camarero inicia sesión desde **Ajustes** y abre su **Perfil** para revisar la credencial QR.
+2. Busca el establecimiento en la sección de sala y conecta el Bar por host y puerto.
+3. La app muestra las salas del local y puede bloquear la edición local del mapa o la carta.
+4. Al enviar una comanda a cocina, Comander actualiza primero Room y publica después la ronda en Bar.
+5. Si Bar falla, la comanda local permanece enviada y el tablet muestra un aviso para que el camarero pueda reintentar o continuar trabajando.
+
+Este flujo pertenece a v1.6 en desarrollo. La release pública v1.5 funciona en modo Local y no incluye la integración completa de establecimiento.
 
 ## Payload de ronda
 
@@ -46,9 +56,9 @@ Sin autenticación en 0.1 (lista blanca QR de Bar aún no).
 
 - `id`: único por envío. Si se repite, Bar responde 200 y no duplica.
 - `mesaId`: **idZona**, p. ej. `T3`. Nunca el id Room.
-- `productoId`: en Commander es el Long de Room en string. El catálogo de Bar usa ids propios (`cana`…): sin sync de carta el destino puede ser siempre BARRA.
+- `productoId`: en Comander es el Long de Room en string. El catálogo de Bar usa ids propios (`cana`…): sin sync de carta el destino puede ser siempre BARRA.
 
-## Comportamiento en Commander
+## Comportamiento en Comander
 
 | Modo | Al enviar a cocina |
 |---|---|

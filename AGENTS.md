@@ -422,7 +422,9 @@ Los assets públicos (`docs/assets/logo.png`, `docs/assets/favicon.png`, `docs/s
 
 ```bash
 python scripts/generate_assets.py   # logo + favicon desde ic_brand_shield.webp (Pillow)
-bash scripts/capture_screens.sh     # 4 capturas desde emulador (adb + uiautomator)
+bash scripts/capture_screens.sh     # 5 capturas desde emulador (adb + uiautomator)
+# Si hay teléfono y tablet activos, fijar el teléfono explícitamente:
+ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
 ```
 
 Ejecutarlos tras cada rebranding/rediseño de UI para no desincronizar README/sitio/wiki.

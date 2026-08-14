@@ -29,12 +29,15 @@ Español · [English](README.md)
 - 💾 **Copia de seguridad** — exportación/importación JSON de toda la base de datos.
 - 🌙 **Tema dark premium** — design system navy & gold, theming dinámico en Android 12+.
 - 🌍 **Bilingüe** — interfaz en español e inglés.
+- 👤 **Cuenta de camarero y establecimiento (v1.6)** — perfil, credencial QR, salas y rondas a Personal Bar en desarrollo.
 
 ## 📱 Capturas
 
-| Resumen | Board de mesas | Menú | Comanda |
-|:---:|:---:|:---:|:---:|
-| <img src="docs/screenshots/home.png" width="180"> | <img src="docs/screenshots/mesas_board.png" width="180"> | <img src="docs/screenshots/menu.png" width="180"> | <img src="docs/screenshots/comanda.png" width="180"> |
+| Resumen | Board de mesas | Menú | Comanda | Ajustes |
+|:---:|:---:|:---:|:---:|:---:|
+| <img src="docs/screenshots/home.png" width="180"> | <img src="docs/screenshots/mesas_board.png" width="180"> | <img src="docs/screenshots/menu.png" width="180"> | <img src="docs/screenshots/comanda.png" width="180"> | <img src="docs/screenshots/ajustes.png" width="180"> |
+
+La release descargable actual es la **v1.5**. La identidad del camarero, las salas del establecimiento y la integración con Personal Bar se preparan para la **v1.6** en `main`; consulta las [notas de flujos v1.6](docs/flujos-v16.md).
 
 ## 🚀 Primeros pasos
 
@@ -69,6 +72,7 @@ En el primer arranque la app crea un menú de demostración y un plano de mesas 
 3. **Comanda** — añade productos por voz o con el dedo, revisa la cuenta, envíala a cocina y ciérrala al cobrar.
 4. **Menú** — gestiona productos, precios, categorías e iconos.
 5. **Ajustes** — configura el servidor TPV, importa/exporta copias y sincroniza el catálogo.
+6. **Cuenta y establecimiento (v1.6)** — inicia sesión, gestiona la credencial QR, conecta el local y envía rondas a Personal Bar. Está en desarrollo y no se incluye en el APK v1.5.
 
 ## 🖼️ Regenerar capturas y assets de marca
 
@@ -80,6 +84,9 @@ python scripts/generate_assets.py
 
 # Capturas de pantalla (requiere un emulador activo)
 bash scripts/capture_screens.sh
+
+# Si hay teléfono y tablet activos, seleccionar el teléfono explícitamente
+ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
 ```
 
 Ejecútalos tras cualquier cambio de marca o rediseño de UI para mantener coherentes el README, el sitio y la wiki.
@@ -104,7 +111,7 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 
 ## 🗺️ Roadmap
 
-- **v1.6** — sincronización de sala por LAN (Personal Bar como nodo), documentación del repo y CI/CD.
+- **v1.6** — identidad del camarero, salas del establecimiento, rondas a Personal Bar y validación de documentación en PRs.
 - Más adelante — funcionalidades premium (ver modelo de licencia).
 
 ## 🤝 Contribuir
