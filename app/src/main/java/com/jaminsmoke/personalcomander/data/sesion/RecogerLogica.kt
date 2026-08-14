@@ -38,6 +38,8 @@ data class EstadoLan(
     val bebida: List<TicketLan> = emptyList(),
     val comida: List<TicketLan> = emptyList(),
     val servidos: List<TicketLan> = emptyList(),
+    val salas: List<SalaLan> = emptyList(),
+    val mesas: List<MesaLan> = emptyList(),
 )
 
 data class BloquesComanda(
@@ -158,7 +160,14 @@ object RecogerLogica {
     }
 
     fun parseEstado(json: String): EstadoLan? = try {
-        gson.fromJson(json, EstadoLan::class.java)
+        val e = gson.fromJson(json, EstadoLanGson::class.java) ?: return null
+        EstadoLan(
+            bebida = e.bebida.orEmpty(),
+            comida = e.comida.orEmpty(),
+            servidos = e.servidos.orEmpty(),
+            salas = e.salas.orEmpty().filter { it.id.isNotBlank() && it.nombre.isNotBlank() },
+            mesas = e.mesas.orEmpty().filter { it.id.isNotBlank() },
+        )
     } catch (_: Exception) {
         null
     }
@@ -197,4 +206,13 @@ object RecogerLogica {
             else -> return eventType to null
         }
     }
+}
+
+/** Gson no respeta defaults de Kotlin: campos ausentes llegan null. */
+private class EstadoLanGson {
+    var bebida: List<TicketLan>? = null
+    var comida: List<TicketLan>? = null
+    var servidos: List<TicketLan>? = null
+    var salas: List<SalaLan>? = null
+    var mesas: List<MesaLan>? = null
 }

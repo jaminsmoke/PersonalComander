@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Sala::class, Mesa::class, Producto::class, Pedido::class, LineaPedido::class, Reserva::class],
-    version = 13,
+    version = 14,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -184,6 +184,23 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `productos` ADD COLUMN `codigoBar` TEXT")
                 db.execSQL(
                     "CREATE UNIQUE INDEX IF NOT EXISTS `index_productos_codigoBar` ON `productos` (`codigoBar`)"
+                )
+            }
+        }
+
+        /**
+         * v13→v14: `salas.codigoBar` y `mesas.codigoBar` (ids de red de Bar) para
+         * espejar el layout de `GET /v1/estado` sin cambiar las PK Long.
+         */
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `salas` ADD COLUMN `codigoBar` TEXT")
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_salas_codigoBar` ON `salas` (`codigoBar`)"
+                )
+                db.execSQL("ALTER TABLE `mesas` ADD COLUMN `codigoBar` TEXT")
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_mesas_codigoBar` ON `mesas` (`codigoBar`)"
                 )
             }
         }

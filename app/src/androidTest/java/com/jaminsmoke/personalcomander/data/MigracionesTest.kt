@@ -29,6 +29,7 @@ import org.junit.runner.RunWith
  *  v10 -> v11: tabla salas + mesas.salaId (deja de existir zona)
  *  v11 -> v12: ticketId en lineas_pedido (SSE recoger)
  *  v12 -> v13: productos.codigoBar (espejo GET /v1/carta)
+ *  v13 -> v14: salas.codigoBar + mesas.codigoBar (espejo GET /v1/estado)
  */
 @RunWith(AndroidJUnit4::class)
 class MigracionesTest {
@@ -161,13 +162,25 @@ class MigracionesTest {
             found
         }
         assertTrue("debe existir columna codigoBar (v13)", tieneCodigoBar)
+        val tieneSalaCodigoBar = db.query("PRAGMA table_info(`salas`)").use { cursor ->
+            var found = false
+            while (cursor.moveToNext()) if (cursor.getString(1) == "codigoBar") found = true
+            found
+        }
+        assertTrue("debe existir columna salas.codigoBar (v14)", tieneSalaCodigoBar)
+        val tieneMesaCodigoBar = db.query("PRAGMA table_info(`mesas`)").use { cursor ->
+            var found = false
+            while (cursor.moveToNext()) if (cursor.getString(1) == "codigoBar") found = true
+            found
+        }
+        assertTrue("debe existir columna mesas.codigoBar (v14)", tieneMesaCodigoBar)
     }
 
     private val migracionesHastaV12 = arrayOf(
         AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6,
         AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8,
         AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10,
-        AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13,
+        AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14,
     )
 
     @Test
@@ -187,7 +200,7 @@ class MigracionesTest {
             "migracion-v6.db",
             AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8,
             AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10,
-            AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13
+            AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -201,7 +214,7 @@ class MigracionesTest {
         abrirConRoom(
             "migracion-v7rota.db",
             AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10,
-            AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13
+            AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -220,7 +233,7 @@ class MigracionesTest {
         abrirConRoom(
             "migracion-v7limpia.db",
             AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10,
-            AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13
+            AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -238,7 +251,7 @@ class MigracionesTest {
         }
         abrirConRoom(
             "migracion-v8.db",
-            AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10, AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13
+            AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10, AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14
         ).apply {
             verificarDatosYEsquema()
             val db = openHelper.writableDatabase
@@ -266,7 +279,7 @@ class MigracionesTest {
             version = 9
             close()
         }
-        abrirConRoom("migracion-v9.db", AppDatabase.MIGRATION_9_10, AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13).apply {
+        abrirConRoom("migracion-v9.db", AppDatabase.MIGRATION_9_10, AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14).apply {
             verificarDatosYEsquema()
             val db = openHelper.writableDatabase
             assertEquals(

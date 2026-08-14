@@ -31,11 +31,16 @@ enum class LineaEstado {
 
 fun LineaEstado.esEditable(): Boolean = this == LineaEstado.PENDIENTE
 
-@Entity(tableName = "salas")
+@Entity(
+    tableName = "salas",
+    indices = [Index(value = ["codigoBar"], unique = true)],
+)
 data class Sala(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val nombre: String,
     val orden: Int = 0,
+    /** Id de red de la sala en Bar (`sala-terraza`). Null = sala solo local. */
+    val codigoBar: String? = null,
 )
 
 @Entity(
@@ -59,6 +64,7 @@ data class Sala(
         Index(value = ["comandaActivaId"]),
         Index(value = ["reservaActivaId"]),
         Index(value = ["salaId"]),
+        Index(value = ["codigoBar"], unique = true),
     ]
 )
 data class Mesa(
@@ -78,7 +84,9 @@ data class Mesa(
     /** Hold de sala: mesa no disponible (rojo). Independiente del ciclo de comanda. */
     val bloqueada: Boolean = false,
     /** Puntero a [Reserva] activa; null = sin reserva. */
-    val reservaActivaId: Long? = null
+    val reservaActivaId: Long? = null,
+    /** Id de red de la mesa en Bar. Null = mesa solo local. */
+    val codigoBar: String? = null,
 )
 
 /** ID dentro de la sala, p.ej. "B1" para Barra 1. */

@@ -29,7 +29,7 @@ Rutas Bar que Commander llama: [`bar-contract-paths.txt`](bar-contract-paths.txt
 | `POST /v1/rondas` | recibe una ronda → 201/200 + **lista de tickets** | Sí (enviar; se guarda `ticketId` por línea) |
 | `POST /v1/tickets/{id}/preparado` | ticket preparado | No (UI de expo en Bar) |
 | `POST /v1/tickets/{id}/recogido` | ticket recogido en expo | No (UI de expo en Bar) |
-| `GET /v1/estado` | establecimiento, salas, colas, mesas | Sí (realinear al conectar SSE; Bar no persiste eventos) |
+| `GET /v1/estado` | establecimiento, salas, colas, mesas | Sí (realinear tickets al conectar SSE; **réplica de layout** al ligar si `admitido`) |
 | `GET /v1/carta` | catálogo `{productos:[{id,nombre,categoria,precio,disponible}]}` | Sí (espejo al ligar) |
 | `SSE /v1/eventos` | `ticket.preparado` / `ticket.recogido` | Sí (aviso recoger) |
 
@@ -66,7 +66,11 @@ Handshake al ligar: `POST /v1/sesion` con el QR. Si el camarero está ACTIVA en 
 
 Aviso en sala: `T3 · Cola 1 Bebida lista` (`destino` `BARRA` → Bebida, `COCINA` → Comida).
 
-Al reconectar: `GET /v1/estado` y marcar `PREPARADO` (y `servidos`) como `LISTA` en líneas con ese `ticketId`.
+Al reconectar: `GET /v1/estado` y marcar `PREPARADO` (y `servidos`) como `LISTA` en líneas con ese `ticketId`. El bucle SSE **no** reescribe el mapa.
+
+## Réplica de mapa
+
+Bar es la fuente de verdad del layout. Si el camarero está **admitido**, al ligar Commander lee `salas` y `mesas` de `GET /v1/estado` y hace upsert por `codigoBar` (el `id` string de Bar). Conserva `id` Room, `estado`, `comandaActivaId` y `reservaActivaId` locales. **No borra** el seed ni salas/mesas sin código. Si no está admitido, 404 o el nodo no manda mapa, el layout local no se toca. `idZona` sigue siendo función (`zonaPrefijo(nombreSala)+indiceZona`), no un campo JSON.
 
 ## Flujo de usuario
 
