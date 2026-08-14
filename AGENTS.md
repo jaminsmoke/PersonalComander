@@ -73,6 +73,9 @@ emulador.bat   # Windows; or: emulator -avd Pixel_9a
 # Tests
 ./gradlew test                         # unit
 ./gradlew connectedAndroidTest         # instrumentation
+python scripts/check_family_contracts.py --selftest
+# El job CI «Family contracts» (no required aún) pinea Identity/Bar main:
+# python scripts/check_family_contracts.py --identity-openapi … --bar-module …
 ```
 
 ## Oficios (familia PersonalHostel)

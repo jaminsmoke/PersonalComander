@@ -78,3 +78,43 @@ jobs:
           name: personal-comander-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+  family-contracts:
+    name: Family contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout Identity spec
+        uses: actions/checkout@v4
+        with:
+          repository: jaminsmoke/PersonalHostel-Identity
+          ref: main
+          path: .family/identity
+          sparse-checkout: |
+            docs/openapi-camareros.json
+          sparse-checkout-cone-mode: false
+
+      - name: Checkout Bar LAN module
+        uses: actions/checkout@v4
+        with:
+          repository: jaminsmoke/PersonalBar
+          ref: main
+          path: .family/bar
+          sparse-checkout: |
+            app/src/main/java/com/jaminsmoke/personalbar/lan/BarLanModule.kt
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Self-test contract checker
+        run: python scripts/check_family_contracts.py --selftest
+
+      - name: Check Commander paths against Identity and Bar
+        run: >
+          python scripts/check_family_contracts.py
+          --identity-openapi .family/identity/docs/openapi-camareros.json
+          --bar-module .family/bar/app/src/main/java/com/jaminsmoke/personalbar/lan/BarLanModule.kt
