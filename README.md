@@ -29,12 +29,15 @@
 - 💾 **Backup & restore** — JSON import/export of the whole database.
 - 🌙 **Dark premium theme** — navy & gold design system, dynamic theming on Android 12+.
 - 🌍 **Bilingual** — Spanish and English UI.
+- 👤 **Waiter account and venue connection (v1.6)** — profile, QR credential, rooms and Personal Bar rounds in development.
 
 ## 📱 Screenshots
 
-| Home | Table board | Menu | Order |
-|:---:|:---:|:---:|:---:|
-| <img src="docs/screenshots/home.png" width="180"> | <img src="docs/screenshots/mesas_board.png" width="180"> | <img src="docs/screenshots/menu.png" width="180"> | <img src="docs/screenshots/comanda.png" width="180"> |
+| Home | Table board | Menu | Order | Settings |
+|:---:|:---:|:---:|:---:|:---:|
+| <img src="docs/screenshots/home.png" width="180"> | <img src="docs/screenshots/mesas_board.png" width="180"> | <img src="docs/screenshots/menu.png" width="180"> | <img src="docs/screenshots/comanda.png" width="180"> | <img src="docs/screenshots/ajustes.png" width="180"> |
+
+The downloadable release is currently **v1.5**. Waiter identity, venue rooms and Personal Bar integration are being prepared for **v1.6** on `main`; see the [v1.6 flow notes](docs/flujos-v16.md).
 
 ## 🚀 Getting started
 
@@ -69,6 +72,7 @@ The first launch seeds a demo menu and a default table layout, so you can explor
 3. **Order** — add products by tapping or by voice, review the ticket, send it to the kitchen and close it when paid.
 4. **Menu** — manage products, prices, categories and icons.
 5. **Settings** — configure the TPV server, import/export backups, and sync the catalog.
+6. **Account and venue (v1.6)** — sign in, manage the QR credential, connect to a venue and send rounds to Personal Bar. This is in development and not included in the v1.5 APK.
 
 ## 🖼️ Regenerar capturas y assets de marca
 
@@ -80,6 +84,9 @@ python scripts/generate_assets.py
 
 # Capturas de pantalla (requiere un emulador activo)
 bash scripts/capture_screens.sh
+
+# Si hay teléfono y tablet activos, seleccionar el teléfono explícitamente
+ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
 ```
 
 Ejecútalos después de cualquier cambio de marca o rediseño de UI para mantener coherentes el README, el sitio y la wiki.
@@ -104,7 +111,7 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 
 ## 🗺️ Roadmap
 
-- **v1.6** — LAN room sync (Personal Bar as a node), repo documentation & CI/CD.
+- **v1.6** — waiter identity, venue rooms, Personal Bar rounds, and documentation validation in PRs.
 - Later — premium features (see licensing model).
 
 ## 🤝 Contributing

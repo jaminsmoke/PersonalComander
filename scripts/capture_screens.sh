@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Captura las 4 pantallas principales de la app desde un emulador y las guarda
-# en docs/screenshots/{home,mesas_board,menu,comanda}.png normalizadas a 540px.
+# Captura las pantallas principales de la app desde un emulador y las guarda
+# en docs/screenshots/{home,mesas_board,menu,comanda,ajustes}.png normalizadas a 540px.
 #
 # Requisitos:
 #   - Un emulador con la app instalada (o se instala aquí con installDebug).
@@ -8,6 +8,13 @@
 #
 # Uso:
 #   bash scripts/capture_screens.sh
+#   ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
+#   SKIP_INSTALL=1 ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
+#
+# Variables opcionales:
+#   ADB_DEVICE  serial concreto; recomendable si hay teléfono y tablet activos.
+#   SKIP_INSTALL=1  reutiliza una instalación existente.
+#   PYTHON_BIN  intérprete con Pillow (python o python3 por defecto).
 set -euo pipefail
 
 # En git bash de Windows, las rutas de dispositivo (/sdcard/...) no deben
@@ -20,19 +27,33 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$ROOT/docs/screenshots"
 TMP="$ROOT/devartifacts"
 WIDTH=540
+PYTHON_BIN="${PYTHON_BIN:-python}"
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  PYTHON_BIN=python3
+fi
 
-win() { cygpath -m "$1" 2>/dev/null || echo "$1"; }
+win() {
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -m "$1"
+  elif command -v wslpath >/dev/null 2>&1; then
+    wslpath -w "$1" | tr -d '\r'
+  else
+    echo "$1"
+  fi
+}
 
 # --- localizar adb -----------------------------------------------------------
 find_adb() {
   local c
   for c in \
     "${ANDROID_HOME:-}/platform-tools/adb" \
+    "${ANDROID_HOME:-}/platform-tools/adb.exe" \
     "${ANDROID_SDK_ROOT:-}/platform-tools/adb" \
-    "$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe" \
+    "${ANDROID_SDK_ROOT:-}/platform-tools/adb.exe" \
+    "${LOCALAPPDATA:-}/Android/Sdk/platform-tools/adb.exe" \
     "$HOME/AppData/Local/Android/Sdk/platform-tools/adb.exe" \
     "$HOME/Android/Sdk/platform-tools/adb"; do
-    [[ -n "$c" && -x "$c" ]] && { echo "$c"; return 0; }
+    [[ -n "$c" && -f "$c" ]] && { echo "$c"; return 0; }
   done
   return 1
 }
@@ -44,7 +65,11 @@ if [[ -z "$ADB" ]]; then
 fi
 echo "adb: $ADB"
 
-DEVICE="$("$ADB" devices | awk 'NR>1 && $2=="device"{print $1; exit}')"
+if [[ -n "${ADB_DEVICE:-}" ]]; then
+  DEVICE="$ADB_DEVICE"
+else
+  DEVICE="$($ADB devices | tr -d '\r' | awk 'NR>1 && $2=="device"{print $1; exit}')"
+fi
 if [[ -z "$DEVICE" ]]; then
   echo "ERROR: no hay emulador/dispositivo activo." >&2
   exit 1
@@ -61,7 +86,11 @@ mkdir -p "$OUT" "$TMP"
 
 # --- instalar y arrancar con seed limpio --------------------------------------
 echo "==> Instalando app (installDebug)..."
-(cd "$ROOT" && ./gradlew installDebug >/dev/null)
+if [[ "${SKIP_INSTALL:-0}" == "1" ]]; then
+  echo "  instalación omitida (SKIP_INSTALL=1)"
+else
+  (cd "$ROOT" && ./gradlew installDebug >/dev/null)
+fi
 
 echo "==> Limpiando datos para seed y arrancando..."
 adb shell pm clear "$PKG" >/dev/null || true
@@ -76,7 +105,7 @@ find_tap() {
   local xml="$TMP/ui.xml"
   adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
   adb pull /sdcard/ui.xml "$(win "$xml")" >/dev/null 2>&1
-  python - "$(win "$xml")" "$needle" <<'PY'
+  "$PYTHON_BIN" - "$(win "$xml")" "$needle" <<'PY'
 import re, sys
 xml_path, needle = sys.argv[1], sys.argv[2]
 xml = open(xml_path, encoding='utf-8').read()
@@ -109,12 +138,22 @@ tap_text() {
   return 1
 }
 
+tap_text_any() {
+  local needle
+  for needle in "$@"; do
+    if tap_text "$needle"; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 capture() {
   local name="$1"
   local dev="/sdcard/raw_$name.png"
   adb shell screencap -p "$dev" >/dev/null || { echo "  ! error capturando $name" >&2; return 1; }
   adb pull "$dev" "$(win "$TMP/raw_$name.png")" >/dev/null 2>&1 || { echo "  ! error descargando $name" >&2; return 1; }
-  python - "$(win "$TMP/raw_$name.png")" "$(win "$OUT/$name.png")" "$WIDTH" <<'PY'
+  "$PYTHON_BIN" - "$(win "$TMP/raw_$name.png")" "$(win "$OUT/$name.png")" "$WIDTH" <<'PY'
 import sys
 from PIL import Image
 src, dst, width = sys.argv[1], sys.argv[2], int(sys.argv[3])
@@ -132,17 +171,17 @@ echo "==> Capturando pantallas..."
 capture home
 
 echo "  navegando a Mesas..."
-tap_text "Mesas" && capture mesas_board
+tap_text_any "Mesas" "Tables" && capture mesas_board
 
 echo "  navegando a Gestión (menú)..."
-tap_text "Gestión" && capture menu
+tap_text_any "Gestión" "Menu" "Menu Management" && capture menu
 
 echo "  navegando a Mesas y abriendo una comanda..."
-tap_text "Mesas" && {
+tap_text_any "Mesas" "Tables" && {
   xml="$TMP/ui.xml"
   adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
   adb pull /sdcard/ui.xml "$(win "$xml")" >/dev/null 2>&1
-  MESA_BOUNDS="$(python - "$(win "$xml")" "$SCREEN_H" <<'PY'
+  MESA_BOUNDS="$("$PYTHON_BIN" - "$(win "$xml")" "$SCREEN_H" <<'PY'
 import re, sys
 xml_path, screen_h = sys.argv[1], int(sys.argv[2])
 xml = open(xml_path, encoding='utf-8').read()
@@ -164,5 +203,10 @@ PY
     echo "  ! no se localizó una mesa; captura de comanda omitida" >&2
   fi
 }
+
+echo "  navegando a Ajustes..."
+adb shell input keyevent 4 >/dev/null 2>&1 || true
+sleep 2
+tap_text_any "Ajustes" "Settings" && capture ajustes
 
 echo "==> Listo. Capturas en $OUT/"

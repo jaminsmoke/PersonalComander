@@ -24,6 +24,17 @@ La app puede importar el catálogo de productos desde un **servidor TPV en la re
 !!! warning "Seguridad"
     El tráfico LAN **no está cifrado**. Usa la app solo en redes de confianza. Consulta la [política de seguridad](https://github.com/jaminsmoke/PersonalComander/blob/main/SECURITY.md) para más detalles.
 
+## Flujo desde Ajustes
+
+1. Abre **Ajustes** y selecciona el programa de gestión compatible.
+2. Usa **Buscar en red** para localizar servidores o introduce IP, puerto y ruta manualmente.
+3. Revisa el servidor encontrado y pulsa **Sincronizar**.
+4. La app muestra una vista previa de productos nuevos, actualizados e ignorados antes de aplicar el catálogo.
+
+La sincronización TPV solo actualiza el catálogo local. No es el mismo canal que la conexión a Personal Bar: el TPV entrega productos y el Bar recibe rondas de comandas.
+
+En modo Establecimiento la carta puede ser de solo lectura, porque el catálogo del local se considera la fuente compartida. El flujo de cuenta, establecimiento y Bar está descrito en [Flujos v1.6](flujos-v16.md).
+
 ## Protocolo de sala
 
 El catálogo TPV y el nodo Bar son canales distintos. Las rondas hacia Personal Bar están en [Protocolo LAN](sala-protocol.md) (issue #44). El establecimiento es el negocio; las salas son las zonas del mapa.

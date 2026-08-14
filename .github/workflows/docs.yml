@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "mkdocs.yml"
+      - "requirements-docs.txt"
       - "docs/**"
   workflow_dispatch:
 
@@ -38,7 +39,10 @@ jobs:
             mkdocs-material-
 
       - name: Install dependencies
-        run: pip install mkdocs-material
+        run: python -m pip install --requirement requirements-docs.txt
+
+      - name: Validate documentation
+        run: mkdocs build --strict --site-dir site
 
       - name: Deploy to GitHub Pages
         run: mkdocs gh-deploy --force

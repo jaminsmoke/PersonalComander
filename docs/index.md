@@ -19,6 +19,9 @@ El board visual de mesas, la toma de comandas por voz y el control de caja en un
 [📖 Wiki](https://github.com/jaminsmoke/PersonalComander/wiki){ .md-button }
 [📚 Documentación](arquitectura.md){ .md-button }
 
+!!! warning "v1.6 en desarrollo"
+    El APK descargable actual es **v1.5**. Los flujos de cuenta de camarero, establecimiento, salas y Personal Bar están evolucionando en `main` para v1.6. Consulta el [detalle de flujos](flujos-v16.md) antes de probarlos desde código.
+
 </div>
 
 ---
@@ -59,6 +62,10 @@ El board visual de mesas, la toma de comandas por voz y el control de caja en un
 
     Interfaz en español e inglés.
 
+- :material-account-network: **Cuenta y sala (v1.6)**
+
+    Perfil de camarero, QR, establecimiento, salas y envío de rondas a Personal Bar. En desarrollo.
+
 </div>
 
 ## Capturas
@@ -81,6 +88,10 @@ El board visual de mesas, la toma de comandas por voz y el control de caja en un
 
     **Comanda** — toma de pedidos táctil y por voz.
 
+- ![Ajustes](screenshots/ajustes.png){ width="200" }
+
+    **Ajustes** — cuenta, conexión TPV, sincronización y backup.
+
 </div>
 
 ## ¿Qué puedes hacer con Personal Comander?
@@ -93,6 +104,8 @@ El board visual de mesas, la toma de comandas por voz y el control de caja en un
 - **Sincronizar el catálogo** desde tu TPV por la red local
 - Llevar el **control de caja**: facturado hoy, pedidos activos
 - **Exportar e importar** copias de seguridad JSON
+
+Los flujos de cuenta, establecimiento y Personal Bar están documentados como **v1.6 en desarrollo** y no se incluyen todavía en el APK v1.5 descargable.
 
 ## Requisitos
 
