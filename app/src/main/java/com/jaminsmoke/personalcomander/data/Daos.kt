@@ -30,6 +30,9 @@ interface SalaDao {
     @Update
     suspend fun update(sala: Sala)
 
+    @Update
+    suspend fun updateAll(salas: List<Sala>)
+
     @Query("DELETE FROM salas WHERE id = :id")
     suspend fun deleteById(id: Long)
 
@@ -45,6 +48,9 @@ interface MesaDao {
     @Query("SELECT * FROM mesas WHERE id = :id")
     fun observeById(id: Long): Flow<Mesa?>
 
+    @Query("SELECT * FROM mesas ORDER BY salaId, numero")
+    suspend fun getAll(): List<Mesa>
+
     @Query("SELECT COUNT(*) FROM mesas")
     suspend fun count(): Int
 
@@ -59,6 +65,9 @@ interface MesaDao {
 
     @Update
     suspend fun update(mesa: Mesa)
+
+    @Update
+    suspend fun updateAll(mesas: List<Mesa>)
 
     @Query("SELECT * FROM mesas WHERE id = :id")
     suspend fun getById(id: Long): Mesa?

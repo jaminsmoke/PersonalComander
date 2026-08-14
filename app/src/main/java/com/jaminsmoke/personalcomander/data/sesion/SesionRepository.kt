@@ -187,6 +187,7 @@ class SesionRepository(
             store.guardarEstablecimiento(establecimiento)
             _modo.value = establecimiento
             espejarCarta(host, puerto)
+            if (establecimiento.admitido) espejarMapa(host, puerto)
             ConectarBarResult(
                 ok = true,
                 contraste = IdentityJson.contrastarHealth(health?.establecimiento, _membresias.value),
@@ -212,6 +213,28 @@ class SesionRepository(
         db.withTransaction {
             if (plan.insertar.isNotEmpty()) db.productoDao().insertAll(plan.insertar)
             if (plan.actualizar.isNotEmpty()) db.productoDao().updateAll(plan.actualizar)
+        }
+    }
+
+    /**
+     * Réplica de layout al ligar admitido. 404 o `/estado` sin salas no toca el mapa.
+     * No corre en el bucle SSE: solo aquí.
+     */
+    private suspend fun espejarMapa(host: String, puerto: Int) {
+        val estado = BarLanCliente.estado(host, puerto) ?: return
+        if (estado.salas.isEmpty() && estado.mesas.isEmpty()) return
+        db.withTransaction {
+            val planSalas = MapaSync.planSalas(db.salaDao().getAll(), estado.salas)
+            if (planSalas.actualizar.isNotEmpty()) db.salaDao().updateAll(planSalas.actualizar)
+            for (sala in planSalas.insertar) {
+                db.salaDao().insert(sala)
+            }
+            val salasPorCodigo = db.salaDao().getAll()
+                .mapNotNull { s -> s.codigoBar?.let { it to s.id } }
+                .toMap()
+            val planMesas = MapaSync.planMesas(db.mesaDao().getAll(), estado.mesas, salasPorCodigo)
+            if (planMesas.insertar.isNotEmpty()) db.mesaDao().insertAll(planMesas.insertar)
+            if (planMesas.actualizar.isNotEmpty()) db.mesaDao().updateAll(planMesas.actualizar)
         }
     }
 
