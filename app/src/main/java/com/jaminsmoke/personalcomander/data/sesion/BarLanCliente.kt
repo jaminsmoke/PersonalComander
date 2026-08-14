@@ -48,7 +48,11 @@ object BarLanCliente {
     fun esBar(health: Health?): Boolean =
         health != null && health.ok && health.role.equals("bar", ignoreCase = true)
 
-    data class PostRondaResult(val ok: Boolean, val codigo: Int)
+    data class PostRondaResult(
+        val ok: Boolean,
+        val codigo: Int,
+        val tickets: List<TicketLan> = emptyList(),
+    )
 
     /** `POST /v1/rondas`. 200 (idempotente) y 201 cuentan como ok. Sin auth en Bar 0.1. */
     fun postRonda(host: String, puerto: Int, ronda: RondaLan): PostRondaResult {
@@ -62,11 +66,67 @@ object BarLanCliente {
             val cuerpo = RondaLanMapper.toJson(ronda).toByteArray(Charsets.UTF_8)
             conexion.outputStream.use { it.write(cuerpo) }
             val codigo = conexion.responseCode
-            PostRondaResult(ok = codigo in 200..299, codigo = codigo)
+            val ok = codigo in 200..299
+            val texto = (if (ok) conexion.inputStream else conexion.errorStream)
+                ?.bufferedReader()?.use { it.readText() }
+                .orEmpty()
+            PostRondaResult(
+                ok = ok,
+                codigo = codigo,
+                tickets = if (ok) RecogerLogica.parseTickets(texto) else emptyList(),
+            )
         } catch (_: IOException) {
             PostRondaResult(ok = false, codigo = 0)
         } finally {
             conexion.disconnect()
+        }
+    }
+
+    /** Snapshot de colas. Bar no persiste SSE: al reconectar hay que realinear con esto. */
+    fun estado(host: String, puerto: Int = PUERTO): EstadoLan? {
+        val conexion = URL("http://$host:$puerto/v1/estado").openConnection() as HttpURLConnection
+        return try {
+            conexion.connectTimeout = 2500
+            conexion.readTimeout = 4000
+            conexion.requestMethod = "GET"
+            if (conexion.responseCode !in 200..299) return null
+            val texto = conexion.inputStream.bufferedReader().use { it.readText() }
+            RecogerLogica.parseEstado(texto)
+        } catch (_: IOException) {
+            null
+        } finally {
+            conexion.disconnect()
+        }
+    }
+
+    fun abrirSse(host: String, puerto: Int): HttpURLConnection {
+        val conexion = URL("http://$host:$puerto/v1/eventos").openConnection() as HttpURLConnection
+        conexion.connectTimeout = 4000
+        conexion.readTimeout = 0
+        conexion.requestMethod = "GET"
+        conexion.setRequestProperty("Accept", "text/event-stream")
+        conexion.setRequestProperty("Cache-Control", "no-cache")
+        return conexion
+    }
+
+    fun leerSseAbierto(
+        conexion: HttpURLConnection,
+        debeParar: () -> Boolean,
+        onEvento: (SalaEventLan) -> Unit,
+    ) {
+        try {
+            if (conexion.responseCode !in 200..299) return
+            val reader = conexion.inputStream.bufferedReader()
+            var eventType: String? = null
+            val data = StringBuilder()
+            while (!debeParar() && !Thread.currentThread().isInterrupted) {
+                val line = reader.readLine() ?: break
+                val (nuevoTipo, evento) = RecogerLogica.alimentarSse(eventType, data, line)
+                eventType = nuevoTipo
+                if (evento != null) onEvento(evento)
+            }
+        } catch (_: IOException) {
+            // reconexión la gestiona RecogerServicio
         }
     }
 }

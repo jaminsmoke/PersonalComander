@@ -7,7 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Sala::class, Mesa::class, Producto::class, Pedido::class, LineaPedido::class, Reserva::class],
-    version = 11,
+    version = 12,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -159,6 +159,19 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_mesas_comandaActivaId` ON `mesas` (`comandaActivaId`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_mesas_reservaActivaId` ON `mesas` (`reservaActivaId`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_mesas_salaId` ON `mesas` (`salaId`)")
+            }
+        }
+
+        /**
+         * v11→v12: `ticketId` en líneas para cruzar SSE `ticket.preparado` / `ticket.recogido`
+         * con la comanda local (delta de ronda).
+         */
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `lineas_pedido` ADD COLUMN `ticketId` TEXT")
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_lineas_pedido_ticketId` ON `lineas_pedido` (`ticketId`)"
+                )
             }
         }
 

@@ -8,10 +8,14 @@
 }
 -dontwarn androidx.room.paging.**
 
-# ---- Gson (backup JSON) ----
+# ---- Gson (backup JSON + LAN Bar) ----
 -keepattributes Signature
 -keepattributes *Annotation*
 -keep class com.jaminsmoke.personalcomander.data.BackupJson* { *; }
+-keep class com.jaminsmoke.personalcomander.data.sesion.TicketLan { *; }
+-keep class com.jaminsmoke.personalcomander.data.sesion.LineaTicketLan { *; }
+-keep class com.jaminsmoke.personalcomander.data.sesion.SalaEventLan { *; }
+-keep class com.jaminsmoke.personalcomander.data.sesion.EstadoLan { *; }
 -keepclassmembers class com.jaminsmoke.personalcomander.data.Producto { *; }
 -keepclassmembers class com.jaminsmoke.personalcomander.data.Mesa { *; }
 -keepclassmembers class com.jaminsmoke.personalcomander.data.Pedido { *; }

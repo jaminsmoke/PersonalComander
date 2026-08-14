@@ -8,7 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.jaminsmoke.personalcomander.PersonalComanderApp
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.AppDatabase
+import com.jaminsmoke.personalcomander.data.LineaEstado
 import com.jaminsmoke.personalcomander.data.LineaPedido
+import com.jaminsmoke.personalcomander.data.esEditable
 import com.jaminsmoke.personalcomander.data.normalizarNombre
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaEstado
@@ -17,6 +19,7 @@ import com.jaminsmoke.personalcomander.data.PedidoEstado
 import com.jaminsmoke.personalcomander.data.Producto
 import com.jaminsmoke.personalcomander.data.sesion.BarLanCliente
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
+import com.jaminsmoke.personalcomander.data.sesion.RecogerLogica
 import com.jaminsmoke.personalcomander.data.sesion.RondaLanMapper
 import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +50,8 @@ data class ComandaUiState(
     val escuchandoVoz: Boolean = false,
     val procesandoVoz: Boolean = false,
     val feedbackVoz: String? = null,
-    val error: String? = null
+    val error: String? = null,
+    val ligadoAlBar: Boolean = false,
 ) {
     val total: Double get() = lineas.sumOf { it.precioUnitario * it.cantidad }
 }
@@ -115,7 +119,7 @@ class ComandaViewModel(
 
         val _snackState = combine(_feedbackVoz, _error, _procesandoVoz) { f, e, p -> SnackState(f, e, p) }
 
-        combine(datos, _busqueda, _categoria, _escuchandoVoz, _snackState) { d, busqueda, categoria, escuchando, ss ->
+        val sinBar = combine(datos, _busqueda, _categoria, _escuchandoVoz, _snackState) { d, busqueda, categoria, escuchando, ss ->
             val cats = d.productos.map { it.categoria }.distinct()
             val porCategoria = d.productos.filter { categoria == null || it.categoria == categoria }
             val filtrados = if (busqueda.isBlank()) porCategoria
@@ -129,6 +133,9 @@ class ComandaViewModel(
                 busqueda = busqueda, categoria = categoria,
                 escuchandoVoz = escuchando, procesandoVoz = ss.procesando, feedbackVoz = ss.feedbackVoz, error = ss.error
             )
+        }
+        combine(sinBar, sesion.modo) { state, modo ->
+            state.copy(ligadoAlBar = modo is ModoSesion.Establecimiento)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ComandaUiState())
     }
 
@@ -203,36 +210,37 @@ class ComandaViewModel(
             clearFeedbackVoz()
             return
         }
-        if (p.estado == PedidoEstado.ENVIADA) {
-            _feedbackVoz.value = ctx.getString(R.string.comanda_voice_sent_cant_remove)
-            clearFeedbackVoz()
-            return
-        }
         val lineas = db.lineaPedidoDao().getForPedido(p.id)
         if (lineas.isEmpty()) {
             _feedbackVoz.value = ctx.getString(R.string.comanda_voice_no_order)
             clearFeedbackVoz()
             return
         }
+        val pendientes = lineas.filter { it.estado == LineaEstado.PENDIENTE }
+        if (pendientes.isEmpty()) {
+            _feedbackVoz.value = ctx.getString(R.string.comanda_voice_sent_cant_remove)
+            clearFeedbackVoz()
+            return
+        }
 
         val primeraPalabra = comanda.split(" ").first()
         if (primeraPalabra == "todo" || primeraPalabra == "todos" || primeraPalabra == "todas") {
-            removeAllLineas(lineas)
+            removeAllLineas(pendientes)
             _feedbackVoz.value = ctx.getString(R.string.comanda_voice_removed_all)
             clearFeedbackVoz()
             return
         }
 
-        val resultado = parsearQuitar(comanda, lineas)
+        val resultado = parsearQuitar(comanda, pendientes)
         if (resultado.lineas.isNotEmpty()) {
-            removeLineasBatch(resultado.lineas, lineas)
+            removeLineasBatch(resultado.lineas, pendientes)
         }
         val resumen = resultado.lineas.joinToString(", ") { "${it.cantidad}× ${it.nombreProducto}" }
-        val pendientes = resultado.noEntendido.joinToString(" ")
+        val noEntendido = resultado.noEntendido.joinToString(" ")
         _feedbackVoz.value = when {
-            resumen.isEmpty() && pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_remove_unrecognized, textoOriginal, pendientes)
+            resumen.isEmpty() && noEntendido.isNotEmpty() -> ctx.getString(R.string.comanda_voice_remove_unrecognized, textoOriginal, noEntendido)
             resumen.isEmpty() -> ctx.getString(R.string.comanda_voice_not_understood, textoOriginal)
-            pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_remove_partial, textoOriginal, resumen, pendientes)
+            noEntendido.isNotEmpty() -> ctx.getString(R.string.comanda_voice_remove_partial, textoOriginal, resumen, noEntendido)
             else -> ctx.getString(R.string.comanda_voice_removed, textoOriginal, resumen)
         }
         clearFeedbackVoz()
@@ -265,7 +273,7 @@ class ComandaViewModel(
                 }
                 val lineas = db.lineaPedidoDao().getForPedido(p.id)
                 for (lv in lineasVoz) {
-                    val existente = lineas.firstOrNull { it.productoId == lv.producto.id }
+                    val existente = RecogerLogica.lineaPendienteDelProducto(lineas, lv.producto.id)
                     if (existente != null) {
                         db.lineaPedidoDao().update(existente.copy(cantidad = existente.cantidad + lv.cantidad))
                     } else {
@@ -333,7 +341,7 @@ class ComandaViewModel(
                         }
 
                         val lineas = db.lineaPedidoDao().getForPedido(pedidoActivo.id)
-                        val existente = lineas.firstOrNull { it.productoId == producto.id }
+                        val existente = RecogerLogica.lineaPendienteDelProducto(lineas, producto.id)
                         if (existente != null) {
                             db.lineaPedidoDao().update(existente.copy(cantidad = existente.cantidad + cantidad))
                         } else {
@@ -351,6 +359,7 @@ class ComandaViewModel(
     }
 
     fun aumentarLinea(linea: LineaPedido) {
+        if (!linea.estado.esEditable()) return
         viewModelScope.launch {
             mutex.withLock {
                 try { db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad + 1)) }
@@ -360,12 +369,39 @@ class ComandaViewModel(
     }
 
     fun disminuirLinea(linea: LineaPedido) {
+        if (!linea.estado.esEditable()) return
         viewModelScope.launch {
             mutex.withLock {
                 try {
                     if (linea.cantidad > 1) db.lineaPedidoDao().update(linea.copy(cantidad = linea.cantidad - 1))
                     else db.lineaPedidoDao().delete(linea)
                 } catch (e: Exception) { _error.value = ctx.getString(R.string.error_decrease_quantity, e.message ?: e.javaClass.simpleName) }
+            }
+        }
+    }
+
+    fun marcarServida(linea: LineaPedido) {
+        val ligado = sesion.modo.value is ModoSesion.Establecimiento
+        if (!RecogerLogica.puedeMarcarServida(linea, ligado)) return
+        viewModelScope.launch {
+            mutex.withLock {
+                try { db.lineaPedidoDao().update(linea.copy(estado = LineaEstado.SERVIDA)) }
+                catch (e: Exception) { _error.value = ctx.getString(R.string.error_add_product, e.message ?: e.javaClass.simpleName) }
+            }
+        }
+    }
+
+    fun marcarTodasListasServidas() {
+        viewModelScope.launch {
+            mutex.withLock {
+                val p = db.pedidoDao().getActivo(mesaId) ?: return@withLock
+                val ligado = sesion.modo.value is ModoSesion.Establecimiento
+                val lineas = db.lineaPedidoDao().getForPedido(p.id)
+                for (linea in lineas) {
+                    if (RecogerLogica.puedeMarcarServida(linea, ligado)) {
+                        db.lineaPedidoDao().update(linea.copy(estado = LineaEstado.SERVIDA))
+                    }
+                }
             }
         }
     }
@@ -379,9 +415,11 @@ class ComandaViewModel(
                         val mesa = db.mesaDao().getById(mesaId) ?: return@withTransaction null
                         val nombreSala = db.salaDao().getById(mesa.salaId)?.nombre.orEmpty()
                         val lineas = db.lineaPedidoDao().getForPedido(p.id)
+                        val pendientes = RecogerLogica.lineasAEnviar(lineas)
+                        if (pendientes.isEmpty()) return@withTransaction null
                         db.pedidoDao().update(p.copy(estado = PedidoEstado.ENVIADA))
                         db.mesaDao().updateEstado(mesaId, MesaEstado.EN_COCINA, p.id)
-                        EnvioLocal(p.id, mesa, nombreSala, lineas)
+                        EnvioLocal(p.id, mesa, nombreSala, pendientes)
                     }
                 } catch (e: Exception) {
                     _error.value = ctx.getString(R.string.error_send_to_kitchen, e.message ?: e.javaClass.simpleName)
@@ -394,21 +432,34 @@ class ComandaViewModel(
 
     private suspend fun enviarRondaSiEstablecimiento(envio: EnvioLocal) {
         val modo = sesion.modo.value
-        if (modo !is ModoSesion.Establecimiento) return
-        if (envio.lineas.isEmpty()) return
-        val ronda = RondaLanMapper.desdePedido(
-            pedidoId = envio.pedidoId,
-            mesa = envio.mesa,
-            nombreSala = envio.nombreSala,
-            lineas = envio.lineas,
-            camarero = modo.perfil.nombreCompleto,
-            creadoEn = System.currentTimeMillis(),
-        )
-        val resultado = withContext(Dispatchers.IO) {
-            BarLanCliente.postRonda(modo.barHost, modo.barPuerto, ronda)
+        val tickets = if (modo is ModoSesion.Establecimiento && envio.lineas.isNotEmpty()) {
+            val ronda = RondaLanMapper.desdePedido(
+                pedidoId = envio.pedidoId,
+                mesa = envio.mesa,
+                nombreSala = envio.nombreSala,
+                lineas = envio.lineas,
+                camarero = modo.perfil.nombreCompleto,
+                creadoEn = System.currentTimeMillis(),
+            )
+            val resultado = withContext(Dispatchers.IO) {
+                BarLanCliente.postRonda(modo.barHost, modo.barPuerto, ronda)
+            }
+            if (!resultado.ok) {
+                _error.value = ctx.getString(R.string.error_send_ronda_bar)
+            }
+            resultado.tickets
+        } else {
+            emptyList()
         }
-        if (!resultado.ok) {
-            _error.value = ctx.getString(R.string.error_send_ronda_bar)
+        val actualizadas = if (modo is ModoSesion.Establecimiento) {
+            RecogerLogica.asignarTickets(envio.lineas, tickets)
+        } else {
+            envio.lineas.map { it.copy(estado = LineaEstado.LISTA) }
+        }
+        mutex.withLock {
+            for (linea in actualizadas) {
+                db.lineaPedidoDao().update(linea)
+            }
         }
     }
 

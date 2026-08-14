@@ -1,0 +1,175 @@
+package com.jaminsmoke.personalcomander.data.sesion
+
+import com.jaminsmoke.personalcomander.data.LineaEstado
+import com.jaminsmoke.personalcomander.data.LineaPedido
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class RecogerLogicaTest {
+
+    private fun lp(
+        id: Long,
+        productoId: Long,
+        nombre: String,
+        estado: LineaEstado = LineaEstado.PENDIENTE,
+        ticketId: String? = null,
+    ) = LineaPedido(
+        id = id,
+        pedidoId = 42,
+        productoId = productoId,
+        nombreProducto = nombre,
+        precioUnitario = 1.0,
+        cantidad = 1,
+        estado = estado,
+        ticketId = ticketId,
+    )
+
+    @Test
+    fun lineasAEnviar_solo_pendientes() {
+        val lineas = listOf(
+            lp(1, 12, "Caña", LineaEstado.PENDIENTE),
+            lp(2, 3, "Croquetas", LineaEstado.ENVIADA, "t-cocina"),
+            lp(3, 4, "Tarta", LineaEstado.LISTA, "t-postre"),
+        )
+        val delta = RecogerLogica.lineasAEnviar(lineas)
+        assertEquals(1, delta.size)
+        assertEquals(12L, delta[0].productoId)
+    }
+
+    @Test
+    fun lineaPendienteDelProducto_no_pisa_enviada() {
+        val lineas = listOf(
+            lp(1, 12, "Caña", LineaEstado.ENVIADA, "t1"),
+            lp(2, 12, "Caña", LineaEstado.PENDIENTE),
+        )
+        val p = RecogerLogica.lineaPendienteDelProducto(lineas, 12)
+        assertEquals(2L, p!!.id)
+        assertNull(RecogerLogica.lineaPendienteDelProducto(lineas, 99))
+    }
+
+    @Test
+    fun asignarTickets_cruza_por_producto() {
+        val enviadas = listOf(lp(1, 12, "Caña"), lp(2, 3, "Croquetas"))
+        val tickets = listOf(
+            TicketLan(
+                id = "p42-t1-barra",
+                rondaId = "p42-t1",
+                destino = "BARRA",
+                lineas = listOf(LineaTicketLan("12", "Caña", 1)),
+            ),
+            TicketLan(
+                id = "p42-t1-cocina",
+                rondaId = "p42-t1",
+                destino = "COCINA",
+                lineas = listOf(LineaTicketLan("3", "Croquetas", 1)),
+            ),
+        )
+        val out = RecogerLogica.asignarTickets(enviadas, tickets)
+        assertEquals(LineaEstado.ENVIADA, out[0].estado)
+        assertEquals("p42-t1-barra", out[0].ticketId)
+        assertEquals("p42-t1-cocina", out[1].ticketId)
+    }
+
+    @Test
+    fun asignarTickets_sin_body_marca_enviada_sin_id() {
+        val out = RecogerLogica.asignarTickets(listOf(lp(1, 12, "Caña")), emptyList())
+        assertEquals(LineaEstado.ENVIADA, out[0].estado)
+        assertNull(out[0].ticketId)
+    }
+
+    @Test
+    fun bloques_tres_secciones() {
+        val b = RecogerLogica.bloques(
+            listOf(
+                lp(1, 1, "A", LineaEstado.PENDIENTE),
+                lp(2, 2, "B", LineaEstado.ENVIADA),
+                lp(3, 3, "C", LineaEstado.LISTA),
+                lp(4, 4, "D", LineaEstado.SERVIDA),
+            )
+        )
+        assertEquals(2, b.estaRonda.size)
+        assertEquals(1, b.paraRecoger.size)
+        assertEquals(1, b.servido.size)
+    }
+
+    @Test
+    fun puedeMarcarServida_lista_siempre_enviada_solo_local() {
+        val lista = lp(1, 1, "A", LineaEstado.LISTA)
+        val enviada = lp(2, 2, "B", LineaEstado.ENVIADA)
+        assertTrue(RecogerLogica.puedeMarcarServida(lista, ligadoAlBar = true))
+        assertFalse(RecogerLogica.puedeMarcarServida(enviada, ligadoAlBar = true))
+        assertTrue(RecogerLogica.puedeMarcarServida(enviada, ligadoAlBar = false))
+    }
+
+    @Test
+    fun parseSalaEvent_ciego_y_enriquecido() {
+        val ciego = RecogerLogica.parseSalaEvent(
+            """{"tipo":"ticket.preparado","ticketId":"p1-barra","preparadoPor":"Ana"}"""
+        )!!
+        assertEquals(RecogerLogica.TIPO_PREPARADO, ciego.tipo)
+        assertEquals("p1-barra", ciego.ticketId)
+        assertNull(ciego.mesaId)
+
+        val rico = RecogerLogica.parseSalaEvent(
+            """{"tipo":"ticket.preparado","ticketId":"p1-barra","rondaId":"p1","mesaId":"T3","destino":"BARRA","numeroCola":1}""",
+            eventType = "ticket.preparado",
+        )!!
+        assertEquals("T3", rico.mesaId)
+        assertEquals(1, rico.numeroCola)
+        assertEquals("BARRA", rico.destino)
+    }
+
+    @Test
+    fun parseSalaEvent_usa_event_sse_si_json_sin_tipo() {
+        val e = RecogerLogica.parseSalaEvent(
+            """{"ticketId":"x-cocina"}""",
+            eventType = "ticket.recogido",
+        )!!
+        assertEquals(RecogerLogica.TIPO_RECOGIDO, e.tipo)
+    }
+
+    @Test
+    fun parseTickets_y_estado() {
+        val tickets = RecogerLogica.parseTickets(
+            """[{"id":"p1-barra","rondaId":"p1","destino":"BARRA","lineas":[{"productoId":"12","nombreProducto":"Caña","cantidad":2}]}]"""
+        )
+        assertEquals(1, tickets.size)
+        assertEquals("12", tickets[0].lineas[0].productoId)
+
+        val estado = RecogerLogica.parseEstado(
+            """{"bebida":[{"id":"a","estado":"PREPARADO"}],"comida":[],"servidos":[{"id":"b"}]}"""
+        )!!
+        assertEquals(1, RecogerLogica.ticketsDeColas(estado).size)
+        assertEquals("PREPARADO", estado.bebida[0].estado)
+        assertEquals("b", estado.servidos[0].id)
+    }
+
+    @Test
+    fun alimentarSse_cierra_frame() {
+        val data = StringBuilder()
+        var tipo: String? = null
+        var evento: SalaEventLan? = null
+        listOf(
+            "event: ticket.preparado",
+            """data: {"ticketId":"t1","tipo":"ticket.preparado","mesaId":"T3"}""",
+            "",
+        ).forEach { line ->
+            val (nt, ev) = RecogerLogica.alimentarSse(tipo, data, line)
+            tipo = nt
+            if (ev != null) evento = ev
+        }
+        val cerrado = evento!!
+        assertEquals("T3", cerrado.mesaId)
+        assertEquals("t1", cerrado.ticketId)
+    }
+
+    @Test
+    fun destinoClave() {
+        assertEquals("bebida", RecogerLogica.destinoClave("BARRA"))
+        assertEquals("comida", RecogerLogica.destinoClave("cocina"))
+        assertNull(RecogerLogica.destinoClave(null))
+    }
+}
