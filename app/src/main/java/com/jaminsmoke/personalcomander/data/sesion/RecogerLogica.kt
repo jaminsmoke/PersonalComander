@@ -22,7 +22,7 @@ data class LineaTicketLan(
     val cantidad: Int = 0,
 )
 
-/** Payload SSE `/v1/eventos`. Campos extra (mesa, cola…) opcionales hasta que Bar los publique. */
+/** Payload SSE `/v1/eventos`. Bar v1 anida destino/cola en [ticket]; los campos planos quedan de respaldo. */
 data class SalaEventLan(
     val tipo: String = "",
     val ticketId: String = "",
@@ -31,6 +31,7 @@ data class SalaEventLan(
     val destino: String? = null,
     val numeroCola: Int? = null,
     val preparadoPor: String? = null,
+    val ticket: TicketLan? = null,
 )
 
 data class EstadoLan(
@@ -50,6 +51,8 @@ data class AvisoRecoger(
     val mesaId: String?,
     val ticketId: String,
 )
+
+enum class PlantillaAviso { COMPLETO, SOLO_MESA, SIN_MESA }
 
 /**
  * Lógica pura del circuito recoger: delta de líneas, parseo Gson y bloques de la comanda.
@@ -102,9 +105,34 @@ object RecogerLogica {
         if (e.ticketId.isBlank()) return null
         val tipo = e.tipo.ifBlank { eventType.orEmpty() }
         if (tipo.isBlank()) return null
-        e.copy(tipo = tipo)
+        hidratarDesdeTicket(e.copy(tipo = tipo))
     } catch (_: Exception) {
         null
+    }
+
+    /**
+     * Bar publica `destino` / `numeroCola` / `rondaId` dentro de `ticket`, no en la raíz.
+     * Si ya vienen planos (contrato antiguo del plan), se respetan.
+     */
+    fun hidratarDesdeTicket(evento: SalaEventLan): SalaEventLan {
+        val t = evento.ticket ?: return evento
+        return evento.copy(
+            rondaId = evento.rondaId?.takeIf { it.isNotBlank() } ?: t.rondaId.takeIf { it.isNotBlank() },
+            destino = evento.destino ?: t.destino,
+            numeroCola = evento.numeroCola?.takeIf { it > 0 } ?: t.numeroCola.takeIf { it > 0 },
+        )
+    }
+
+    /** Qué plantilla de aviso usar: completo (mesa+cola+destino), solo mesa, o genérico. */
+    fun plantillaAviso(evento: SalaEventLan): PlantillaAviso {
+        val mesa = evento.mesaId?.takeIf { it.isNotBlank() }
+        val dest = destinoClave(evento.destino)
+        val cola = evento.numeroCola?.takeIf { it > 0 }
+        return when {
+            mesa != null && cola != null && dest != null -> PlantillaAviso.COMPLETO
+            mesa != null -> PlantillaAviso.SOLO_MESA
+            else -> PlantillaAviso.SIN_MESA
+        }
     }
 
     fun parseTickets(json: String): List<TicketLan> = try {

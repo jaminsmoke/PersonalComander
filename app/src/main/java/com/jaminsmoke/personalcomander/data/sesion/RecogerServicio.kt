@@ -124,12 +124,12 @@ class RecogerServicio(
             else -> null
         }
         val cola = evento.numeroCola?.takeIf { it > 0 }
-        return when {
-            mesa != null && cola != null && dest != null ->
+        return when (RecogerLogica.plantillaAviso(evento)) {
+            PlantillaAviso.COMPLETO ->
                 context.getString(R.string.recoger_aviso_preparado, mesa, cola, dest)
-            mesa != null ->
+            PlantillaAviso.SOLO_MESA ->
                 context.getString(R.string.recoger_aviso_preparado_mesa, mesa)
-            else ->
+            PlantillaAviso.SIN_MESA ->
                 context.getString(R.string.recoger_aviso_preparado_sin_mesa)
         }
     }

@@ -32,19 +32,34 @@ Sin autenticación en 0.1 (lista blanca QR de Bar aún no).
 
 ## SSE
 
-`event` = tipo. `data` = JSON `SalaEvent`. Campos extra (`mesaId`, `rondaId`, `destino`, `numeroCola`) los publica Bar cuando aterrice su ítem de contrato; Comander los consume si vienen y **no inventa la mesa** si faltan.
+`event` = tipo. `data` = JSON `SalaEvent` v1 (Bar [#37](https://github.com/jaminsmoke/PersonalBar/issues/37) / PR [#38](https://github.com/jaminsmoke/PersonalBar/pull/38)).
+
+`mesaId` va en la raíz. `destino`, `numeroCola` y `rondaId` van **dentro de `ticket`**. Commander los hidrata a la raíz al parsear. Si faltan, **no inventa la mesa**.
 
 ```json
 {
+  "version": 1,
   "tipo": "ticket.preparado",
   "ticketId": "p42-t1730000000000-barra",
-  "rondaId": "p42-t1730000000000",
+  "preparadoPor": "Anita",
   "mesaId": "T3",
-  "destino": "BARRA",
-  "numeroCola": 1,
-  "preparadoPor": "Anita"
+  "camarero": "Lucía García",
+  "resumen": "2× Caña",
+  "ticket": {
+    "id": "p42-t1730000000000-barra",
+    "rondaId": "p42-t1730000000000",
+    "destino": "BARRA",
+    "estado": "PREPARADO",
+    "preparadoPor": "Anita",
+    "numeroCola": 1,
+    "lineas": [
+      { "productoId": "12", "nombreProducto": "Caña", "cantidad": 2 }
+    ]
+  }
 }
 ```
+
+Aviso en sala: `T3 · Cola 1 Bebida lista` (`destino` `BARRA` → Bebida, `COCINA` → Comida).
 
 Al reconectar: `GET /v1/estado` y marcar `PREPARADO` (y `servidos`) como `LISTA` en líneas con ese `ticketId`.
 
