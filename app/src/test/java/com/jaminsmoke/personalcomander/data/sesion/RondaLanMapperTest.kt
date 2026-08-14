@@ -84,4 +84,19 @@ class RondaLanMapperTest {
         )
         assertEquals("I4", ronda.mesaId)
     }
+
+    @Test
+    fun productoId_usa_codigoBar_si_hay_match() {
+        val ronda = RondaLanMapper.desdePedido(
+            pedidoId = 42,
+            mesa = mesaTerraza,
+            nombreSala = "Terraza",
+            lineas = lineas,
+            camarero = "Lucía García",
+            creadoEn = 1L,
+            codigoBarPorProductoId = mapOf(12L to "cana"),
+        )
+        assertEquals("cana", ronda.lineas[0].productoId)
+        assertEquals("3", ronda.lineas[1].productoId)
+    }
 }

@@ -1,6 +1,8 @@
 package com.jaminsmoke.personalcomander.data.sesion
 
 import android.content.Context
+import androidx.room.withTransaction
+import com.jaminsmoke.personalcomander.data.AppDatabase
 import com.jaminsmoke.personalcomander.data.EscaneadorRed
 import com.jaminsmoke.personalcomander.data.ServidorDescubierto
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +16,7 @@ import kotlinx.coroutines.withContext
 class SesionRepository(
     context: Context,
     scope: CoroutineScope,
+    private val db: AppDatabase,
 ) {
     private val store = SesionStore(context)
 
@@ -182,6 +185,7 @@ class SesionRepository(
             )
             store.guardarEstablecimiento(establecimiento)
             _modo.value = establecimiento
+            espejarCarta(host, puerto)
             ConectarBarResult(
                 ok = true,
                 contraste = IdentityJson.contrastarHealth(health?.establecimiento, _membresias.value),
@@ -196,6 +200,18 @@ class SesionRepository(
         val identidad = ModoSesion.Identidad(actual.perfil, actual.qr, actual.token)
         store.guardarIdentidad(identidad.perfil, identidad.qr, identidad.token)
         _modo.value = identidad
+    }
+
+    /** Best-effort: 404 o red caída no deshacen el ligue. No borra productos locales. */
+    private suspend fun espejarCarta(host: String, puerto: Int) {
+        val carta = BarLanCliente.carta(host, puerto) ?: return
+        val existentes = db.productoDao().getAllIncluyendoOcultos()
+        val plan = CartaSync.plan(existentes, carta.productos)
+        if (plan.insertar.isEmpty() && plan.actualizar.isEmpty()) return
+        db.withTransaction {
+            if (plan.insertar.isNotEmpty()) db.productoDao().insertAll(plan.insertar)
+            if (plan.actualizar.isNotEmpty()) db.productoDao().updateAll(plan.actualizar)
+        }
     }
 
     suspend fun buscarBares(): List<ServidorDescubierto> = withContext(Dispatchers.IO) {

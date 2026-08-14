@@ -5,7 +5,7 @@ import com.jaminsmoke.personalcomander.data.LineaPedido
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.idZona
 
-/** Línea del contrato Bar `POST /v1/rondas`. `productoId` es el id Room en string. */
+/** Línea del contrato Bar `POST /v1/rondas`. `productoId` es el id Bar si hay `codigoBar`. */
 data class LineaRondaLan(
     val productoId: String,
     val nombreProducto: String,
@@ -37,6 +37,7 @@ object RondaLanMapper {
         camarero: String?,
         creadoEn: Long,
         numero: Int = 1,
+        codigoBarPorProductoId: Map<Long, String> = emptyMap(),
     ): RondaLan {
         require(lineas.isNotEmpty()) { "ronda sin líneas" }
         return RondaLan(
@@ -47,7 +48,9 @@ object RondaLanMapper {
             creadoEn = creadoEn,
             lineas = lineas.map { linea ->
                 LineaRondaLan(
-                    productoId = linea.productoId.toString(),
+                    productoId = codigoBarPorProductoId[linea.productoId]
+                        ?.takeIf { it.isNotBlank() }
+                        ?: linea.productoId.toString(),
                     nombreProducto = linea.nombreProducto,
                     cantidad = linea.cantidad,
                 )

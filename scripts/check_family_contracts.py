@@ -220,6 +220,7 @@ def _fixtures_ok() -> tuple[dict, dict, str]:
         post("/v1/rondas") {}
         get("/v1/estado") {}
         sse("/v1/eventos") {}
+        get("/v1/carta") {}
         post("/v1/tickets/{id}/preparado") {}
         post("/v1/tickets/{id}/recogido") {}
     """

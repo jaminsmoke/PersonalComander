@@ -13,8 +13,9 @@ object BarLanCliente {
         const val RONDAS = "/v1/rondas"
         const val ESTADO = "/v1/estado"
         const val EVENTOS = "/v1/eventos"
+        const val CARTA = "/v1/carta"
 
-        fun todas(): List<String> = listOf(HEALTH, RONDAS, ESTADO, EVENTOS)
+        fun todas(): List<String> = listOf(HEALTH, RONDAS, ESTADO, EVENTOS, CARTA)
     }
 
     data class Health(
@@ -101,6 +102,23 @@ object BarLanCliente {
             if (conexion.responseCode !in 200..299) return null
             val texto = conexion.inputStream.bufferedReader().use { it.readText() }
             RecogerLogica.parseEstado(texto)
+        } catch (_: IOException) {
+            null
+        } finally {
+            conexion.disconnect()
+        }
+    }
+
+    /** Catálogo canónico del nodo. 404 o red caída → null (el ligue no debe fallar). */
+    fun carta(host: String, puerto: Int = PUERTO): CartaLan? {
+        val conexion = URL("http://$host:$puerto${Rutas.CARTA}").openConnection() as HttpURLConnection
+        return try {
+            conexion.connectTimeout = 2500
+            conexion.readTimeout = 4000
+            conexion.requestMethod = "GET"
+            if (conexion.responseCode !in 200..299) return null
+            val texto = conexion.inputStream.bufferedReader().use { it.readText() }
+            CartaSync.parse(texto)
         } catch (_: IOException) {
             null
         } finally {

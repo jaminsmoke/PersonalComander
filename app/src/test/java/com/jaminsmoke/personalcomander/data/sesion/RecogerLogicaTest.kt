@@ -81,6 +81,32 @@ class RecogerLogicaTest {
     }
 
     @Test
+    fun asignarTickets_cruza_por_codigoBar() {
+        val enviadas = listOf(lp(1, 12, "Caña"), lp(2, 3, "Croquetas"))
+        val tickets = listOf(
+            TicketLan(
+                id = "p42-t1-barra",
+                rondaId = "p42-t1",
+                destino = "BARRA",
+                lineas = listOf(LineaTicketLan("cana", "Caña", 1)),
+            ),
+            TicketLan(
+                id = "p42-t1-cocina",
+                rondaId = "p42-t1",
+                destino = "COCINA",
+                lineas = listOf(LineaTicketLan("3", "Croquetas", 1)),
+            ),
+        )
+        val out = RecogerLogica.asignarTickets(
+            enviadas,
+            tickets,
+            codigoBarPorProductoId = mapOf(12L to "cana"),
+        )
+        assertEquals("p42-t1-barra", out[0].ticketId)
+        assertEquals("p42-t1-cocina", out[1].ticketId)
+    }
+
+    @Test
     fun bloques_tres_secciones() {
         val b = RecogerLogica.bloques(
             listOf(

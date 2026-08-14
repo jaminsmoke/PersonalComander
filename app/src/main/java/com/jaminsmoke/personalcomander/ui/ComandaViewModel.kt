@@ -432,27 +432,31 @@ class ComandaViewModel(
 
     private suspend fun enviarRondaSiEstablecimiento(envio: EnvioLocal) {
         val modo = sesion.modo.value
-        val tickets = if (modo is ModoSesion.Establecimiento && envio.lineas.isNotEmpty()) {
-            val ronda = RondaLanMapper.desdePedido(
-                pedidoId = envio.pedidoId,
-                mesa = envio.mesa,
-                nombreSala = envio.nombreSala,
-                lineas = envio.lineas,
-                camarero = modo.perfil.nombreCompleto,
-                creadoEn = System.currentTimeMillis(),
-            )
-            val resultado = withContext(Dispatchers.IO) {
-                BarLanCliente.postRonda(modo.barHost, modo.barPuerto, ronda)
-            }
-            if (!resultado.ok) {
-                _error.value = ctx.getString(R.string.error_send_ronda_bar)
-            }
-            resultado.tickets
-        } else {
-            emptyList()
-        }
         val actualizadas = if (modo is ModoSesion.Establecimiento) {
-            RecogerLogica.asignarTickets(envio.lineas, tickets)
+            val codigoBar = db.productoDao().getAllIncluyendoOcultos()
+                .mapNotNull { p -> p.codigoBar?.takeIf { it.isNotBlank() }?.let { p.id to it } }
+                .toMap()
+            val ticketsLan = if (envio.lineas.isNotEmpty()) {
+                val ronda = RondaLanMapper.desdePedido(
+                    pedidoId = envio.pedidoId,
+                    mesa = envio.mesa,
+                    nombreSala = envio.nombreSala,
+                    lineas = envio.lineas,
+                    camarero = modo.perfil.nombreCompleto,
+                    creadoEn = System.currentTimeMillis(),
+                    codigoBarPorProductoId = codigoBar,
+                )
+                val resultado = withContext(Dispatchers.IO) {
+                    BarLanCliente.postRonda(modo.barHost, modo.barPuerto, ronda)
+                }
+                if (!resultado.ok) {
+                    _error.value = ctx.getString(R.string.error_send_ronda_bar)
+                }
+                resultado.tickets
+            } else {
+                emptyList()
+            }
+            RecogerLogica.asignarTickets(envio.lineas, ticketsLan, codigoBar)
         } else {
             envio.lineas.map { it.copy(estado = LineaEstado.LISTA) }
         }
