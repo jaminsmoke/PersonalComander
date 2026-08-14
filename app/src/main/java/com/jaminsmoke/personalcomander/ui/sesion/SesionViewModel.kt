@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.jaminsmoke.personalcomander.PersonalComanderApp
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.ServidorDescubierto
+import com.jaminsmoke.personalcomander.data.sesion.ContrasteMembresia
 import com.jaminsmoke.personalcomander.data.sesion.IdentityJson
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.SesionStore
@@ -23,6 +24,7 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
 
     val modo: StateFlow<ModoSesion> = repo.modo
     val foto: StateFlow<ByteArray?> = repo.foto
+    val membresias = repo.membresias
 
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
@@ -180,11 +182,17 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
     fun conectarBar(host: String, puerto: Int) {
         viewModelScope.launch {
             _busy.value = true
-            val ok = repo.conectarBar(host, puerto)
+            val r = repo.conectarBar(host, puerto)
             _busy.value = false
-            _mensaje.value = ctx.getString(
-                if (ok) R.string.sesion_bar_conectado_pendiente else R.string.sesion_bar_no_health,
-            )
+            _mensaje.value = when {
+                !r.ok -> ctx.getString(R.string.sesion_bar_no_health)
+                r.contraste == ContrasteMembresia.NoCoincide ->
+                    ctx.getString(
+                        R.string.sesion_bar_conectado_sin_membresia,
+                        r.nombreBar ?: host,
+                    )
+                else -> ctx.getString(R.string.sesion_bar_conectado_pendiente)
+            }
         }
     }
 

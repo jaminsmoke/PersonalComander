@@ -2,13 +2,15 @@
 
 Contrato entre **Personal Comander** (cliente) y **Personal Bar** (nodo). Puerto fijo **8787**. HTTP en claro solo en LAN de confianza.
 
-No confundir con Identity (`:8080`, HTTPS en producción): eso es el DNI del camarero, no el nodo del local.
+No confundir con Identity: el **servicio camareros** (`:8080`, HTTPS en producción) es el DNI del camarero y la fuente de verdad de cuentas y membresías. El **servicio negocio** (`:8082`) es de Bar / Identity Web. El nodo de sala sigue siendo Bar LAN.
+
+Rutas Identity que Commander llama: [`identity-contract-paths.txt`](identity-contract-paths.txt).
 
 ## Glosario
 
 | Término | Qué es | Qué no es |
 |---|---|---|
-| **Establecimiento** | Negocio / local. Cuenta del Bar. El camarero se **liga al establecimiento** (`ModoSesion.Establecimiento`). | Una sala del mapa. |
+| **Establecimiento** | Negocio / local. Registro canónico en Identity. En turno, el camarero se **liga al nodo Bar** (`ModoSesion.Establecimiento`). | Una sala del mapa. |
 | **Sala** | Zona del mapa del establecimiento (barra, interior, terraza…). En Comander: entidad Room `Sala` + `Mesa.salaId` (antes «zona»). | El modo de sesión ni el host LAN. |
 | **idZona** | Identidad de mesa **en red**: prefijo del **nombre de la sala** + `indiceZona` (`T3` = Terraza 3). | El `id` autoincrement de Room ni el alias visible. |
 | **Ronda** | Lo que Comander envía al Bar al «enviar a cocina» ligado. Bar la parte en tickets BARRA / COCINA. | El pedido Room completo como modelo de red. |
@@ -65,8 +67,8 @@ Al reconectar: `GET /v1/estado` y marcar `PREPARADO` (y `servidos`) como `LISTA`
 
 ## Flujo de usuario
 
-1. El camarero inicia sesión desde **Ajustes** y abre su **Perfil** para revisar la credencial QR.
-2. Busca el establecimiento en la sección de sala y conecta el Bar por host y puerto.
+1. El camarero inicia sesión contra Identity (servicio camareros) desde **Ajustes** y abre **Perfil** para revisar la credencial QR y las membresías cacheadas.
+2. Busca el Bar en la sección de sala y conecta por host y puerto (nodo de turno). Si Identity lista locales y el `health` no coincide, se avisa pero **no se bloquea**.
 3. La app muestra las salas del local y puede bloquear la edición local del mapa o la carta.
 4. Al enviar, Comander manda **solo líneas `PENDIENTE`**, las marca `ENVIADA` y guarda los `ticketId` del body.
 5. Bar marca preparado → SSE → líneas `LISTA` + snackbar/notificación.

@@ -7,7 +7,11 @@ Esta página conecta la documentación técnica con el [manual de usuario de la 
 
 ## Oficios
 
-**Commander** es la app del camarero (sala, comanda, cuenta). **Personal Bar** es el puesto del negocio (nodo LAN, colas, lista blanca). Bar no crea cuentas de camarero: las asigna al establecimiento. El nick visible en los locales se define aquí, en registro/perfil (ítem kanban `PVTI_lAHOBM87Yc4BgJWOzg2gWTY`).
+**Commander** es la app del camarero (sala, comanda, cuenta). **Personal Bar** es el puesto del negocio (nodo LAN, colas, lista blanca). **Identity** (VPS) es la fuente de verdad de cuentas de camarero, negocios y membresías.
+
+La UX visual sigue partida: el camarero crea su cuenta en Commander; el negocio se da de alta en Bar. Bar **consulta** Identity; no es el registro. Room y las prefs de sesión en el teléfono son **fallback** si Identity no responde.
+
+Bar no crea cuentas de camarero: las asigna al establecimiento. El nick visible en los locales se define aquí, en registro/perfil (ítem kanban `PVTI_lAHOBM87Yc4BgJWOzg2gWTY`).
 
 ## Cuenta del camarero
 
@@ -20,7 +24,7 @@ Revocar el QR invalida la credencial actual. Renovarlo genera una nueva credenci
 
 ## Establecimiento y salas
 
-El camarero se liga al **establecimiento**, que es la cuenta del local en Personal Bar. Las **salas** son las zonas físicas del mapa, como barra, interior o terraza. No son modos de sesión ni servidores distintos.
+El camarero se liga en **turno** al nodo Bar del **establecimiento**. El registro canónico del local y de la membresía vive en Identity (`GET /v1/camareros/me/establecimientos`). Las **salas** son las zonas físicas del mapa, como barra, interior o terraza. No son modos de sesión ni servidores distintos.
 
 Cuando el dispositivo está ligado a un establecimiento:
 

@@ -63,6 +63,7 @@ fun PerfilScreen(
 ) {
     val modo by viewModel.modo.collectAsState()
     val foto by viewModel.foto.collectAsState()
+    val membresias by viewModel.membresias.collectAsState()
     val busy by viewModel.busy.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
     val perfil = modo.perfil
@@ -158,6 +159,7 @@ fun PerfilScreen(
                     )
                     else -> Unit
                 }
+                MembresiasIdentityBlock(membresias = membresias)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),

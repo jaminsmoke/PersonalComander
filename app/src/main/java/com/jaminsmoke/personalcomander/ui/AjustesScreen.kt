@@ -61,6 +61,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.data.ServidorDescubierto
 import com.jaminsmoke.personalcomander.data.TpvPrograma
 import com.jaminsmoke.personalcomander.data.sesion.BarLanCliente
+import com.jaminsmoke.personalcomander.data.sesion.MembresiaEstablecimiento
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.cartaEditable
 import com.jaminsmoke.personalcomander.ui.components.BrandHeaderDensity
@@ -69,6 +70,7 @@ import com.jaminsmoke.personalcomander.ui.components.PcBrandHeader
 import com.jaminsmoke.personalcomander.ui.components.PcPrimaryButton
 import com.jaminsmoke.personalcomander.ui.components.PcSecondaryButton
 import com.jaminsmoke.personalcomander.ui.components.PcSesionChip
+import com.jaminsmoke.personalcomander.ui.sesion.MembresiasIdentityBlock
 import com.jaminsmoke.personalcomander.ui.sesion.SesionViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,6 +91,7 @@ fun AjustesScreen(
     val bares by sesionViewModel.bares.collectAsState()
     val escaneandoBares by sesionViewModel.escaneando.collectAsState()
     val busySesion by sesionViewModel.busy.collectAsState()
+    val membresias by sesionViewModel.membresias.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val cartaEditable = modo.cartaEditable
 
@@ -220,6 +223,7 @@ fun AjustesScreen(
             item {
                 SalaCard(
                     modo = modo,
+                    membresias = membresias,
                     bares = bares,
                     escaneando = escaneandoBares,
                     busy = busySesion,
@@ -487,6 +491,7 @@ private fun CuentaCard(
 @Composable
 private fun SalaCard(
     modo: ModoSesion,
+    membresias: List<MembresiaEstablecimiento>,
     bares: List<ServidorDescubierto>,
     escaneando: Boolean,
     busy: Boolean,
@@ -526,6 +531,7 @@ private fun SalaCard(
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                     )
+                    MembresiasIdentityBlock(membresias = membresias)
                     PcSecondaryButton(
                         text = stringResource(R.string.sesion_desconectar_bar),
                         onClick = onDesconectar,
@@ -534,6 +540,7 @@ private fun SalaCard(
                     )
                 }
                 is ModoSesion.Identidad -> {
+                    MembresiasIdentityBlock(membresias = membresias)
                     if (modo.qr == null) {
                         Text(
                             text = stringResource(R.string.sesion_qr_revocada),

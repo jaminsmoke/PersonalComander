@@ -89,6 +89,62 @@ class IdentityJsonTest {
         assertEquals("u1", id)
         assertTrue(qr.startsWith("phid1:"))
     }
+
+    @Test
+    fun parseEstablecimientos_lista() {
+        val body = """
+            [{"id":"e1","nombre":"Casa Pepe","cuenta_negocio_id":"n1","rol":"staff"}]
+        """.trimIndent()
+        val lista = IdentityJson.parseEstablecimientos(body)!!
+        assertEquals(1, lista.size)
+        assertEquals("e1", lista[0].id)
+        assertEquals("Casa Pepe", lista[0].nombre)
+        assertEquals("n1", lista[0].cuentaNegocioId)
+        assertEquals("staff", lista[0].rol)
+    }
+
+    @Test
+    fun parseEstablecimientos_vacia() {
+        val lista = IdentityJson.parseEstablecimientos("[]")!!
+        assertTrue(lista.isEmpty())
+    }
+
+    @Test
+    fun parseEstablecimientos_item_sin_campo_se_omite() {
+        val body = """[{"id":"e1","nombre":"Casa Pepe"}]"""
+        val lista = IdentityJson.parseEstablecimientos(body)!!
+        assertTrue(lista.isEmpty())
+    }
+
+    @Test
+    fun parseEstablecimientos_no_array_es_null() {
+        assertEquals(null, IdentityJson.parseEstablecimientos("""{"id":"e1"}"""))
+        assertEquals(null, IdentityJson.parseEstablecimientos("no-json"))
+    }
+
+    @Test
+    fun contrastarHealth_sin_datos() {
+        assertEquals(ContrasteMembresia.SinDatos, IdentityJson.contrastarHealth("Casa Pepe", emptyList()))
+        assertEquals(
+            ContrasteMembresia.SinDatos,
+            IdentityJson.contrastarHealth(
+                null,
+                listOf(MembresiaEstablecimiento("e1", "Casa Pepe", "n1", "staff")),
+            ),
+        )
+    }
+
+    @Test
+    fun contrastarHealth_coincide_ignora_mayusculas() {
+        val lista = listOf(MembresiaEstablecimiento("e1", "Casa Pepe", "n1", "staff"))
+        assertEquals(ContrasteMembresia.Coincide, IdentityJson.contrastarHealth("casa pepe", lista))
+    }
+
+    @Test
+    fun contrastarHealth_no_coincide() {
+        val lista = listOf(MembresiaEstablecimiento("e1", "Casa Pepe", "n1", "staff"))
+        assertEquals(ContrasteMembresia.NoCoincide, IdentityJson.contrastarHealth("Otro Local", lista))
+    }
 }
 
 class BarLanClienteTest {
