@@ -25,12 +25,14 @@ class IdentityCliente(
         email: String,
         password: String,
         telefono: String? = null,
+        nick: String,
     ): IdentityRespuesta<IdentityJson.SesionIdentity> {
         val payload = JsonObject().apply {
             addProperty("nombre", nombre)
             addProperty("apellidos", apellidos)
             addProperty("email", email)
             addProperty("password", password)
+            addProperty("nick", nick)
             if (!telefono.isNullOrBlank()) addProperty("telefono", telefono)
         }
         val http = post("/v1/camareros/registro", payload.toString())
@@ -42,7 +44,7 @@ class IdentityCliente(
             true,
             IdentityJson.SesionIdentity(
                 token = null,
-                perfil = PerfilCamarero(id, nombre, apellidos, email, telefono),
+                perfil = PerfilCamarero(id, nombre, apellidos, email, telefono, nick = nick),
                 qr = qr,
             ),
             codigo = http.codigo,
@@ -57,6 +59,17 @@ class IdentityCliente(
         val http = post("/v1/auth/login", payload.toString())
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(true, IdentityJson.parseLogin(http.cuerpo), codigo = http.codigo)
+    }
+
+    fun actualizarPerfil(token: String, nick: String): IdentityRespuesta<PerfilCamarero> {
+        val payload = JsonObject().apply { addProperty("nick", nick) }
+        val http = patch("/v1/camareros/me", payload.toString(), token)
+        if (http.codigo !in 200..299) return errorDe(http)
+        return IdentityRespuesta(
+            true,
+            IdentityJson.parsePerfil(com.google.gson.JsonParser.parseString(http.cuerpo)),
+            codigo = http.codigo,
+        )
     }
 
     fun me(token: String): IdentityRespuesta<PerfilCamarero> {
@@ -207,6 +220,33 @@ class IdentityCliente(
             HttpCuerpo(0, e.message ?: "Sin conexión")
         } finally {
             conexion.disconnect()
+        }
+    }
+
+    private fun patch(path: String, json: String, token: String): HttpCuerpo {
+        val conexion = open(path)
+        return try {
+            setHttpMethod(conexion, "PATCH")
+            conexion.doOutput = true
+            conexion.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+            conexion.setRequestProperty("Authorization", "Bearer $token")
+            conexion.outputStream.use { it.write(json.toByteArray(Charsets.UTF_8)) }
+            leer(conexion)
+        } catch (e: IOException) {
+            HttpCuerpo(0, e.message ?: "Sin conexión")
+        } finally {
+            conexion.disconnect()
+        }
+    }
+
+    /** PATCH no está en HttpURLConnection de API 24; se fuerza el método. */
+    private fun setHttpMethod(conexion: HttpURLConnection, method: String) {
+        try {
+            conexion.requestMethod = method
+        } catch (_: java.net.ProtocolException) {
+            val campo = HttpURLConnection::class.java.getDeclaredField("method")
+            campo.isAccessible = true
+            campo.set(conexion, method)
         }
     }
 

@@ -217,6 +217,10 @@
     <string name="sesion_tab_registro">Register</string>
     <string name="sesion_nombre">First name</string>
     <string name="sesion_apellidos">Last name</string>
+    <string name="sesion_nick">Nickname</string>
+    <string name="sesion_nick_hint">How they will call you at the bar and in queues</string>
+    <string name="sesion_nick_guardar">Save nickname</string>
+    <string name="sesion_nick_ok">Nickname updated</string>
     <string name="sesion_email">Email</string>
     <string name="sesion_telefono">Phone (optional)</string>
     <string name="sesion_avatar_desc">Waiter profile photo</string>

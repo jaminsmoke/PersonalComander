@@ -31,6 +31,17 @@ class IdentityJsonTest {
         assertEquals("phid1:u1:c1:sig", sesion.qr)
         assertEquals(4, sesion.qr.split(":").size)
         assertEquals("/v1/camareros/me/foto", sesion.perfil.fotoUrl)
+        assertEquals(null, sesion.perfil.nick)
+    }
+
+    @Test
+    fun parseLogin_con_nick() {
+        val body = """
+            {"token":"abc","camarero":{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com","telefono":null,"foto_url":null,"nick":"Anita"},"qr":"phid1:u1:c1:sig"}
+        """.trimIndent()
+        val sesion = IdentityJson.parseLogin(body)
+        assertEquals("Anita", sesion.perfil.nick)
+        assertEquals("Anita", sesion.perfil.mote)
     }
 
     @Test
@@ -42,6 +53,7 @@ class IdentityJsonTest {
         )
         assertEquals(null, perfil.fotoUrl)
         assertEquals(null, perfil.telefono)
+        assertEquals(null, perfil.nick)
     }
 
     @Test

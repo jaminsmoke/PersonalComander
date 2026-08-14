@@ -28,6 +28,7 @@ class ModoSesionTest {
         assertTrue(modo.cartaEditable)
         assertTrue(modo.puedeAdherirseABar)
         assertEquals("Ana", modo.etiquetaHeader())
+        assertEquals("Ana", perfil.mote)
         assertEquals("AG", perfil.iniciales)
         assertEquals("tok", modo.token)
         assertEquals("phid1:a:b:sig", modo.qr)
@@ -68,5 +69,14 @@ class ModoSesionTest {
         )
         assertFalse(modo.cartaEditable)
         assertFalse(modo.mapaEditable)
+    }
+
+    @Test
+    fun mote_usa_nick_si_existe() {
+        val conNick = perfil.copy(nick = "Lucía")
+        val modo = ModoSesion.Identidad(conNick, "phid1:a:b:sig", "tok")
+        assertEquals("Lucía", conNick.mote)
+        assertEquals("Lucía", modo.etiquetaHeader())
+        assertEquals("Ana García", conNick.nombreCompleto)
     }
 }

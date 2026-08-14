@@ -30,9 +30,15 @@ data class PerfilCamarero(
     val email: String,
     val telefono: String? = null,
     val fotoUrl: String? = null,
+    /** Mote visible en establecimientos (colas, voz). Distinto del nombre legal. */
+    val nick: String? = null,
 ) {
     val nombreCompleto: String
         get() = "$nombre $apellidos".trim()
+
+    /** Referencia coloquial: nick si hay; si no, el primer nombre. */
+    val mote: String
+        get() = nick?.trim()?.takeIf { it.isNotEmpty() } ?: nombre
 
     val iniciales: String
         get() = buildString {
@@ -88,6 +94,6 @@ val ModoSesion.qr: String?
 
 fun ModoSesion.etiquetaHeader(): String? = when (this) {
     ModoSesion.Local -> null
-    is ModoSesion.Identidad -> perfil.nombre
-    is ModoSesion.Establecimiento -> perfil.nombre
+    is ModoSesion.Identidad -> perfil.mote
+    is ModoSesion.Establecimiento -> perfil.mote
 }

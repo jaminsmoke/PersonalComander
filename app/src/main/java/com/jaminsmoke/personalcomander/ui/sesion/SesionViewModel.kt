@@ -58,10 +58,11 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
         email: String,
         password: String,
         telefono: String? = null,
+        nick: String,
     ) {
         viewModelScope.launch {
             _busy.value = true
-            val r = repo.registrar(nombre, apellidos, email, password, telefono)
+            val r = repo.registrar(nombre, apellidos, email, password, telefono, nick)
             _busy.value = false
             if (!r.ok) _mensaje.value = r.error ?: ctx.getString(R.string.sesion_error_generico)
         }
@@ -83,6 +84,16 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
 
     fun cerrarSesion() {
         repo.cerrarSesion()
+    }
+
+    fun actualizarNick(nick: String) {
+        viewModelScope.launch {
+            _busy.value = true
+            val r = repo.actualizarNick(nick)
+            _busy.value = false
+            _mensaje.value = if (r.ok) ctx.getString(R.string.sesion_nick_ok)
+            else r.error ?: ctx.getString(R.string.sesion_error_generico)
+        }
     }
 
     fun renovarQr() {

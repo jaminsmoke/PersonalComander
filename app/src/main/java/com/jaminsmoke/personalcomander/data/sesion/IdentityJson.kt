@@ -58,6 +58,7 @@ object IdentityJson {
             email = o.get("email").asString,
             telefono = o.get("telefono")?.takeUnless { it.isJsonNull }?.asString,
             fotoUrl = o.get("foto_url")?.takeUnless { it.isJsonNull }?.asString,
+            nick = o.get("nick")?.takeUnless { it.isJsonNull }?.asString?.trim()?.ifBlank { null },
         )
     }
 

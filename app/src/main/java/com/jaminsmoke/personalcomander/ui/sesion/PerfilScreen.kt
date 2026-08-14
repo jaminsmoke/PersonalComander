@@ -73,6 +73,7 @@ fun PerfilScreen(
     var confirmarRevocar by remember { mutableStateOf(false) }
     var confirmarBorrar by remember { mutableStateOf(false) }
     var passwordBorrar by remember { mutableStateOf("") }
+    var nickEdit by remember(perfil?.id, perfil?.nick) { mutableStateOf(perfil?.mote.orEmpty()) }
 
     val picker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia(),
@@ -127,6 +128,20 @@ fun PerfilScreen(
                 perfil.telefono?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                OutlinedTextField(
+                    value = nickEdit,
+                    onValueChange = { nickEdit = it },
+                    label = { Text(stringResource(R.string.sesion_nick)) },
+                    supportingText = { Text(stringResource(R.string.sesion_nick_hint)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                PcSecondaryButton(
+                    text = stringResource(R.string.sesion_nick_guardar),
+                    onClick = { viewModel.actualizarNick(nickEdit) },
+                    enabled = !busy && nickEdit.trim().isNotEmpty() && nickEdit.trim() != perfil.nick,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 when (val actual = modo) {
                     is ModoSesion.Establecimiento -> Text(
                         text = stringResource(

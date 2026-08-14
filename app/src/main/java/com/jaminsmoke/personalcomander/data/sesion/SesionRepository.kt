@@ -41,8 +41,9 @@ class SesionRepository(
         email: String,
         password: String,
         telefono: String? = null,
+        nick: String,
     ): IdentityRespuesta<IdentityJson.SesionIdentity> = withContext(Dispatchers.IO) {
-        val r = cliente().registrar(nombre, apellidos, email, password, telefono)
+        val r = cliente().registrar(nombre, apellidos, email, password, telefono, nick)
         aplicarSesion(r)
         r
     }
@@ -72,6 +73,19 @@ class SesionRepository(
             if (qr == null && _modo.value is ModoSesion.Establecimiento) desconectarBar()
             persistir(perfil, qr, token)
             cargarFoto(token, perfil.fotoUrl)
+        }
+    }
+
+    suspend fun actualizarNick(nick: String): IdentityRespuesta<PerfilCamarero> {
+        val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
+        val limpio = nick.trim()
+        if (limpio.isEmpty()) return IdentityRespuesta(false, error = "Nick vacío")
+        return withContext(Dispatchers.IO) {
+            val r = cliente().actualizarPerfil(token, limpio)
+            if (r.ok && r.valor != null) {
+                persistir(r.valor, _modo.value.qr, token)
+            }
+            r
         }
     }
 
