@@ -218,6 +218,7 @@ def _fixtures_ok() -> tuple[dict, dict, str]:
     bar_ok = """
         get("/health") {}
         post("/v1/rondas") {}
+        post("/v1/sesion") {}
         get("/v1/estado") {}
         sse("/v1/eventos") {}
         get("/v1/carta") {}

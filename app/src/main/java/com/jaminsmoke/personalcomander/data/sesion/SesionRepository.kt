@@ -175,13 +175,14 @@ class SesionRepository(
             val token = actual.token ?: return@withContext ConectarBarResult(ok = false)
             val health = BarLanCliente.health(host, puerto)
             if (!BarLanCliente.esBar(health)) return@withContext ConectarBarResult(ok = false)
+            val sesion = BarLanCliente.postSesion(host, puerto, qr)
             val establecimiento = ModoSesion.Establecimiento(
                 perfil = perfil,
                 qr = qr,
                 token = token,
                 barHost = host,
                 barPuerto = puerto,
-                admitido = false,
+                admitido = sesion?.admitido == true,
             )
             store.guardarEstablecimiento(establecimiento)
             _modo.value = establecimiento

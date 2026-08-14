@@ -3,6 +3,7 @@
 # Una ruta por línea. BarContratoTest y check_family_contracts.py las contrastan.
 /health
 /v1/rondas
+/v1/sesion
 /v1/estado
 /v1/eventos
 /v1/carta

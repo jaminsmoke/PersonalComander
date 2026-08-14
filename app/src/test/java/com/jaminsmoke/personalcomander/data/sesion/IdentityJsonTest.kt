@@ -175,4 +175,31 @@ class BarLanClienteTest {
     fun parseHealth_invalido() {
         assertEquals(null, BarLanCliente.parseHealth("no-json"))
     }
+
+    @Test
+    fun parseSesion_admitido() {
+        val s = BarLanCliente.parseSesion(
+            """{"admitido":true,"camareroId":"11111111-1111-4111-8111-111111111111","nombre":"luciaTest"}""",
+        )
+        assertEquals(true, s!!.admitido)
+        assertEquals("11111111-1111-4111-8111-111111111111", s.camareroId)
+        assertEquals("luciaTest", s.nombre)
+    }
+
+    @Test
+    fun parseSesion_pendiente() {
+        val s = BarLanCliente.parseSesion(
+            """{"admitido":false,"camareroId":"11111111-1111-4111-8111-111111111111"}""",
+        )
+        assertEquals(false, s!!.admitido)
+        assertEquals("11111111-1111-4111-8111-111111111111", s.camareroId)
+        assertEquals(null, s.nombre)
+    }
+
+    @Test
+    fun parseSesion_sin_flag_o_basura() {
+        assertEquals(null, BarLanCliente.parseSesion("""{"camareroId":"x"}"""))
+        assertEquals(null, BarLanCliente.parseSesion("{"))
+        assertEquals(null, BarLanCliente.parseSesion("no-json"))
+    }
 }
