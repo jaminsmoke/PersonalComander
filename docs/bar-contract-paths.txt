@@ -1,0 +1,7 @@
+# Rutas LAN de Personal Bar que usa BarLanCliente.
+# Commander no llama a preparado/recogido (UI de expo en Bar).
+# Una ruta por línea. BarContratoTest y check_family_contracts.py las contrastan.
+/health
+/v1/rondas
+/v1/estado
+/v1/eventos

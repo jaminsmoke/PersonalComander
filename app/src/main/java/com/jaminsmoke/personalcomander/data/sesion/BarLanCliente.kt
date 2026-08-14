@@ -8,6 +8,15 @@ import java.net.URL
 object BarLanCliente {
     const val PUERTO: Int = 8787
 
+    object Rutas {
+        const val HEALTH = "/health"
+        const val RONDAS = "/v1/rondas"
+        const val ESTADO = "/v1/estado"
+        const val EVENTOS = "/v1/eventos"
+
+        fun todas(): List<String> = listOf(HEALTH, RONDAS, ESTADO, EVENTOS)
+    }
+
     data class Health(
         val ok: Boolean,
         val role: String,
@@ -16,7 +25,7 @@ object BarLanCliente {
     )
 
     fun health(host: String, puerto: Int = PUERTO): Health? {
-        val conexion = URL("http://$host:$puerto/health").openConnection() as HttpURLConnection
+        val conexion = URL("http://$host:$puerto${Rutas.HEALTH}").openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 2500
             conexion.readTimeout = 4000
@@ -56,7 +65,7 @@ object BarLanCliente {
 
     /** `POST /v1/rondas`. 200 (idempotente) y 201 cuentan como ok. Sin auth en Bar 0.1. */
     fun postRonda(host: String, puerto: Int, ronda: RondaLan): PostRondaResult {
-        val conexion = URL("http://$host:$puerto/v1/rondas").openConnection() as HttpURLConnection
+        val conexion = URL("http://$host:$puerto${Rutas.RONDAS}").openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 2500
             conexion.readTimeout = 4000
@@ -84,7 +93,7 @@ object BarLanCliente {
 
     /** Snapshot de colas. Bar no persiste SSE: al reconectar hay que realinear con esto. */
     fun estado(host: String, puerto: Int = PUERTO): EstadoLan? {
-        val conexion = URL("http://$host:$puerto/v1/estado").openConnection() as HttpURLConnection
+        val conexion = URL("http://$host:$puerto${Rutas.ESTADO}").openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 2500
             conexion.readTimeout = 4000
@@ -100,7 +109,7 @@ object BarLanCliente {
     }
 
     fun abrirSse(host: String, puerto: Int): HttpURLConnection {
-        val conexion = URL("http://$host:$puerto/v1/eventos").openConnection() as HttpURLConnection
+        val conexion = URL("http://$host:$puerto${Rutas.EVENTOS}").openConnection() as HttpURLConnection
         conexion.connectTimeout = 4000
         conexion.readTimeout = 0
         conexion.requestMethod = "GET"

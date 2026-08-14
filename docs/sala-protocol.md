@@ -5,6 +5,7 @@ Contrato entre **Personal Comander** (cliente) y **Personal Bar** (nodo). Puerto
 No confundir con Identity: el **servicio camareros** (`:8080`, HTTPS en producción) es el DNI del camarero y la fuente de verdad de cuentas y membresías. El **servicio negocio** (`:8082`) es de Bar / Identity Web. El nodo de sala sigue siendo Bar LAN.
 
 Rutas Identity que Commander llama: [`identity-contract-paths.txt`](identity-contract-paths.txt).
+Rutas Bar que Commander llama: [`bar-contract-paths.txt`](bar-contract-paths.txt). El job CI `Family contracts` las contrasta con Identity `main` (OpenAPI camareros) y Bar `main` (`BarLanModule.kt`); aún no es check requerido del ruleset.
 
 ## Glosario
 
