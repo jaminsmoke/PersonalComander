@@ -1,5 +1,6 @@
 package com.jaminsmoke.personalcomander.data.sesion
 
+import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -11,11 +12,12 @@ object BarLanCliente {
     object Rutas {
         const val HEALTH = "/health"
         const val RONDAS = "/v1/rondas"
+        const val SESION = "/v1/sesion"
         const val ESTADO = "/v1/estado"
         const val EVENTOS = "/v1/eventos"
         const val CARTA = "/v1/carta"
 
-        fun todas(): List<String> = listOf(HEALTH, RONDAS, ESTADO, EVENTOS, CARTA)
+        fun todas(): List<String> = listOf(HEALTH, RONDAS, SESION, ESTADO, EVENTOS, CARTA)
     }
 
     data class Health(
@@ -57,6 +59,50 @@ object BarLanCliente {
 
     fun esBar(health: Health?): Boolean =
         health != null && health.ok && health.role.equals("bar", ignoreCase = true)
+
+    data class SesionLan(
+        val admitido: Boolean = false,
+        val camareroId: String? = null,
+        val nombre: String? = null,
+    )
+
+    /**
+     * `POST /v1/sesion` con el QR `phid1`. 404 o red → null (nodo viejo: ligue ok, no admitido).
+     * 400 / no-2xx → null. No es un alta.
+     */
+    fun postSesion(host: String, puerto: Int, qr: String): SesionLan? {
+        val conexion = URL("http://$host:$puerto${Rutas.SESION}").openConnection() as HttpURLConnection
+        return try {
+            conexion.connectTimeout = 2500
+            conexion.readTimeout = 4000
+            conexion.requestMethod = "POST"
+            conexion.doOutput = true
+            conexion.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+            val cuerpo = JsonObject().apply { addProperty("qr", qr) }.toString()
+                .toByteArray(Charsets.UTF_8)
+            conexion.outputStream.use { it.write(cuerpo) }
+            val codigo = conexion.responseCode
+            if (codigo !in 200..299) return null
+            val texto = conexion.inputStream.bufferedReader().use { it.readText() }
+            parseSesion(texto)
+        } catch (_: IOException) {
+            null
+        } finally {
+            conexion.disconnect()
+        }
+    }
+
+    fun parseSesion(json: String): SesionLan? = try {
+        val o = JsonParser.parseString(json).asJsonObject
+        if (!o.has("admitido") || o.get("admitido").isJsonNull) return null
+        SesionLan(
+            admitido = o.get("admitido").asBoolean,
+            camareroId = o.get("camareroId")?.takeUnless { it.isJsonNull }?.asString,
+            nombre = o.get("nombre")?.takeUnless { it.isJsonNull }?.asString,
+        )
+    } catch (_: Exception) {
+        null
+    }
 
     data class PostRondaResult(
         val ok: Boolean,

@@ -25,6 +25,7 @@ Rutas Bar que Commander llama: [`bar-contract-paths.txt`](bar-contract-paths.txt
 | Método | Ruta | Uso en Comander |
 |---|---|---|
 | `GET /health` | liveness `{ok, role:"bar", establecimiento, sala, version}` | Sí (ligar) |
+| `POST /v1/sesion` | `{ "qr": "phid1:…" }` → `{ admitido, camareroId, nombre }` | Sí (candado carta/mapa/TPV al ligar) |
 | `POST /v1/rondas` | recibe una ronda → 201/200 + **lista de tickets** | Sí (enviar; se guarda `ticketId` por línea) |
 | `POST /v1/tickets/{id}/preparado` | ticket preparado | No (UI de expo en Bar) |
 | `POST /v1/tickets/{id}/recogido` | ticket recogido en expo | No (UI de expo en Bar) |
@@ -32,7 +33,7 @@ Rutas Bar que Commander llama: [`bar-contract-paths.txt`](bar-contract-paths.txt
 | `GET /v1/carta` | catálogo `{productos:[{id,nombre,categoria,precio,disponible}]}` | Sí (espejo al ligar) |
 | `SSE /v1/eventos` | `ticket.preparado` / `ticket.recogido` | Sí (aviso recoger) |
 
-Sin autenticación en 0.1 (lista blanca QR de Bar aún no).
+Handshake al ligar: `POST /v1/sesion` con el QR. Si el camarero está ACTIVA en la lista blanca, `admitido=true` y candan carta, mapa y TPV. 404 (nodo viejo) o no admitido: el ligue sigue; `admitido=false`. Las demás rutas **no** exigen handshake (LAN 0.1).
 
 ## SSE
 
@@ -70,8 +71,8 @@ Al reconectar: `GET /v1/estado` y marcar `PREPARADO` (y `servidos`) como `LISTA`
 ## Flujo de usuario
 
 1. El camarero inicia sesión contra Identity (servicio camareros) desde **Ajustes** y abre **Perfil** para revisar la credencial QR y las membresías cacheadas.
-2. Busca el Bar en la sección de sala y conecta por host y puerto (nodo de turno). Si Identity lista locales y el `health` no coincide, se avisa pero **no se bloquea**.
-3. La app muestra las salas del local y puede bloquear la edición local del mapa o la carta.
+2. Busca el Bar en la sección de sala y conecta por host y puerto (nodo de turno). Si Identity lista locales y el `health` no coincide, se avisa pero **no se bloquea**. Tras el health, Commander consulta `POST /v1/sesion`.
+3. Si está en la lista blanca, carta, mapa y TPV pasan a solo lectura. Si no, permanece pendiente y sigue editando. Las rondas se envían igual.
 4. Al enviar, Comander manda **solo líneas `PENDIENTE`**, las marca `ENVIADA` y guarda los `ticketId` del body.
 5. Bar marca preparado → SSE → líneas `LISTA` + snackbar/notificación.
 6. El camarero marca **servido en mesa** (`SERVIDA`). Recogido de bandeja sigue en Bar.
