@@ -139,13 +139,18 @@ fun zonaPrefijo(zona: String): String = when {
     else -> zona.trim().firstOrNull()?.uppercase() ?: "M"
 }
 
-@Entity(tableName = "productos")
+@Entity(
+    tableName = "productos",
+    indices = [Index(value = ["codigoBar"], unique = true)],
+)
 data class Producto(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val nombre: String,
     val categoria: String,
     val precio: Double,
-    val disponible: Boolean = true
+    val disponible: Boolean = true,
+    /** Id de red del catálogo de Bar (`cana`). Null = producto solo local. */
+    val codigoBar: String? = null,
 )
 
 @Entity(

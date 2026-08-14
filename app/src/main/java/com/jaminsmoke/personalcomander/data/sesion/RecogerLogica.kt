@@ -85,12 +85,17 @@ object RecogerLogica {
      * Cruza las líneas que acabamos de mandar con los tickets que Bar devolvió.
      * Si el parseo falla, las marca [LineaEstado.ENVIADA] sin `ticketId`.
      */
-    fun asignarTickets(lineasEnviadas: List<LineaPedido>, tickets: List<TicketLan>): List<LineaPedido> {
+    fun asignarTickets(
+        lineasEnviadas: List<LineaPedido>,
+        tickets: List<TicketLan>,
+        codigoBarPorProductoId: Map<Long, String> = emptyMap(),
+    ): List<LineaPedido> {
         val cupos = tickets.flatMap { t ->
             t.lineas.map { Triple(t.id, it.productoId, it.cantidad) }
         }.toMutableList()
         return lineasEnviadas.map { linea ->
-            val idx = cupos.indexOfFirst { it.second == linea.productoId.toString() }
+            val ids = idsDeRed(linea.productoId, codigoBarPorProductoId)
+            val idx = cupos.indexOfFirst { it.second in ids }
             if (idx >= 0) {
                 val ticketId = cupos.removeAt(idx).first
                 linea.copy(estado = LineaEstado.ENVIADA, ticketId = ticketId)
@@ -98,6 +103,13 @@ object RecogerLogica {
                 linea.copy(estado = LineaEstado.ENVIADA)
             }
         }
+    }
+
+    /** Preferir el slug de Bar; el Long local queda de fallback. */
+    fun idsDeRed(productoId: Long, codigoBarPorProductoId: Map<Long, String>): Set<String> {
+        val ids = mutableSetOf(productoId.toString())
+        codigoBarPorProductoId[productoId]?.takeIf { it.isNotBlank() }?.let { ids.add(it) }
+        return ids
     }
 
     fun parseSalaEvent(json: String, eventType: String? = null): SalaEventLan? = try {

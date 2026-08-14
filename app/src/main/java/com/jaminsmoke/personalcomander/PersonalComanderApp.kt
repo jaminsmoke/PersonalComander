@@ -29,13 +29,14 @@ class PersonalComanderApp : Application() {
                 AppDatabase.MIGRATION_9_10,
                 AppDatabase.MIGRATION_10_11,
                 AppDatabase.MIGRATION_11_12,
+                AppDatabase.MIGRATION_12_13,
             )
             .fallbackToDestructiveMigration(false)
             .build()
             .also { seedIfEmpty(it) }
     }
 
-    val sesion: SesionRepository by lazy { SesionRepository(this, applicationScope) }
+    val sesion: SesionRepository by lazy { SesionRepository(this, applicationScope, db) }
 
     val recoger: RecogerServicio by lazy {
         RecogerServicio(this, db, sesion, applicationScope)

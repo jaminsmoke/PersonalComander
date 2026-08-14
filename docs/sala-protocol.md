@@ -29,6 +29,7 @@ Rutas Bar que Commander llama: [`bar-contract-paths.txt`](bar-contract-paths.txt
 | `POST /v1/tickets/{id}/preparado` | ticket preparado | No (UI de expo en Bar) |
 | `POST /v1/tickets/{id}/recogido` | ticket recogido en expo | No (UI de expo en Bar) |
 | `GET /v1/estado` | establecimiento, salas, colas, mesas | Sí (realinear al conectar SSE; Bar no persiste eventos) |
+| `GET /v1/carta` | catálogo `{productos:[{id,nombre,categoria,precio,disponible}]}` | Sí (espejo al ligar) |
 | `SSE /v1/eventos` | `ticket.preparado` / `ticket.recogido` | Sí (aviso recoger) |
 
 Sin autenticación en 0.1 (lista blanca QR de Bar aún no).
@@ -97,7 +98,7 @@ Este flujo pertenece a v1.6 en desarrollo. La release pública v1.5 funciona en 
 
 - `id`: único por envío. Si se repite, Bar responde 200 y no duplica.
 - `mesaId`: **idZona**, p. ej. `T3`. Nunca el id Room.
-- `productoId`: en Comander es el Long de Room en string. El catálogo de Bar usa ids propios (`cana`…): sin sync de carta el destino puede ser siempre BARRA.
+- `productoId`: id de red de Bar (`cana`) si Commander espejó `GET /v1/carta` (`codigoBar`); si no, el Long de Room en string. Sin match, Bar manda la línea a BARRA.
 - Respuesta: array de tickets (`id` = `{rondaId}-barra` / `-cocina`).
 
 ## Comportamiento en Comander
