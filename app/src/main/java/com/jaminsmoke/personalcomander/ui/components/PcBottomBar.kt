@@ -38,7 +38,7 @@ fun PcBottomBar(
     onNavigate: (TopLevelDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val selected = TopLevelDestination.entries.find { it.route == currentRoute }
+    val selected = TopLevelDestination.entries.find { it.route == routeBase(currentRoute) }
         ?: TopLevelDestination.HOME
 
     NavigationBar(
@@ -77,5 +77,9 @@ fun PcBottomBar(
     }
 }
 
-fun isTopLevelRoute(route: String?): Boolean =
-    TopLevelDestination.entries.any { it.route == route }
+fun routeBase(route: String?): String? = route?.substringBefore("?")
+
+fun isTopLevelRoute(route: String?): Boolean {
+    val base = routeBase(route) ?: return false
+    return TopLevelDestination.entries.any { it.route == base }
+}

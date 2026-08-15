@@ -26,6 +26,8 @@ import com.jaminsmoke.personalcomander.PersonalComanderApp as App
 import com.jaminsmoke.personalcomander.ui.components.PcBottomBar
 import com.jaminsmoke.personalcomander.ui.components.TopLevelDestination
 import com.jaminsmoke.personalcomander.ui.components.isTopLevelRoute
+import com.jaminsmoke.personalcomander.ui.gestion.GestionAcceso
+import com.jaminsmoke.personalcomander.ui.gestion.GestionScreen
 import com.jaminsmoke.personalcomander.ui.sesion.AuthScreen
 import com.jaminsmoke.personalcomander.ui.sesion.PerfilScreen
 
@@ -38,7 +40,26 @@ fun PersonalComanderApp() {
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = isTopLevelRoute(currentRoute)
 
+    fun navigateMenu(abrir: String = GestionAcceso.NAV_HUB) {
+        val route = if (abrir == GestionAcceso.NAV_HUB) {
+            TopLevelDestination.MENU.route
+        } else {
+            "${TopLevelDestination.MENU.route}?abrir=$abrir"
+        }
+        navController.navigate(route) {
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = abrir == GestionAcceso.NAV_HUB
+        }
+    }
+
     fun navigateTopLevel(dest: TopLevelDestination) {
+        if (dest == TopLevelDestination.MENU) {
+            navigateMenu(GestionAcceso.NAV_HUB)
+            return
+        }
         navController.navigate(dest.route) {
             popUpTo(navController.graph.findStartDestination().id) {
                 saveState = true
@@ -79,7 +100,7 @@ fun PersonalComanderApp() {
             ) {
                 HomeScreen(
                     onOpenMesas = { navigateTopLevel(TopLevelDestination.MESAS) },
-                    onOpenMenu = { navigateTopLevel(TopLevelDestination.MENU) },
+                    onOpenMenu = { navigateMenu(GestionAcceso.CARTA.navKey) },
                     onOpenAjustes = { navigateTopLevel(TopLevelDestination.AJUSTES) },
                     onOpenAuth = { navController.navigate("auth") },
                     onOpenPerfil = { navController.navigate("perfil") },
@@ -92,7 +113,7 @@ fun PersonalComanderApp() {
             ) {
                 MesasScreen(
                     onOpenMesa = { mesaId -> navController.navigate("comanda/$mesaId") },
-                    onOpenMenu = { navigateTopLevel(TopLevelDestination.MENU) },
+                    onOpenMenu = { navigateMenu(GestionAcceso.CARTA.navKey) },
                     onBack = null,
                 )
             }
@@ -108,11 +129,22 @@ fun PersonalComanderApp() {
                 )
             }
             composable(
-                route = TopLevelDestination.MENU.route,
+                route = "${TopLevelDestination.MENU.route}?abrir={abrir}",
+                arguments = listOf(
+                    navArgument("abrir") {
+                        type = NavType.StringType
+                        defaultValue = GestionAcceso.NAV_HUB
+                    },
+                ),
                 enterTransition = { fadeIn(animationSpec = tween(ANIM_DURATION)) },
                 exitTransition = { fadeOut(animationSpec = tween(ANIM_DURATION)) },
-            ) {
-                MenuScreen(onBack = null)
+            ) { entry ->
+                GestionScreen(
+                    abrir = entry.arguments?.getString("abrir"),
+                    onOpenAjustes = { navigateTopLevel(TopLevelDestination.AJUSTES) },
+                    onOpenAuth = { navController.navigate("auth") },
+                    onOpenPerfil = { navController.navigate("perfil") },
+                )
             }
             composable(
                 route = "comanda/{mesaId}",

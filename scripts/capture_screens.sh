@@ -173,8 +173,11 @@ capture home
 echo "  navegando a Mesas..."
 tap_text_any "Mesas" "Tables" && capture mesas_board
 
-echo "  navegando a Gestión (menú)..."
-tap_text_any "Gestión" "Menu" "Menu Management" && capture menu
+echo "  navegando a Gestión (hub → carta)..."
+tap_text_any "Gestión" "Management" "Menu" && {
+  tap_text_any "Carta" "Menu" || true
+  capture menu
+}
 
 echo "  navegando a Mesas y abriendo una comanda..."
 tap_text_any "Mesas" "Tables" && {

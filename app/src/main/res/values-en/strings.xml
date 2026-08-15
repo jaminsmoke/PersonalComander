@@ -8,7 +8,7 @@
     <!-- Bottom navigation -->
     <string name="nav_resumen">Summary</string>
     <string name="nav_mesas">Tables</string>
-    <string name="nav_gestion">Menu</string>
+    <string name="nav_gestion">Management</string>
     <string name="nav_ajustes">Settings</string>
 
     <!-- Home Screen -->
@@ -65,6 +65,16 @@
     <string name="mesas_isolated_body">It left the board limits or ended up too far from the other tables.</string>
     <string name="mesas_isolated_keep">Keep here</string>
     <string name="mesas_isolated_bring">Move to edge</string>
+
+    <!-- Management hub -->
+    <string name="gestion_titulo">Management</string>
+    <string name="gestion_carta">Menu</string>
+    <string name="gestion_locales">Venues</string>
+    <string name="gestion_invitaciones">Invitations</string>
+    <string name="gestion_locales_ir_turno">Shift in Settings</string>
+    <string name="gestion_invitaciones_vacio_titulo">No invitations</string>
+    <string name="gestion_invitaciones_vacio_desc">When a venue invites you, they will show up here. Today you join by showing your QR at the bar.</string>
+    <string name="gestion_invitaciones_ver_qr">Show my QR</string>
 
     <!-- Menu Screen -->
     <string name="menu_title">Menu Management</string>

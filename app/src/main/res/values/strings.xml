@@ -66,6 +66,16 @@
     <string name="mesas_isolated_keep">Mantener aquí</string>
     <string name="mesas_isolated_bring">Llevar al borde</string>
 
+    <!-- Gestión (hub) -->
+    <string name="gestion_titulo">Gestión</string>
+    <string name="gestion_carta">Carta</string>
+    <string name="gestion_locales">Locales</string>
+    <string name="gestion_invitaciones">Invitaciones</string>
+    <string name="gestion_locales_ir_turno">Turno en Ajustes</string>
+    <string name="gestion_invitaciones_vacio_titulo">Sin invitaciones</string>
+    <string name="gestion_invitaciones_vacio_desc">Cuando un local te invite, aparecerán aquí. Hoy el alta es enseñar tu QR en barra.</string>
+    <string name="gestion_invitaciones_ver_qr">Ver mi QR</string>
+
     <!-- Menu Screen -->
     <string name="menu_title">Gestión del menú</string>
     <string name="menu_new_product">Nuevo producto</string>
