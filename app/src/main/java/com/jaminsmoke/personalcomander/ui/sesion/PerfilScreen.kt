@@ -147,7 +147,11 @@ fun PerfilScreen(
                 when (val actual = modo) {
                     is ModoSesion.Establecimiento -> Text(
                         text = stringResource(
-                            if (actual.admitido) R.string.sesion_modo_sala_admitido else R.string.sesion_modo_sala_pendiente,
+                            when {
+                                actual.sesionTrabajo -> R.string.sesion_modo_sala_admitido
+                                actual.admitido -> R.string.sesion_modo_sala_sin_jornada
+                                else -> R.string.sesion_modo_sala_pendiente
+                            },
                             actual.etiquetaLocal(),
                         ),
                         style = MaterialTheme.typography.bodySmall,

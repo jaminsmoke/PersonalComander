@@ -25,15 +25,20 @@ Rutas Bar que Commander llama: [`bar-contract-paths.txt`](bar-contract-paths.txt
 | Método | Ruta | Uso en Comander |
 |---|---|---|
 | `GET /health` | liveness `{ok, role:"bar", establecimiento, sala, version}` | Sí (ligar) |
-| `POST /v1/sesion` | `{ "qr": "phid1:…" }` → `{ admitido, camareroId, nombre }` | Sí (candado carta/mapa/TPV al ligar) |
-| `POST /v1/rondas` | recibe una ronda → 201/200 + **lista de tickets** | Sí (enviar; se guarda `ticketId` por línea) |
+| `POST /v1/sesion` | `{ "qr": "phid1:…" }` → `{ admitido, camareroId, nombre }` | Sí (candado carta/mapa/TPV al ligar; **no** inicia jornada) |
+| `POST /v1/sesion/iniciar` | `{ "qr": "phid1:…" }` → estado de jornada | Sí (gesto Empiezo; 404 = nodo viejo) |
+| `POST /v1/sesion/cortar` | `{ "qr": "phid1:…" }` | Sí (terminar jornada o salir del nodo) |
+| `POST /v1/heartbeat` | `{ "camareroId" }` | Sí (~10 s mientras hay jornada) |
+| `POST /v1/rondas` | recibe una ronda → 201/200 + **lista de tickets**; 403 sin jornada | Sí (enviar; se guarda `ticketId` por línea) |
 | `POST /v1/tickets/{id}/preparado` | ticket preparado | No (UI de expo en Bar) |
 | `POST /v1/tickets/{id}/recogido` | ticket recogido en expo | No (UI de expo en Bar) |
 | `GET /v1/estado` | establecimiento, salas, colas, mesas | Sí (realinear tickets al conectar SSE; **réplica de layout** al ligar si `admitido`) |
 | `GET /v1/carta` | catálogo `{productos:[{id,nombre,categoria,precio,disponible}]}` | Sí (espejo al ligar) |
-| `SSE /v1/eventos` | `ticket.preparado` / `ticket.recogido` | Sí (aviso recoger) |
+| `SSE /v1/eventos` | `ticket.preparado` / `ticket.recogido` / `sesion.cortada` | Sí (aviso recoger y corte de jornada) |
 
-Handshake al ligar: `POST /v1/sesion` con el QR. Si el camarero está ACTIVA en la lista blanca, `admitido=true` y candan carta, mapa y TPV. 404 (nodo viejo) o no admitido: el ligue sigue; `admitido=false`. Las demás rutas **no** exigen handshake (LAN 0.1).
+Handshake al ligar: `POST /v1/sesion` con el QR. Si el camarero está ACTIVA en la lista blanca, `admitido=true` y candan carta, mapa y TPV. 404 (nodo viejo) o no admitido: el ligue sigue; `admitido=false`.
+
+**Contratado ≠ jornada.** Ligar al nodo no autoriza comandas. El camarero pide `POST /v1/sesion/iniciar` (gesto Empiezo). Bar concede `sesionActiva`. Commander manda `POST /v1/heartbeat` ~10 s. Corte: `POST /v1/sesion/cortar`, SSE `sesion.cortada`, 403 de ronda/heartbeat, o pérdida de lista blanca. 404 en iniciar = Bar 0.1: se trata como jornada implícita.
 
 ## SSE
 
@@ -75,12 +80,13 @@ Bar es la fuente de verdad del layout. Si el camarero está **admitido**, al lig
 ## Flujo de usuario
 
 1. El camarero inicia sesión contra Identity (servicio camareros) desde **Ajustes** o **Entrar**. La cuenta puede estar **registrada** en varios establecimientos; eso no activa un turno.
-2. **Standalone** (Local o Identidad): carta y mapa locales. El header lo indica. **Activo** es un turno en **un** nodo Bar a la vez.
+2. **Standalone** (Local o Identidad): carta y mapa locales. El header lo indica. Ligarse a un nodo no es jornada.
 3. Activa el turno buscando el Bar en LAN (puerto 8787) o por host. Tras el health, Commander consulta `POST /v1/sesion`. Si Identity lista locales y el `health` no coincide, se avisa pero **no se bloquea**.
-4. Si está en la lista blanca, carta, mapa y TPV pasan a solo lectura y se replica el layout. Si no, el turno sigue en el nodo y el mapa local permanece editable. Al volver a Home se **revalida** `admitido` (no hace falta desactivar y reactivar). Las rondas se envían igual.
-5. Al enviar, Comander manda **solo líneas `PENDIENTE`**, las marca `ENVIADA` y guarda los `ticketId` del body.
-6. Bar marca preparado → SSE → líneas `LISTA` + snackbar/notificación.
-7. El camarero marca **servido en mesa** (`SERVIDA`). Recogido de bandeja sigue en Bar.
+4. Si está en la lista blanca, carta, mapa y TPV pasan a solo lectura y se replica el layout. El header dice **En nodo** hasta **Empezar jornada** (`POST /v1/sesion/iniciar`); entonces dice **Activo**. Al volver a Home se **revalida** `admitido`. Si se pierde la lista blanca, la jornada se corta.
+5. Sin jornada no se llama a `POST /v1/rondas`. Si Bar corta (SSE `sesion.cortada`, 403 o latido), el nodo puede seguir ligado.
+6. Al enviar con jornada, Comander manda **solo líneas `PENDIENTE`**, las marca `ENVIADA` y guarda los `ticketId` del body.
+7. Bar marca preparado → SSE → líneas `LISTA` + snackbar/notificación.
+8. El camarero marca **servido en mesa** (`SERVIDA`). Recogido de bandeja sigue en Bar.
 
 Pendiente de lista blanca **no** es una invitación de cuenta. Las invitaciones (Bar invita, camarero acepta) van en ítems de Bar e Identity; la aceptación in-app aún no está.
 
@@ -114,6 +120,7 @@ Este flujo pertenece a v1.6 en desarrollo. La release pública v1.5 funciona en 
 | Modo | Al enviar a cocina |
 |---|---|
 | Local / Identidad | Solo Room: pedido `ENVIADA`, mesa `EN_COCINA`, líneas `LISTA` (para recoger sin expo). |
-| Establecimiento | Delta `PENDIENTE` + `POST /v1/rondas` → `ENVIADA` + `ticketId`. SSE + `/estado`. Servido solo desde `LISTA`. |
+| Establecimiento **con jornada** | Delta `PENDIENTE` + `POST /v1/rondas` → `ENVIADA` + `ticketId`. SSE + `/estado`. Servido solo desde `LISTA`. |
+| Establecimiento **sin jornada** | No se llama a `/v1/rondas`. El camarero ve el aviso y empieza la jornada en Ajustes. |
 
-No se exige `admitido=true`. No se recorta el un-tablet.
+No se recorta el un-tablet. `esActivo` en código sigue significando «ligado al nodo»; el permiso de comandar es `sesionTrabajo`.

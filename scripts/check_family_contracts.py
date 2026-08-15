@@ -219,6 +219,9 @@ def _fixtures_ok() -> tuple[dict, dict, str]:
         get("/health") {}
         post("/v1/rondas") {}
         post("/v1/sesion") {}
+        post("/v1/sesion/iniciar") {}
+        post("/v1/sesion/cortar") {}
+        post("/v1/heartbeat") {}
         get("/v1/estado") {}
         sse("/v1/eventos") {}
         get("/v1/carta") {}

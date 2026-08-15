@@ -231,6 +231,8 @@ fun AjustesScreen(
                     onBuscar = sesionViewModel::buscarBares,
                     onConectar = sesionViewModel::conectarBar,
                     onDesconectar = sesionViewModel::desconectarBar,
+                    onIniciarJornada = sesionViewModel::iniciarJornada,
+                    onCortarJornada = sesionViewModel::cortarJornada,
                     onIrLogin = onOpenAuth,
                 )
             }
@@ -499,6 +501,8 @@ private fun SalaCard(
     onBuscar: () -> Unit,
     onConectar: (String, Int) -> Unit,
     onDesconectar: () -> Unit,
+    onIniciarJornada: () -> Unit,
+    onCortarJornada: () -> Unit,
     onIrLogin: () -> Unit,
 ) {
     var barHost by remember {
@@ -527,12 +531,32 @@ private fun SalaCard(
                 is ModoSesion.Establecimiento -> {
                     Text(
                         text = stringResource(
-                            if (modo.admitido) R.string.sesion_modo_sala_admitido else R.string.sesion_modo_sala_pendiente,
+                            when {
+                                modo.sesionTrabajo -> R.string.sesion_modo_sala_admitido
+                                modo.admitido -> R.string.sesion_modo_sala_sin_jornada
+                                else -> R.string.sesion_modo_sala_pendiente
+                            },
                             modo.etiquetaLocal(),
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     MembresiasIdentityBlock(membresias = membresias)
+                    if (modo.admitido && !modo.sesionTrabajo) {
+                        PcPrimaryButton(
+                            text = stringResource(R.string.sesion_empezar_jornada),
+                            onClick = onIniciarJornada,
+                            enabled = !busy,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    if (modo.sesionTrabajo) {
+                        PcSecondaryButton(
+                            text = stringResource(R.string.sesion_terminar_jornada),
+                            onClick = onCortarJornada,
+                            enabled = !busy,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                     PcSecondaryButton(
                         text = stringResource(R.string.sesion_desconectar_bar),
                         onClick = onDesconectar,

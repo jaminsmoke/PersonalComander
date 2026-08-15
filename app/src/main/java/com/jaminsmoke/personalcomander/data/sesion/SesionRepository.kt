@@ -15,7 +15,7 @@ import kotlinx.coroutines.withContext
 
 class SesionRepository(
     context: Context,
-    scope: CoroutineScope,
+    private val scope: CoroutineScope,
     private val db: AppDatabase,
 ) {
     private val store = SesionStore(context)
@@ -187,6 +187,7 @@ class SesionRepository(
                 barPuerto = puerto,
                 admitido = sesion?.admitido == true,
                 nombreEstablecimiento = nombre,
+                sesionTrabajo = false,
             )
             store.guardarEstablecimiento(establecimiento)
             _modo.value = establecimiento
@@ -203,10 +204,54 @@ class SesionRepository(
     fun desconectarBar() {
         val actual = _modo.value
         if (actual !is ModoSesion.Establecimiento) return
+        val qr = actual.qr
+        val host = actual.barHost
+        val puerto = actual.barPuerto
+        if (actual.sesionTrabajo && qr != null) {
+            scope.launch(Dispatchers.IO) { BarLanCliente.postCortar(host, puerto, qr) }
+        }
         store.limpiarBar()
         val identidad = ModoSesion.Identidad(actual.perfil, actual.qr, actual.token)
         store.guardarIdentidad(identidad.perfil, identidad.qr, identidad.token)
         _modo.value = identidad
+    }
+
+    suspend fun iniciarJornada(): BarLanCliente.JornadaLanResult {
+        val actual = _modo.value as? ModoSesion.Establecimiento
+            ?: return BarLanCliente.JornadaLanResult(ok = false, codigo = 0)
+        val qr = actual.qr ?: return BarLanCliente.JornadaLanResult(ok = false, codigo = 0)
+        return withContext(Dispatchers.IO) {
+            val r = BarLanCliente.postIniciar(actual.barHost, actual.barPuerto, qr)
+            if (r.ok && r.sesionActiva) persistirJornada(true)
+            r
+        }
+    }
+
+    suspend fun cortarJornada(): BarLanCliente.JornadaLanResult {
+        val actual = _modo.value as? ModoSesion.Establecimiento
+            ?: return BarLanCliente.JornadaLanResult(ok = false, codigo = 0)
+        val qr = actual.qr
+        return withContext(Dispatchers.IO) {
+            val r = if (qr != null) {
+                BarLanCliente.postCortar(actual.barHost, actual.barPuerto, qr)
+            } else {
+                BarLanCliente.JornadaLanResult(ok = true, codigo = 0)
+            }
+            persistirJornada(false)
+            r
+        }
+    }
+
+    fun marcarJornadaCortada() {
+        persistirJornada(false)
+    }
+
+    private fun persistirJornada(activa: Boolean) {
+        val vigente = _modo.value as? ModoSesion.Establecimiento ?: return
+        if (vigente.sesionTrabajo == activa) return
+        val nuevo = vigente.copy(sesionTrabajo = activa)
+        store.guardarEstablecimiento(nuevo)
+        _modo.value = nuevo
     }
 
     /**
@@ -222,8 +267,22 @@ class SesionRepository(
             val admitido = sesion?.admitido ?: actual.admitido
             val nombre = health?.establecimiento?.trim()?.takeIf { it.isNotEmpty() }
                 ?: actual.nombreEstablecimiento
-            if (admitido == actual.admitido && nombre == actual.nombreEstablecimiento) return@withContext
-            val nuevo = actual.copy(admitido = admitido, nombreEstablecimiento = nombre)
+            val jornada = if (admitido) actual.sesionTrabajo else false
+            if (
+                admitido == actual.admitido &&
+                nombre == actual.nombreEstablecimiento &&
+                jornada == actual.sesionTrabajo
+            ) {
+                return@withContext
+            }
+            if (!jornada && actual.sesionTrabajo) {
+                BarLanCliente.postCortar(actual.barHost, actual.barPuerto, qr)
+            }
+            val nuevo = actual.copy(
+                admitido = admitido,
+                nombreEstablecimiento = nombre,
+                sesionTrabajo = jornada,
+            )
             store.guardarEstablecimiento(nuevo)
             _modo.value = nuevo
             if (admitido && !actual.admitido) espejarMapa(actual.barHost, actual.barPuerto)

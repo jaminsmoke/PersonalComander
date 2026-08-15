@@ -123,10 +123,13 @@ fun PcTurnoIndicador(
         ModoSesion.Local, is ModoSesion.Identidad ->
             stringResource(R.string.sesion_turno_standalone)
         is ModoSesion.Establecimiento ->
-            if (m.admitido) stringResource(R.string.sesion_turno_activo, m.etiquetaLocal())
-            else stringResource(R.string.sesion_turno_nodo_pendiente, m.etiquetaLocal())
+            when {
+                m.sesionTrabajo -> stringResource(R.string.sesion_turno_activo, m.etiquetaLocal())
+                m.admitido -> stringResource(R.string.sesion_turno_en_nodo, m.etiquetaLocal())
+                else -> stringResource(R.string.sesion_turno_nodo_pendiente, m.etiquetaLocal())
+            }
     }
-    val color = if (modo is ModoSesion.Establecimiento && modo.admitido) {
+    val color = if (modo is ModoSesion.Establecimiento && modo.sesionTrabajo) {
         MaterialTheme.colorScheme.secondary
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant

@@ -408,6 +408,11 @@ class ComandaViewModel(
 
     fun enviarACocina() {
         viewModelScope.launch {
+            val modoActual = sesion.modo.value
+            if (modoActual is ModoSesion.Establecimiento && !modoActual.sesionTrabajo) {
+                _error.value = ctx.getString(R.string.sesion_ronda_sin_jornada)
+                return@launch
+            }
             val envio = mutex.withLock {
                 try {
                     db.withTransaction {
@@ -450,7 +455,12 @@ class ComandaViewModel(
                     BarLanCliente.postRonda(modo.barHost, modo.barPuerto, ronda)
                 }
                 if (!resultado.ok) {
-                    _error.value = ctx.getString(R.string.error_send_ronda_bar)
+                    if (resultado.codigo == 403) {
+                        sesion.marcarJornadaCortada()
+                        _error.value = ctx.getString(R.string.sesion_ronda_sin_jornada)
+                    } else {
+                        _error.value = ctx.getString(R.string.error_send_ronda_bar)
+                    }
                 }
                 resultado.tickets
             } else {

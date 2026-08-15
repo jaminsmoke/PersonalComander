@@ -6,6 +6,7 @@ import com.jaminsmoke.personalcomander.data.AppDatabase
 import com.jaminsmoke.personalcomander.data.LineaEstado
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,7 +27,7 @@ import java.net.HttpURLConnection
 class RecogerServicio(
     private val context: Context,
     private val db: AppDatabase,
-    sesion: SesionRepository,
+    private val sesion: SesionRepository,
     scope: CoroutineScope,
 ) {
     private val _avisos = MutableSharedFlow<AvisoRecoger>(extraBufferCapacity = 8)
@@ -44,10 +45,28 @@ class RecogerServicio(
     }
 
     private suspend fun bucle(modo: ModoSesion.Establecimiento) {
+        coroutineScope {
+            if (modo.sesionTrabajo) {
+                launch { latido(modo) }
+            }
+            while (isActive) {
+                alinearConEstado(modo.barHost, modo.barPuerto)
+                escucharSse(modo.barHost, modo.barPuerto)
+                delay(2_000)
+            }
+        }
+    }
+
+    private suspend fun latido(modo: ModoSesion.Establecimiento) {
         while (currentCoroutineContext().isActive) {
-            alinearConEstado(modo.barHost, modo.barPuerto)
-            escucharSse(modo.barHost, modo.barPuerto)
-            delay(2_000)
+            val r = withContext(Dispatchers.IO) {
+                BarLanCliente.postHeartbeat(modo.barHost, modo.barPuerto, modo.perfil.id)
+            }
+            if (r.codigo == 403) {
+                avisarJornadaCortada()
+                return
+            }
+            delay(HEARTBEAT_MS)
         }
     }
 
@@ -114,7 +133,19 @@ class RecogerServicio(
                     LineaEstado.LISTA,
                 )
             }
+            RecogerLogica.TIPO_SESION_CORTADA -> avisarJornadaCortada()
         }
+    }
+
+    private suspend fun avisarJornadaCortada() {
+        sesion.marcarJornadaCortada()
+        _avisos.emit(
+            AvisoRecoger(
+                texto = context.getString(R.string.sesion_jornada_cortada),
+                mesaId = null,
+                ticketId = RecogerLogica.TIPO_SESION_CORTADA,
+            ),
+        )
     }
 
     private fun textoPreparado(evento: SalaEventLan, mesa: String?): String {
@@ -134,3 +165,5 @@ class RecogerServicio(
         }
     }
 }
+
+private const val HEARTBEAT_MS = 10_000L

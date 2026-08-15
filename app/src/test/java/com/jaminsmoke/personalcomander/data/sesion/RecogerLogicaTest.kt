@@ -232,6 +232,25 @@ class RecogerLogicaTest {
     }
 
     @Test
+    fun parseSalaEvent_sesion_cortada_sin_ticket() {
+        val e = RecogerLogica.parseSalaEvent(
+            """{"tipo":"sesion.cortada"}""",
+        )!!
+        assertEquals(RecogerLogica.TIPO_SESION_CORTADA, e.tipo)
+    }
+
+    @Test
+    fun parseSalaEvent_sesion_cortada_por_event_sse() {
+        val e = RecogerLogica.parseSalaEvent("{}", eventType = RecogerLogica.TIPO_SESION_CORTADA)!!
+        assertEquals(RecogerLogica.TIPO_SESION_CORTADA, e.tipo)
+    }
+
+    @Test
+    fun parseSalaEvent_sin_ticket_sigue_nulo_si_no_es_corte() {
+        assertEquals(null, RecogerLogica.parseSalaEvent("""{"tipo":"ticket.preparado"}"""))
+    }
+
+    @Test
     fun destinoClave() {
         assertEquals("bebida", RecogerLogica.destinoClave("BARRA"))
         assertEquals("comida", RecogerLogica.destinoClave("cocina"))
