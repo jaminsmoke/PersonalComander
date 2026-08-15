@@ -1,6 +1,7 @@
 package com.jaminsmoke.personalcomander.data.sesion
 
 import com.jaminsmoke.personalcomander.data.sesion.esActivo
+import com.jaminsmoke.personalcomander.data.sesion.esJornada
 import com.jaminsmoke.personalcomander.data.sesion.esStandalone
 import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
 import org.junit.Assert.assertEquals
@@ -61,7 +62,25 @@ class ModoSesionTest {
         assertTrue(modo.puedeAdherirseABar)
         assertEquals("192.168.1.10:8787", modo.etiquetaLocal())
         assertTrue(modo.esActivo)
+        assertFalse(modo.esJornada)
         assertFalse(modo.esStandalone)
+    }
+
+    @Test
+    fun establecimiento_jornada_es_permiso_de_ronda() {
+        val ligado = ModoSesion.Establecimiento(
+            perfil = perfil,
+            qr = "phid1:a:b:sig",
+            token = "tok",
+            barHost = "192.168.1.10",
+            admitido = true,
+            nombreEstablecimiento = "Casa Pepe",
+        )
+        assertTrue(ligado.esActivo)
+        assertFalse(ligado.esJornada)
+        val jornada = ligado.copy(sesionTrabajo = true)
+        assertTrue(jornada.esJornada)
+        assertTrue(jornada.esActivo)
     }
 
     @Test

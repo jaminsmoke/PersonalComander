@@ -62,6 +62,7 @@ enum class PlantillaAviso { COMPLETO, SOLO_MESA, SIN_MESA }
 object RecogerLogica {
     const val TIPO_PREPARADO = "ticket.preparado"
     const val TIPO_RECOGIDO = "ticket.recogido"
+    const val TIPO_SESION_CORTADA = "sesion.cortada"
 
     private val gson = Gson()
 
@@ -116,9 +117,10 @@ object RecogerLogica {
 
     fun parseSalaEvent(json: String, eventType: String? = null): SalaEventLan? = try {
         val e = gson.fromJson(json, SalaEventLan::class.java) ?: return null
-        if (e.ticketId.isBlank()) return null
         val tipo = e.tipo.ifBlank { eventType.orEmpty() }
         if (tipo.isBlank()) return null
+        if (tipo == TIPO_SESION_CORTADA) return e.copy(tipo = tipo)
+        if (e.ticketId.isBlank()) return null
         hidratarDesdeTicket(e.copy(tipo = tipo))
     } catch (_: Exception) {
         null

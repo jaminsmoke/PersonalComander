@@ -4,6 +4,9 @@
 /health
 /v1/rondas
 /v1/sesion
+/v1/sesion/iniciar
+/v1/sesion/cortar
+/v1/heartbeat
 /v1/estado
 /v1/eventos
 /v1/carta

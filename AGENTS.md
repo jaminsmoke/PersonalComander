@@ -77,7 +77,8 @@ python scripts/check_family_contracts.py --selftest
 # El job CI «Family contracts» (no required aún) pinea Identity/Bar main y deja
 # un summary en Actions (usadas / no usadas / error). Rojo solo si falta una ruta que llamamos.
 # Carta de Bar: GET /v1/carta; Commander cachea codigoBar al ligarse.
-# Lista blanca: POST /v1/sesion al ligar; admitido canda carta/mapa/TPV (rondas sin 403).
+# Lista blanca: POST /v1/sesion al ligar; admitido canda carta/mapa/TPV.
+# Jornada: POST /v1/sesion/iniciar + heartbeat; sin jornada las rondas son 403.
 # python scripts/check_family_contracts.py --identity-openapi … --negocio-openapi … --bar-module …
 ```
 

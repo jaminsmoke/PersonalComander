@@ -24,6 +24,8 @@ sealed class ModoSesion {
         val admitido: Boolean = false,
         /** Nombre de `GET /health`, no la IP. */
         val nombreEstablecimiento: String? = null,
+        /** Jornada concedida por Bar (`POST /v1/sesion/iniciar`). Distinto de [admitido]. */
+        val sesionTrabajo: Boolean = false,
     ) : ModoSesion()
 }
 
@@ -83,9 +85,13 @@ data class PerfilCamarero(
 val ModoSesion.esStandalone: Boolean
     get() = this !is ModoSesion.Establecimiento
 
-/** Turno abierto contra un nodo Bar (admitido o no). */
+/** Turno abierto contra un nodo Bar (admitido o no). No implica jornada. */
 val ModoSesion.esActivo: Boolean
     get() = this is ModoSesion.Establecimiento
+
+/** Bar concedió sesión de trabajo: se pueden mandar rondas. */
+val ModoSesion.esJornada: Boolean
+    get() = this is ModoSesion.Establecimiento && sesionTrabajo
 
 fun ModoSesion.Establecimiento.etiquetaLocal(): String =
     nombreEstablecimiento?.trim()?.takeIf { it.isNotEmpty() } ?: "$barHost:$barPuerto"

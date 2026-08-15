@@ -13,11 +13,16 @@ object BarLanCliente {
         const val HEALTH = "/health"
         const val RONDAS = "/v1/rondas"
         const val SESION = "/v1/sesion"
+        const val SESION_INICIAR = "/v1/sesion/iniciar"
+        const val SESION_CORTAR = "/v1/sesion/cortar"
+        const val HEARTBEAT = "/v1/heartbeat"
         const val ESTADO = "/v1/estado"
         const val EVENTOS = "/v1/eventos"
         const val CARTA = "/v1/carta"
 
-        fun todas(): List<String> = listOf(HEALTH, RONDAS, SESION, ESTADO, EVENTOS, CARTA)
+        fun todas(): List<String> = listOf(
+            HEALTH, RONDAS, SESION, SESION_INICIAR, SESION_CORTAR, HEARTBEAT, ESTADO, EVENTOS, CARTA,
+        )
     }
 
     data class Health(
@@ -102,6 +107,51 @@ object BarLanCliente {
         )
     } catch (_: Exception) {
         null
+    }
+
+    data class JornadaLanResult(
+        val ok: Boolean,
+        val codigo: Int,
+        val sesionActiva: Boolean = false,
+        val nodoViejo: Boolean = false,
+    )
+
+    fun postIniciar(host: String, puerto: Int, qr: String): JornadaLanResult {
+        val (codigo, cuerpo) = postJson(host, puerto, Rutas.SESION_INICIAR, cuerpoQr(qr))
+        return interpretarIniciar(codigo, cuerpo)
+    }
+
+    fun postCortar(host: String, puerto: Int, qr: String): JornadaLanResult {
+        val (codigo, _) = postJson(host, puerto, Rutas.SESION_CORTAR, cuerpoQr(qr))
+        return JornadaLanResult(ok = codigo in 200..299 || codigo == 404, codigo = codigo)
+    }
+
+    fun postHeartbeat(host: String, puerto: Int, camareroId: String): JornadaLanResult {
+        val cuerpo = JsonObject().apply { addProperty("camareroId", camareroId) }.toString()
+        val (codigo, _) = postJson(host, puerto, Rutas.HEARTBEAT, cuerpo)
+        return JornadaLanResult(ok = codigo in 200..299, codigo = codigo)
+    }
+
+    fun cuerpoQr(qr: String): String =
+        JsonObject().apply { addProperty("qr", qr) }.toString()
+
+    fun parseSesionActiva(json: String): Boolean? = try {
+        val o = JsonParser.parseString(json).asJsonObject
+        val el = o.get("sesionActiva") ?: o.get("sesion_activa")
+        if (el == null || el.isJsonNull || !el.isJsonPrimitive) null
+        else if (el.asJsonPrimitive.isBoolean) el.asBoolean else null
+    } catch (_: Exception) {
+        null
+    }
+
+    /** 404 = Bar 0.1 sin jornada: se trata como activa para no romper el envío. */
+    fun interpretarIniciar(codigo: Int, cuerpo: String): JornadaLanResult = when {
+        codigo == 404 -> JornadaLanResult(ok = true, codigo = 404, sesionActiva = true, nodoViejo = true)
+        codigo in 200..299 -> {
+            val activa = parseSesionActiva(cuerpo) ?: true
+            JornadaLanResult(ok = true, codigo = codigo, sesionActiva = activa)
+        }
+        else -> JornadaLanResult(ok = false, codigo = codigo)
     }
 
     data class PostRondaResult(
@@ -200,6 +250,27 @@ object BarLanCliente {
             }
         } catch (_: IOException) {
             // reconexión la gestiona RecogerServicio
+        }
+    }
+
+    private fun postJson(host: String, puerto: Int, path: String, json: String): Pair<Int, String> {
+        val conexion = URL("http://$host:$puerto$path").openConnection() as HttpURLConnection
+        return try {
+            conexion.connectTimeout = 2500
+            conexion.readTimeout = 4000
+            conexion.requestMethod = "POST"
+            conexion.doOutput = true
+            conexion.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+            conexion.outputStream.use { it.write(json.toByteArray(Charsets.UTF_8)) }
+            val codigo = conexion.responseCode
+            val texto = (if (codigo in 200..299) conexion.inputStream else conexion.errorStream)
+                ?.bufferedReader()?.use { it.readText() }
+                .orEmpty()
+            codigo to texto
+        } catch (_: IOException) {
+            0 to ""
+        } finally {
+            conexion.disconnect()
         }
     }
 }

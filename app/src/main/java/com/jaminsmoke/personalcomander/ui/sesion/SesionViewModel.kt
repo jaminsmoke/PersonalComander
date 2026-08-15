@@ -11,6 +11,7 @@ import com.jaminsmoke.personalcomander.data.sesion.ContrasteMembresia
 import com.jaminsmoke.personalcomander.data.sesion.IdentityJson
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.SesionStore
+import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -202,6 +203,34 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
 
     fun desconectarBar() {
         repo.desconectarBar()
+    }
+
+    fun iniciarJornada() {
+        viewModelScope.launch {
+            _busy.value = true
+            val r = repo.iniciarJornada()
+            _busy.value = false
+            _mensaje.value = when {
+                !r.ok -> ctx.getString(R.string.sesion_jornada_rechazada)
+                r.nodoViejo -> ctx.getString(R.string.sesion_jornada_nodo_viejo)
+                r.sesionActiva -> ctx.getString(
+                    R.string.sesion_jornada_iniciada,
+                    repo.modo.value.let { m ->
+                        (m as? ModoSesion.Establecimiento)?.etiquetaLocal() ?: ""
+                    },
+                )
+                else -> ctx.getString(R.string.sesion_jornada_pendiente_bar)
+            }
+        }
+    }
+
+    fun cortarJornada() {
+        viewModelScope.launch {
+            _busy.value = true
+            repo.cortarJornada()
+            _busy.value = false
+            _mensaje.value = ctx.getString(R.string.sesion_jornada_terminada)
+        }
     }
 
     fun revalidarTurno() {

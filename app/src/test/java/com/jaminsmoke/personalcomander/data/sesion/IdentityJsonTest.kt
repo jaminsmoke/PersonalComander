@@ -304,4 +304,40 @@ class BarLanClienteTest {
         assertEquals(null, BarLanCliente.parseSesion("{"))
         assertEquals(null, BarLanCliente.parseSesion("no-json"))
     }
+
+    @Test
+    fun interpretarIniciar_404_es_nodo_viejo() {
+        val r = BarLanCliente.interpretarIniciar(404, "")
+        assertTrue(r.ok)
+        assertTrue(r.nodoViejo)
+        assertTrue(r.sesionActiva)
+    }
+
+    @Test
+    fun interpretarIniciar_200_sin_campo_es_activa() {
+        val r = BarLanCliente.interpretarIniciar(200, """{"admitido":true}""")
+        assertTrue(r.ok)
+        assertTrue(r.sesionActiva)
+        assertFalse(r.nodoViejo)
+    }
+
+    @Test
+    fun interpretarIniciar_sesionActiva_false() {
+        val r = BarLanCliente.interpretarIniciar(200, """{"sesionActiva":false}""")
+        assertTrue(r.ok)
+        assertFalse(r.sesionActiva)
+    }
+
+    @Test
+    fun interpretarIniciar_403_rechaza() {
+        val r = BarLanCliente.interpretarIniciar(403, """{"detail":"no"}""")
+        assertFalse(r.ok)
+        assertFalse(r.sesionActiva)
+    }
+
+    @Test
+    fun cuerpoQr_incluye_qr() {
+        val o = com.google.gson.JsonParser.parseString(BarLanCliente.cuerpoQr("phid1:u1:c1:sig")).asJsonObject
+        assertEquals("phid1:u1:c1:sig", o.get("qr").asString)
+    }
 }
