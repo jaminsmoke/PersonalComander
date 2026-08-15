@@ -1,6 +1,7 @@
 package com.jaminsmoke.personalcomander.data.sesion
 
 import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 
 /** Parseo puro del contrato Identity `/v1`. Sin red. */
@@ -21,6 +22,12 @@ object IdentityJson {
     data class IdentityError(
         val detail: String,
         val code: String? = null,
+    )
+
+    data class RegistroIdentity(
+        val id: String,
+        val qr: String,
+        val dataOrigin: DataOrigin,
     )
 
     fun parseError(body: String): IdentityError {
@@ -44,9 +51,13 @@ object IdentityJson {
 
     fun parseErrorDetail(body: String): String = parseError(body).detail
 
-    fun parseRegistro(body: String): Pair<String, String> {
+    fun parseRegistro(body: String): RegistroIdentity {
         val o = JsonParser.parseString(body).asJsonObject
-        return o.get("id").asString to o.get("qr").asString
+        return RegistroIdentity(
+            id = o.get("id").asString,
+            qr = o.get("qr").asString,
+            dataOrigin = parseDataOrigin(o),
+        )
     }
 
     fun parsePerfil(el: JsonElement): PerfilCamarero {
@@ -59,7 +70,35 @@ object IdentityJson {
             telefono = o.get("telefono")?.takeUnless { it.isJsonNull }?.asString,
             fotoUrl = o.get("foto_url")?.takeUnless { it.isJsonNull }?.asString,
             nick = o.get("nick")?.takeUnless { it.isJsonNull }?.asString?.trim()?.ifBlank { null },
+            dataOrigin = parseDataOrigin(o),
         )
+    }
+
+    fun parseDataOrigin(o: JsonObject): DataOrigin {
+        val el = o.get("data_origin")
+        val raw = el?.takeUnless { it.isJsonNull }?.takeIf { it.isJsonPrimitive }?.asString
+        return DataOrigin.fromWire(raw)
+    }
+
+    fun cuerpoRegistro(
+        nombre: String,
+        apellidos: String,
+        email: String,
+        password: String,
+        nick: String,
+        telefono: String? = null,
+        origin: DataOrigin = DataOrigin.Real,
+    ): String {
+        val o = JsonObject().apply {
+            addProperty("nombre", nombre)
+            addProperty("apellidos", apellidos)
+            addProperty("email", email)
+            addProperty("password", password)
+            addProperty("nick", nick)
+            addProperty("data_origin", origin.wire)
+            if (!telefono.isNullOrBlank()) addProperty("telefono", telefono)
+        }
+        return o.toString()
     }
 
     fun parseLogin(body: String): SesionIdentity {

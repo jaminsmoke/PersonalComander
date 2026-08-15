@@ -32,6 +32,7 @@ class IdentityJsonTest {
         assertEquals(4, sesion.qr.split(":").size)
         assertEquals("/v1/camareros/me/foto", sesion.perfil.fotoUrl)
         assertEquals(null, sesion.perfil.nick)
+        assertEquals(DataOrigin.Real, sesion.perfil.origen)
     }
 
     @Test
@@ -54,6 +55,47 @@ class IdentityJsonTest {
         assertEquals(null, perfil.fotoUrl)
         assertEquals(null, perfil.telefono)
         assertEquals(null, perfil.nick)
+        assertEquals(DataOrigin.Real, perfil.origen)
+    }
+
+    @Test
+    fun parsePerfil_data_origin_test() {
+        val perfil = IdentityJson.parsePerfil(
+            com.google.gson.JsonParser.parseString(
+                """{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com","data_origin":"test"}""",
+            ),
+        )
+        assertEquals(DataOrigin.Test, perfil.origen)
+        assertEquals(DataOrigin.Test, perfil.dataOrigin)
+    }
+
+    @Test
+    fun parsePerfil_data_origin_demo() {
+        val perfil = IdentityJson.parsePerfil(
+            com.google.gson.JsonParser.parseString(
+                """{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com","data_origin":"demo"}""",
+            ),
+        )
+        assertEquals(DataOrigin.Demo, perfil.origen)
+    }
+
+    @Test
+    fun parsePerfil_data_origin_basura_es_real() {
+        val perfil = IdentityJson.parsePerfil(
+            com.google.gson.JsonParser.parseString(
+                """{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com","data_origin":"staging"}""",
+            ),
+        )
+        assertEquals(DataOrigin.Real, perfil.origen)
+    }
+
+    @Test
+    fun parseLogin_con_data_origin() {
+        val body = """
+            {"token":"abc","camarero":{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com","data_origin":"test"},"qr":"phid1:u1:c1:sig"}
+        """.trimIndent()
+        val sesion = IdentityJson.parseLogin(body)
+        assertEquals(DataOrigin.Test, sesion.perfil.origen)
     }
 
     @Test
@@ -85,9 +127,69 @@ class IdentityJsonTest {
 
     @Test
     fun parseRegistro() {
-        val (id, qr) = IdentityJson.parseRegistro("""{"id":"u1","qr":"phid1:u1:c1:sig"}""")
-        assertEquals("u1", id)
-        assertTrue(qr.startsWith("phid1:"))
+        val r = IdentityJson.parseRegistro("""{"id":"u1","qr":"phid1:u1:c1:sig"}""")
+        assertEquals("u1", r.id)
+        assertTrue(r.qr.startsWith("phid1:"))
+        assertEquals(DataOrigin.Real, r.dataOrigin)
+    }
+
+    @Test
+    fun parseRegistro_con_origen() {
+        val r = IdentityJson.parseRegistro("""{"id":"u1","qr":"phid1:u1:c1:sig","data_origin":"demo"}""")
+        assertEquals(DataOrigin.Demo, r.dataOrigin)
+    }
+
+    @Test
+    fun cuerpoRegistro_incluye_data_origin_real() {
+        val json = IdentityJson.cuerpoRegistro(
+            nombre = "Ana",
+            apellidos = "García",
+            email = "ana@example.com",
+            password = "secret12",
+            nick = "Anita",
+        )
+        val o = com.google.gson.JsonParser.parseString(json).asJsonObject
+        assertEquals("real", o.get("data_origin").asString)
+        assertEquals("Anita", o.get("nick").asString)
+        assertEquals(false, o.has("telefono"))
+    }
+
+    @Test
+    fun cuerpoRegistro_test_y_telefono() {
+        val json = IdentityJson.cuerpoRegistro(
+            nombre = "Ana",
+            apellidos = "García",
+            email = "ana@example.com",
+            password = "secret12",
+            nick = "Anita",
+            telefono = "600111222",
+            origin = DataOrigin.Test,
+        )
+        val o = com.google.gson.JsonParser.parseString(json).asJsonObject
+        assertEquals("test", o.get("data_origin").asString)
+        assertEquals("600111222", o.get("telefono").asString)
+    }
+
+    @Test
+    fun gson_perfil_sin_origen_es_real() {
+        val perfil = com.google.gson.Gson().fromJson(
+            """{"id":"u1","nombre":"Ana","apellidos":"García","email":"a@b.c"}""",
+            PerfilCamarero::class.java,
+        )
+        assertEquals(DataOrigin.Real, perfil.origen)
+        assertEquals(null, perfil.dataOrigin)
+    }
+
+    @Test
+    fun dataOrigin_fromWire() {
+        assertEquals(DataOrigin.Real, DataOrigin.fromWire(null))
+        assertEquals(DataOrigin.Real, DataOrigin.fromWire(""))
+        assertEquals(DataOrigin.Real, DataOrigin.fromWire("real"))
+        assertEquals(DataOrigin.Test, DataOrigin.fromWire("TEST"))
+        assertEquals(DataOrigin.Demo, DataOrigin.fromWire(" Demo "))
+        assertEquals("real", DataOrigin.Real.wire)
+        assertEquals("test", DataOrigin.Test.wire)
+        assertEquals("demo", DataOrigin.Demo.wire)
     }
 
     @Test

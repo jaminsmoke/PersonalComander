@@ -52,26 +52,30 @@ class IdentityCliente(
         password: String,
         telefono: String? = null,
         nick: String,
+        origin: DataOrigin = DataOrigin.Real,
     ): IdentityRespuesta<IdentityJson.SesionIdentity> {
-        val payload = JsonObject().apply {
-            addProperty("nombre", nombre)
-            addProperty("apellidos", apellidos)
-            addProperty("email", email)
-            addProperty("password", password)
-            addProperty("nick", nick)
-            if (!telefono.isNullOrBlank()) addProperty("telefono", telefono)
-        }
-        val http = post(Rutas.REGISTRO, payload.toString())
+        val http = post(
+            Rutas.REGISTRO,
+            IdentityJson.cuerpoRegistro(nombre, apellidos, email, password, nick, telefono, origin),
+        )
         if (http.codigo !in 200..299) return errorDe(http)
-        val (id, qr) = IdentityJson.parseRegistro(http.cuerpo)
+        val registro = IdentityJson.parseRegistro(http.cuerpo)
         val login = login(email, password)
         if (login.ok && login.valor != null) return login
         return IdentityRespuesta(
             true,
             IdentityJson.SesionIdentity(
                 token = null,
-                perfil = PerfilCamarero(id, nombre, apellidos, email, telefono, nick = nick),
-                qr = qr,
+                perfil = PerfilCamarero(
+                    registro.id,
+                    nombre,
+                    apellidos,
+                    email,
+                    telefono,
+                    nick = nick,
+                    dataOrigin = registro.dataOrigin,
+                ),
+                qr = registro.qr,
             ),
             codigo = http.codigo,
         )

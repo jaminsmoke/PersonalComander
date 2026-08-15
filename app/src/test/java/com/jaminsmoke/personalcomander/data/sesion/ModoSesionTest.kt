@@ -96,4 +96,11 @@ class ModoSesionTest {
         assertEquals("Lucía", modo.etiquetaHeader())
         assertEquals("Ana García", conNick.nombreCompleto)
     }
+
+    @Test
+    fun origen_default_es_real() {
+        assertEquals(DataOrigin.Real, perfil.origen)
+        assertEquals(DataOrigin.Test, perfil.copy(dataOrigin = DataOrigin.Test).origen)
+        assertEquals(DataOrigin.Real, perfil.copy(dataOrigin = null).origen)
+    }
 }

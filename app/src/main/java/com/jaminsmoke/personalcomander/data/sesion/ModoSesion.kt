@@ -1,5 +1,7 @@
 package com.jaminsmoke.personalcomander.data.sesion
 
+import com.google.gson.annotations.SerializedName
+
 /**
  * Sesión de primer nivel del camarero. Local no exige cuenta.
  * [Establecimiento] con [admitido] false = Bar visto por health, pendiente de lista blanca.
@@ -25,6 +27,29 @@ sealed class ModoSesion {
     ) : ModoSesion()
 }
 
+/** Linaje de la cuenta en Identity. No es un rol; inmutable tras el alta. */
+enum class DataOrigin {
+    @SerializedName("real") Real,
+    @SerializedName("test") Test,
+    @SerializedName("demo") Demo,
+    ;
+
+    val wire: String
+        get() = when (this) {
+            Real -> "real"
+            Test -> "test"
+            Demo -> "demo"
+        }
+
+    companion object {
+        fun fromWire(value: String?): DataOrigin = when (value?.trim()?.lowercase()) {
+            "test" -> Test
+            "demo" -> Demo
+            else -> Real
+        }
+    }
+}
+
 data class PerfilCamarero(
     val id: String,
     val nombre: String,
@@ -34,6 +59,8 @@ data class PerfilCamarero(
     val fotoUrl: String? = null,
     /** Mote visible en establecimientos (colas, voz). Distinto del nombre legal. */
     val nick: String? = null,
+    /** Linaje Identity. Null en prefs viejos: [origen] cae a Real. */
+    val dataOrigin: DataOrigin? = DataOrigin.Real,
 ) {
     val nombreCompleto: String
         get() = "$nombre $apellidos".trim()
@@ -41,6 +68,9 @@ data class PerfilCamarero(
     /** Referencia coloquial: nick si hay; si no, el primer nombre. */
     val mote: String
         get() = nick?.trim()?.takeIf { it.isNotEmpty() } ?: nombre
+
+    val origen: DataOrigin
+        get() = dataOrigin ?: DataOrigin.Real
 
     val iniciales: String
         get() = buildString {
