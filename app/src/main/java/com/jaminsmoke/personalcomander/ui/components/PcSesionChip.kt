@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,11 +25,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.etiquetaHeader
+import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
 import com.jaminsmoke.personalcomander.data.sesion.perfil
 
 @Composable
@@ -106,5 +110,38 @@ fun PcSesionChip(
                 maxLines = 1,
             )
         }
+    }
+}
+
+@Composable
+fun PcTurnoIndicador(
+    modo: ModoSesion,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val texto = when (val m = modo) {
+        ModoSesion.Local, is ModoSesion.Identidad ->
+            stringResource(R.string.sesion_turno_standalone)
+        is ModoSesion.Establecimiento ->
+            if (m.admitido) stringResource(R.string.sesion_turno_activo, m.etiquetaLocal())
+            else stringResource(R.string.sesion_turno_nodo_pendiente, m.etiquetaLocal())
+    }
+    val color = if (modo is ModoSesion.Establecimiento && modo.admitido) {
+        MaterialTheme.colorScheme.secondary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        Text(
+            text = texto,
+            style = MaterialTheme.typography.labelLarge,
+            color = color,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = modifier
+                .clip(RoundedCornerShape(999.dp))
+                .clickable(onClick = onClick)
+                .semantics { contentDescription = texto },
+        )
     }
 }

@@ -20,6 +20,8 @@ sealed class ModoSesion {
         val barHost: String,
         val barPuerto: Int = BarLanCliente.PUERTO,
         val admitido: Boolean = false,
+        /** Nombre de `GET /health`, no la IP. */
+        val nombreEstablecimiento: String? = null,
     ) : ModoSesion()
 }
 
@@ -46,6 +48,17 @@ data class PerfilCamarero(
             apellidos.firstOrNull()?.let { append(it.uppercaseChar()) }
         }.ifBlank { "?" }
 }
+
+/** Sin turno LAN: funciones locales completas (con o sin cuenta). */
+val ModoSesion.esStandalone: Boolean
+    get() = this !is ModoSesion.Establecimiento
+
+/** Turno abierto contra un nodo Bar (admitido o no). */
+val ModoSesion.esActivo: Boolean
+    get() = this is ModoSesion.Establecimiento
+
+fun ModoSesion.Establecimiento.etiquetaLocal(): String =
+    nombreEstablecimiento?.trim()?.takeIf { it.isNotEmpty() } ?: "$barHost:$barPuerto"
 
 val ModoSesion.cartaEditable: Boolean
     get() = when (this) {

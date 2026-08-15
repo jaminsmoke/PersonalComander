@@ -1,5 +1,8 @@
 package com.jaminsmoke.personalcomander.data.sesion
 
+import com.jaminsmoke.personalcomander.data.sesion.esActivo
+import com.jaminsmoke.personalcomander.data.sesion.esStandalone
+import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -56,6 +59,9 @@ class ModoSesionTest {
         assertTrue(modo.cartaEditable)
         assertTrue(modo.mapaEditable)
         assertTrue(modo.puedeAdherirseABar)
+        assertEquals("192.168.1.10:8787", modo.etiquetaLocal())
+        assertTrue(modo.esActivo)
+        assertFalse(modo.esStandalone)
     }
 
     @Test
@@ -66,9 +72,20 @@ class ModoSesionTest {
             token = "tok",
             barHost = "192.168.1.10",
             admitido = true,
+            nombreEstablecimiento = "Casa Pepe",
         )
         assertFalse(modo.cartaEditable)
         assertFalse(modo.mapaEditable)
+        assertEquals("Casa Pepe", modo.etiquetaLocal())
+    }
+
+    @Test
+    fun standalone_es_local_o_identidad() {
+        assertTrue(ModoSesion.Local.esStandalone)
+        assertFalse(ModoSesion.Local.esActivo)
+        val identidad = ModoSesion.Identidad(perfil, "phid1:a:b:sig", "tok")
+        assertTrue(identidad.esStandalone)
+        assertFalse(identidad.esActivo)
     }
 
     @Test

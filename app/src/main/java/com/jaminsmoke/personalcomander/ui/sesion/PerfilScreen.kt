@@ -46,6 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.credencialRevocada
+import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
 import com.jaminsmoke.personalcomander.data.sesion.perfil
 import com.jaminsmoke.personalcomander.data.sesion.qr
 import com.jaminsmoke.personalcomander.ui.components.AvatarCamarero
@@ -147,7 +148,7 @@ fun PerfilScreen(
                     is ModoSesion.Establecimiento -> Text(
                         text = stringResource(
                             if (actual.admitido) R.string.sesion_modo_sala_admitido else R.string.sesion_modo_sala_pendiente,
-                            "${actual.barHost}:${actual.barPuerto}",
+                            actual.etiquetaLocal(),
                         ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.secondary,
