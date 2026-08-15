@@ -64,6 +64,7 @@ import com.jaminsmoke.personalcomander.data.sesion.BarLanCliente
 import com.jaminsmoke.personalcomander.data.sesion.MembresiaEstablecimiento
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.cartaEditable
+import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
 import com.jaminsmoke.personalcomander.ui.components.BrandHeaderDensity
 import com.jaminsmoke.personalcomander.ui.components.GlassCard
 import com.jaminsmoke.personalcomander.ui.components.PcBrandHeader
@@ -527,7 +528,7 @@ private fun SalaCard(
                     Text(
                         text = stringResource(
                             if (modo.admitido) R.string.sesion_modo_sala_admitido else R.string.sesion_modo_sala_pendiente,
-                            "${modo.barHost}:${modo.barPuerto}",
+                            modo.etiquetaLocal(),
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                     )

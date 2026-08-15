@@ -191,6 +191,10 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
                         R.string.sesion_bar_conectado_sin_membresia,
                         r.nombreBar ?: host,
                     )
+                r.admitido -> ctx.getString(
+                    R.string.sesion_bar_conectado_admitido,
+                    r.nombreBar ?: host,
+                )
                 else -> ctx.getString(R.string.sesion_bar_conectado_pendiente)
             }
         }
@@ -198,6 +202,10 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
 
     fun desconectarBar() {
         repo.desconectarBar()
+    }
+
+    fun revalidarTurno() {
+        viewModelScope.launch { repo.revalidarTurno() }
     }
 
     companion object {

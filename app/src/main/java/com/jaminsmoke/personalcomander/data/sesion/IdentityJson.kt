@@ -137,4 +137,5 @@ data class ConectarBarResult(
     val ok: Boolean,
     val contraste: ContrasteMembresia = ContrasteMembresia.SinDatos,
     val nombreBar: String? = null,
+    val admitido: Boolean = false,
 )

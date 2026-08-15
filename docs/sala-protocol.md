@@ -74,12 +74,15 @@ Bar es la fuente de verdad del layout. Si el camarero está **admitido**, al lig
 
 ## Flujo de usuario
 
-1. El camarero inicia sesión contra Identity (servicio camareros) desde **Ajustes** y abre **Perfil** para revisar la credencial QR y las membresías cacheadas.
-2. Busca el Bar en la sección de sala y conecta por host y puerto (nodo de turno). Si Identity lista locales y el `health` no coincide, se avisa pero **no se bloquea**. Tras el health, Commander consulta `POST /v1/sesion`.
-3. Si está en la lista blanca, carta, mapa y TPV pasan a solo lectura. Si no, permanece pendiente y sigue editando. Las rondas se envían igual.
-4. Al enviar, Comander manda **solo líneas `PENDIENTE`**, las marca `ENVIADA` y guarda los `ticketId` del body.
-5. Bar marca preparado → SSE → líneas `LISTA` + snackbar/notificación.
-6. El camarero marca **servido en mesa** (`SERVIDA`). Recogido de bandeja sigue en Bar.
+1. El camarero inicia sesión contra Identity (servicio camareros) desde **Ajustes** o **Entrar**. La cuenta puede estar **registrada** en varios establecimientos; eso no activa un turno.
+2. **Standalone** (Local o Identidad): carta y mapa locales. El header lo indica. **Activo** es un turno en **un** nodo Bar a la vez.
+3. Activa el turno buscando el Bar en LAN (puerto 8787) o por host. Tras el health, Commander consulta `POST /v1/sesion`. Si Identity lista locales y el `health` no coincide, se avisa pero **no se bloquea**.
+4. Si está en la lista blanca, carta, mapa y TPV pasan a solo lectura y se replica el layout. Si no, el turno sigue en el nodo y el mapa local permanece editable. Al volver a Home se **revalida** `admitido` (no hace falta desactivar y reactivar). Las rondas se envían igual.
+5. Al enviar, Comander manda **solo líneas `PENDIENTE`**, las marca `ENVIADA` y guarda los `ticketId` del body.
+6. Bar marca preparado → SSE → líneas `LISTA` + snackbar/notificación.
+7. El camarero marca **servido en mesa** (`SERVIDA`). Recogido de bandeja sigue en Bar.
+
+Pendiente de lista blanca **no** es una invitación de cuenta. Las invitaciones (Bar invita, camarero acepta) van en ítems de Bar e Identity; la aceptación in-app aún no está.
 
 Si Bar falla el POST, la comanda local permanece enviada y el tablet muestra un aviso.
 

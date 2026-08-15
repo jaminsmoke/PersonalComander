@@ -34,6 +34,7 @@ class SesionStore(context: Context) {
                 barHost = barHost,
                 barPuerto = prefs.getInt(KEY_BAR_PUERTO, BarLanCliente.PUERTO),
                 admitido = prefs.getBoolean(KEY_BAR_ADMITIDO, false),
+                nombreEstablecimiento = prefs.getString(KEY_BAR_NOMBRE, null)?.takeIf { it.isNotBlank() },
             )
         }
         return ModoSesion.Identidad(perfil, qr, token)
@@ -46,6 +47,7 @@ class SesionStore(context: Context) {
             .putString(KEY_QR, qr.orEmpty())
             .remove(KEY_BAR_HOST)
             .remove(KEY_BAR_ADMITIDO)
+            .remove(KEY_BAR_NOMBRE)
             .apply()
     }
 
@@ -57,6 +59,7 @@ class SesionStore(context: Context) {
             .putString(KEY_BAR_HOST, modo.barHost)
             .putInt(KEY_BAR_PUERTO, modo.barPuerto)
             .putBoolean(KEY_BAR_ADMITIDO, modo.admitido)
+            .putString(KEY_BAR_NOMBRE, modo.nombreEstablecimiento.orEmpty())
             .apply()
     }
 
@@ -85,6 +88,7 @@ class SesionStore(context: Context) {
             .remove(KEY_BAR_HOST)
             .remove(KEY_BAR_PUERTO)
             .remove(KEY_BAR_ADMITIDO)
+            .remove(KEY_BAR_NOMBRE)
             .apply()
     }
 
@@ -105,6 +109,7 @@ class SesionStore(context: Context) {
         private const val KEY_BAR_HOST = "bar_host"
         private const val KEY_BAR_PUERTO = "bar_puerto"
         private const val KEY_BAR_ADMITIDO = "bar_admitido"
+        private const val KEY_BAR_NOMBRE = "bar_nombre"
         private const val KEY_MEMBRESIAS = "membresias_identity"
     }
 }

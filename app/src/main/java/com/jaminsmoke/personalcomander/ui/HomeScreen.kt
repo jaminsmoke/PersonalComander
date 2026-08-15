@@ -32,6 +32,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,14 +43,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.R
+import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.ui.components.BrandHeaderDensity
 import com.jaminsmoke.personalcomander.ui.components.PcBrandHeader
 import com.jaminsmoke.personalcomander.ui.components.PcSesionChip
+import com.jaminsmoke.personalcomander.ui.components.PcTurnoIndicador
 import com.jaminsmoke.personalcomander.ui.sesion.SesionViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,9 +74,18 @@ fun HomeScreen(
     val fotoSesion by sesionViewModel.foto.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scheme = MaterialTheme.colorScheme
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     LaunchedEffect(state.error) {
         state.error?.let { snackbarHostState.showSnackbar(it) }
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) sesionViewModel.revalidarTurno()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     Scaffold(
@@ -79,13 +94,21 @@ fun HomeScreen(
         topBar = {
             PcBrandHeader(
                 title = stringResource(R.string.home_title),
-                density = BrandHeaderDensity.Hero,
+                density = BrandHeaderDensity.Compact,
                 actions = {
                     PcSesionChip(
                         modo = modo,
                         fotoBytes = fotoSesion,
                         onEntrar = onOpenAuth,
                         onPerfil = onOpenPerfil,
+                    )
+                },
+                supportingContent = {
+                    PcTurnoIndicador(
+                        modo = modo,
+                        onClick = {
+                            if (modo is ModoSesion.Local) onOpenAuth() else onOpenAjustes()
+                        },
                     )
                 },
             )
@@ -95,7 +118,7 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {

@@ -7,13 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -40,15 +37,22 @@ fun PcBrandHeader(
     modifier: Modifier = Modifier,
     navigationIcon: (@Composable () -> Unit)? = null,
     actions: (@Composable RowScope.() -> Unit)? = null,
+    supportingContent: (@Composable () -> Unit)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
     val hero = density == BrandHeaderDensity.Hero
-    val shieldSize = if (hero) 56.dp else 40.dp
-    val barHeight = if (hero) 88.dp else 64.dp
+    val shieldSize = if (hero) 56.dp else 36.dp
     val titleStyle = if (hero) {
         MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
     } else {
         MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+    }
+    // El Scaffold de la app ya consume statusBars en NavHost: no volver a
+    // aplicar el inset aquí (duplicaba un hueco vacío encima del logo).
+    val rowHeight = when {
+        hero -> Modifier.height(88.dp)
+        supportingContent != null -> Modifier.padding(vertical = 4.dp)
+        else -> Modifier.height(52.dp)
     }
 
     Surface(
@@ -59,15 +63,14 @@ fun PcBrandHeader(
         Column {
             Row(
                 modifier = Modifier
-                    .windowInsetsPadding(WindowInsets.statusBars)
                     .fillMaxWidth()
-                    .height(barHeight)
+                    .then(rowHeight)
                     .padding(
                         start = if (navigationIcon == null) 16.dp else 4.dp,
                         end = if (actions == null) 16.dp else 4.dp,
                     ),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 if (navigationIcon != null) {
                     navigationIcon()
@@ -78,14 +81,18 @@ fun PcBrandHeader(
                     modifier = Modifier.size(shieldSize),
                     contentScale = ContentScale.Fit,
                 )
-                Text(
-                    text = title,
-                    color = scheme.secondary,
-                    style = titleStyle,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        color = scheme.secondary,
+                        style = titleStyle,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (supportingContent != null) {
+                        supportingContent()
+                    }
+                }
                 if (actions != null) {
                     Row(content = actions)
                 }

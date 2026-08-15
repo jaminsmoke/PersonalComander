@@ -80,6 +80,7 @@ class SesionRepository(
             persistir(perfil, qr, token)
             cargarFoto(token, perfil.fotoUrl)
             refrescarMembresias(token)
+            revalidarTurno()
         }
     }
 
@@ -176,6 +177,7 @@ class SesionRepository(
             val health = BarLanCliente.health(host, puerto)
             if (!BarLanCliente.esBar(health)) return@withContext ConectarBarResult(ok = false)
             val sesion = BarLanCliente.postSesion(host, puerto, qr)
+            val nombre = health?.establecimiento?.trim()?.takeIf { it.isNotEmpty() }
             val establecimiento = ModoSesion.Establecimiento(
                 perfil = perfil,
                 qr = qr,
@@ -183,6 +185,7 @@ class SesionRepository(
                 barHost = host,
                 barPuerto = puerto,
                 admitido = sesion?.admitido == true,
+                nombreEstablecimiento = nombre,
             )
             store.guardarEstablecimiento(establecimiento)
             _modo.value = establecimiento
@@ -190,8 +193,9 @@ class SesionRepository(
             if (establecimiento.admitido) espejarMapa(host, puerto)
             ConectarBarResult(
                 ok = true,
-                contraste = IdentityJson.contrastarHealth(health?.establecimiento, _membresias.value),
-                nombreBar = health?.establecimiento,
+                contraste = IdentityJson.contrastarHealth(nombre, _membresias.value),
+                nombreBar = nombre,
+                admitido = establecimiento.admitido,
             )
         }
 
@@ -202,6 +206,27 @@ class SesionRepository(
         val identidad = ModoSesion.Identidad(actual.perfil, actual.qr, actual.token)
         store.guardarIdentidad(identidad.perfil, identidad.qr, identidad.token)
         _modo.value = identidad
+    }
+
+    /**
+     * Vuelve a consultar lista blanca y el nombre de health sin desactivar el turno.
+     * Si pasa a admitido, espeja el mapa. Best-effort: red caída no desliga.
+     */
+    suspend fun revalidarTurno() {
+        val actual = _modo.value as? ModoSesion.Establecimiento ?: return
+        val qr = actual.qr ?: return
+        withContext(Dispatchers.IO) {
+            val sesion = BarLanCliente.postSesion(actual.barHost, actual.barPuerto, qr)
+            val health = BarLanCliente.health(actual.barHost, actual.barPuerto)
+            val admitido = sesion?.admitido ?: actual.admitido
+            val nombre = health?.establecimiento?.trim()?.takeIf { it.isNotEmpty() }
+                ?: actual.nombreEstablecimiento
+            if (admitido == actual.admitido && nombre == actual.nombreEstablecimiento) return@withContext
+            val nuevo = actual.copy(admitido = admitido, nombreEstablecimiento = nombre)
+            store.guardarEstablecimiento(nuevo)
+            _modo.value = nuevo
+            if (admitido && !actual.admitido) espejarMapa(actual.barHost, actual.barPuerto)
+        }
     }
 
     /** Best-effort: 404 o red caída no deshacen el ligue. No borra productos locales. */
