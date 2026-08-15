@@ -48,8 +48,9 @@ class SesionRepository(
         password: String,
         telefono: String? = null,
         nick: String,
+        origin: DataOrigin = DataOrigin.Real,
     ): IdentityRespuesta<IdentityJson.SesionIdentity> = withContext(Dispatchers.IO) {
-        val r = cliente().registrar(nombre, apellidos, email, password, telefono, nick)
+        val r = cliente().registrar(nombre, apellidos, email, password, telefono, nick, origin)
         aplicarSesion(r)
         r
     }
