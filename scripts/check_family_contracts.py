@@ -202,6 +202,7 @@ def _fixtures_ok() -> tuple[dict, dict, str]:
             "/v1/camareros/me/qr": {},
             "/v1/camareros/me/renovar": {},
             "/v1/camareros/me/revocar": {},
+            "/v1/camareros/me/visibilidad": {},
             "/v1/camareros/registro": {},
             "/health": {},
             "/v1/keys/qr": {},
