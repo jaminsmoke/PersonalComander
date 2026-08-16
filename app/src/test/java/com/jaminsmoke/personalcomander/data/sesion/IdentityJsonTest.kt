@@ -20,6 +20,40 @@ class IdentityJsonTest {
     }
 
     @Test
+    fun parseLogin_con_ficha_url() {
+        val body = """
+            {"token":"abc","camarero":{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com"},"qr":"phid1:u1:c1:sig","ficha_url":"https://ficha.example/ficha?qr=phid1:u1:c1:sig"}
+        """.trimIndent()
+        val sesion = IdentityJson.parseLogin(body)
+        assertEquals("phid1:u1:c1:sig", sesion.qr)
+        assertEquals("https://ficha.example/ficha?qr=phid1:u1:c1:sig", sesion.fichaUrl)
+    }
+
+    @Test
+    fun parseQr_con_ficha_url() {
+        val q = IdentityJson.parseQr(
+            """{"qr":"phid1:u1:c1:sig","ficha_url":"https://ficha.example/ficha?qr=phid1:u1:c1:sig"}""",
+        )
+        assertEquals("phid1:u1:c1:sig", q.qr)
+        assertEquals("https://ficha.example/ficha?qr=phid1:u1:c1:sig", q.fichaUrl)
+    }
+
+    @Test
+    fun parseQr_sin_ficha_url() {
+        val q = IdentityJson.parseQr("""{"qr":"phid1:u1:c1:sig"}""")
+        assertEquals("phid1:u1:c1:sig", q.qr)
+        assertEquals(null, q.fichaUrl)
+    }
+
+    @Test
+    fun parseRegistro_con_ficha_url() {
+        val r = IdentityJson.parseRegistro(
+            """{"id":"u1","qr":"phid1:u1:c1:sig","ficha_url":"https://ficha.example/ficha?qr=phid1:u1:c1:sig"}""",
+        )
+        assertEquals("https://ficha.example/ficha?qr=phid1:u1:c1:sig", r.fichaUrl)
+    }
+
+    @Test
     fun parseLogin() {
         val body = """
             {"token":"abc","camarero":{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com","telefono":null,"foto_url":"/v1/camareros/me/foto"},"qr":"phid1:u1:c1:sig"}
@@ -29,6 +63,7 @@ class IdentityJsonTest {
         assertEquals("u1", sesion.perfil.id)
         assertEquals("Ana", sesion.perfil.nombre)
         assertEquals("phid1:u1:c1:sig", sesion.qr)
+        assertEquals(null, sesion.fichaUrl)
         assertEquals(4, sesion.qr.split(":").size)
         assertEquals("/v1/camareros/me/foto", sesion.perfil.fotoUrl)
         assertEquals(null, sesion.perfil.nick)

@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -47,8 +48,9 @@ import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.credencialRevocada
 import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
+import com.jaminsmoke.personalcomander.data.sesion.fichaUrl
 import com.jaminsmoke.personalcomander.data.sesion.perfil
-import com.jaminsmoke.personalcomander.data.sesion.qr
+import com.jaminsmoke.personalcomander.data.sesion.qrVisible
 import com.jaminsmoke.personalcomander.ui.components.AvatarCamarero
 import com.jaminsmoke.personalcomander.ui.components.BrandHeaderDensity
 import com.jaminsmoke.personalcomander.ui.components.GlassCard
@@ -68,8 +70,12 @@ fun PerfilScreen(
     val busy by viewModel.busy.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
     val perfil = modo.perfil
-    val qr = modo.qr
-    val qrBmp = remember(qr) { qr?.let { qrImageBitmap(it) } }
+    val qrVisible = modo.qrVisible
+    val fichaHttp = modo.fichaUrl?.trim()?.takeIf {
+        it.startsWith("https://") || it.startsWith("http://")
+    }
+    val qrBmp = remember(qrVisible) { qrVisible?.let { qrImageBitmap(it) } }
+    val uriHandler = LocalUriHandler.current
     val snackbar = remember { SnackbarHostState() }
     var confirmarRenovar by remember { mutableStateOf(false) }
     var confirmarRevocar by remember { mutableStateOf(false) }
@@ -205,7 +211,10 @@ fun PerfilScreen(
                             )
                         } else {
                             Text(
-                                stringResource(R.string.sesion_qr_desc),
+                                stringResource(
+                                    if (fichaHttp != null) R.string.sesion_qr_desc
+                                    else R.string.sesion_qr_desc_sin_url,
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -214,6 +223,14 @@ fun PerfilScreen(
                                     bitmap = qrBmp,
                                     contentDescription = stringResource(R.string.sesion_qr_desc_img),
                                     modifier = Modifier.size(240.dp),
+                                )
+                            }
+                            if (fichaHttp != null) {
+                                PcPrimaryButton(
+                                    text = stringResource(R.string.sesion_qr_abrir),
+                                    onClick = { uriHandler.openUri(fichaHttp) },
+                                    enabled = !busy,
+                                    modifier = Modifier.fillMaxWidth(),
                                 )
                             }
                             PcSecondaryButton(

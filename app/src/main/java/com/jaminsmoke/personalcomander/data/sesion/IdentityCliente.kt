@@ -76,6 +76,7 @@ class IdentityCliente(
                     dataOrigin = registro.dataOrigin,
                 ),
                 qr = registro.qr,
+                fichaUrl = registro.fichaUrl,
             ),
             codigo = http.codigo,
         )
@@ -112,7 +113,7 @@ class IdentityCliente(
         )
     }
 
-    fun meQr(token: String): IdentityRespuesta<String> {
+    fun meQr(token: String): IdentityRespuesta<IdentityJson.QrIdentity> {
         val http = get(Rutas.ME_QR, token)
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(true, IdentityJson.parseQr(http.cuerpo), codigo = http.codigo)
@@ -126,7 +127,7 @@ class IdentityCliente(
         return IdentityRespuesta(true, lista, codigo = http.codigo)
     }
 
-    fun renovar(token: String): IdentityRespuesta<String> {
+    fun renovar(token: String): IdentityRespuesta<IdentityJson.QrIdentity> {
         val http = post(Rutas.ME_RENOVAR, "{}", token)
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(true, IdentityJson.parseQr(http.cuerpo), codigo = http.codigo)

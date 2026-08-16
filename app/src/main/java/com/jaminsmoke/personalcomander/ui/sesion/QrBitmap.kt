@@ -8,7 +8,7 @@ import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 
-/** Pinta el payload `phid1:...` como QR (ZXing). */
+/** Pinta el payload del QR (URL de ficha o `phid1:...`) con ZXing. */
 fun qrImageBitmap(payload: String, sizePx: Int = 512): ImageBitmap {
     val hints = mapOf(
         EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M,
