@@ -32,6 +32,7 @@ class IdentityCliente(
         const val ME_REVOCAR = "/v1/camareros/me/revocar"
         const val ME_FOTO = "/v1/camareros/me/foto"
         const val ME_ESTABLECIMIENTOS = "/v1/camareros/me/establecimientos"
+        const val ME_VISIBILIDAD = "/v1/camareros/me/visibilidad"
 
         fun todas(): List<String> = listOf(
             REGISTRO,
@@ -42,6 +43,7 @@ class IdentityCliente(
             ME_REVOCAR,
             ME_FOTO,
             ME_ESTABLECIMIENTOS,
+            ME_VISIBILIDAD,
         )
     }
 
@@ -117,6 +119,22 @@ class IdentityCliente(
         val http = get(Rutas.ME_QR, token)
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(true, IdentityJson.parseQr(http.cuerpo), codigo = http.codigo)
+    }
+
+    fun meVisibilidad(token: String): IdentityRespuesta<VisibilidadCamarero> {
+        val http = get(Rutas.ME_VISIBILIDAD, token)
+        if (http.codigo !in 200..299) return errorDe(http)
+        return IdentityRespuesta(true, IdentityJson.parseVisibilidad(http.cuerpo), codigo = http.codigo)
+    }
+
+    fun actualizarVisibilidad(
+        token: String,
+        campo: CampoVisibilidad,
+        valor: Boolean,
+    ): IdentityRespuesta<VisibilidadCamarero> {
+        val http = put(Rutas.ME_VISIBILIDAD, IdentityJson.cuerpoVisibilidad(campo, valor), token)
+        if (http.codigo !in 200..299) return errorDe(http)
+        return IdentityRespuesta(true, IdentityJson.parseVisibilidad(http.cuerpo), codigo = http.codigo)
     }
 
     fun meEstablecimientos(token: String): IdentityRespuesta<List<MembresiaEstablecimiento>> {
@@ -222,6 +240,22 @@ class IdentityCliente(
             conexion.doOutput = true
             conexion.setRequestProperty("Content-Type", "application/json; charset=utf-8")
             if (token != null) conexion.setRequestProperty("Authorization", "Bearer $token")
+            conexion.outputStream.use { it.write(json.toByteArray(Charsets.UTF_8)) }
+            leer(conexion)
+        } catch (e: IOException) {
+            HttpCuerpo(0, e.message ?: "Sin conexión")
+        } finally {
+            conexion.disconnect()
+        }
+    }
+
+    private fun put(path: String, json: String, token: String): HttpCuerpo {
+        val conexion = open(path)
+        return try {
+            conexion.requestMethod = "PUT"
+            conexion.doOutput = true
+            conexion.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+            conexion.setRequestProperty("Authorization", "Bearer $token")
             conexion.outputStream.use { it.write(json.toByteArray(Charsets.UTF_8)) }
             leer(conexion)
         } catch (e: IOException) {

@@ -27,6 +27,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -40,11 +41,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.R
+import com.jaminsmoke.personalcomander.data.sesion.CampoVisibilidad
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.credencialRevocada
 import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
@@ -67,6 +71,7 @@ fun PerfilScreen(
     val modo by viewModel.modo.collectAsState()
     val foto by viewModel.foto.collectAsState()
     val membresias by viewModel.membresias.collectAsState()
+    val visibilidad by viewModel.visibilidad.collectAsState()
     val busy by viewModel.busy.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
     val perfil = modo.perfil
@@ -189,6 +194,57 @@ fun PerfilScreen(
                         enabled = !busy && foto != null,
                         modifier = Modifier.weight(1f),
                     )
+                }
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(stringResource(R.string.sesion_visibilidad_titulo), style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            stringResource(R.string.sesion_visibilidad_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        FilaVisibilidad(
+                            titulo = stringResource(R.string.sesion_visibilidad_nombre),
+                            hint = stringResource(R.string.sesion_visibilidad_nombre_hint),
+                            checked = visibilidad.nombre,
+                            enabled = !busy,
+                            onCheckedChange = { viewModel.setVisibilidad(CampoVisibilidad.NOMBRE, it) },
+                        )
+                        FilaVisibilidad(
+                            titulo = stringResource(R.string.sesion_visibilidad_apellidos),
+                            checked = visibilidad.apellidos,
+                            enabled = !busy,
+                            onCheckedChange = { viewModel.setVisibilidad(CampoVisibilidad.APELLIDOS, it) },
+                        )
+                        FilaVisibilidad(
+                            titulo = stringResource(R.string.sesion_visibilidad_nick),
+                            checked = visibilidad.nick,
+                            enabled = !busy,
+                            onCheckedChange = { viewModel.setVisibilidad(CampoVisibilidad.NICK, it) },
+                        )
+                        FilaVisibilidad(
+                            titulo = stringResource(R.string.sesion_visibilidad_email),
+                            checked = visibilidad.email,
+                            enabled = !busy,
+                            onCheckedChange = { viewModel.setVisibilidad(CampoVisibilidad.EMAIL, it) },
+                        )
+                        FilaVisibilidad(
+                            titulo = stringResource(R.string.sesion_visibilidad_telefono),
+                            checked = visibilidad.telefono,
+                            enabled = !busy,
+                            onCheckedChange = { viewModel.setVisibilidad(CampoVisibilidad.TELEFONO, it) },
+                        )
+                        FilaVisibilidad(
+                            titulo = stringResource(R.string.sesion_visibilidad_foto),
+                            hint = stringResource(R.string.sesion_visibilidad_foto_hint),
+                            checked = visibilidad.foto,
+                            enabled = !busy,
+                            onCheckedChange = { viewModel.setVisibilidad(CampoVisibilidad.FOTO, it) },
+                        )
+                    }
                 }
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
                     Column(
@@ -355,6 +411,38 @@ fun PerfilScreen(
                     passwordBorrar = ""
                 }) { Text(stringResource(R.string.menu_cancel)) }
             },
+        )
+    }
+}
+
+@Composable
+private fun FilaVisibilidad(
+    titulo: String,
+    checked: Boolean,
+    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    hint: String? = null,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(titulo, style = MaterialTheme.typography.bodyMedium)
+            if (hint != null) {
+                Text(
+                    hint,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+            modifier = Modifier.semantics { this.contentDescription = titulo },
         )
     }
 }

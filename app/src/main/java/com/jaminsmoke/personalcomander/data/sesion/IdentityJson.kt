@@ -133,6 +133,37 @@ object IdentityJson {
         return el.asString.trim().takeIf { it.isNotEmpty() }
     }
 
+    fun booleanODefault(o: JsonObject, clave: String, defecto: Boolean): Boolean {
+        val el = o.get(clave) ?: return defecto
+        if (el.isJsonNull || !el.isJsonPrimitive || !el.asJsonPrimitive.isBoolean) return defecto
+        return el.asBoolean
+    }
+
+    fun parseVisibilidad(body: String): VisibilidadCamarero {
+        val o = JsonParser.parseString(body).asJsonObject
+        return VisibilidadCamarero(
+            nombre = booleanODefault(o, "nombre", true),
+            apellidos = booleanODefault(o, "apellidos", true),
+            nick = booleanODefault(o, "nick", true),
+            email = booleanODefault(o, "email", false),
+            telefono = booleanODefault(o, "telefono", false),
+            foto = booleanODefault(o, "foto", false),
+        )
+    }
+
+    fun cuerpoVisibilidad(campo: CampoVisibilidad, valor: Boolean): String =
+        JsonObject().apply { addProperty(campo.wire, valor) }.toString()
+
+    fun cuerpoVisibilidadCompleto(v: VisibilidadCamarero): String = JsonObject().apply {
+        addProperty("nombre", v.nombre)
+        addProperty("apellidos", v.apellidos)
+        addProperty("nick", v.nick)
+        addProperty("email", v.email)
+        addProperty("telefono", v.telefono)
+        addProperty("foto", v.foto)
+    }.toString()
+
+
     fun parseFotoUrl(body: String): String? {
         val el = JsonParser.parseString(body).asJsonObject.get("foto_url")
         return el?.takeUnless { it.isJsonNull }?.asString
@@ -176,6 +207,47 @@ object IdentityJson {
         } else {
             ContrasteMembresia.NoCoincide
         }
+    }
+}
+
+enum class CampoVisibilidad(val wire: String) {
+    NOMBRE("nombre"),
+    APELLIDOS("apellidos"),
+    NICK("nick"),
+    EMAIL("email"),
+    TELEFONO("telefono"),
+    FOTO("foto"),
+}
+
+/** Preferencias públicas de ficha. Mirror de Identity; no se inventan campos. */
+data class VisibilidadCamarero(
+    val nombre: Boolean = true,
+    val apellidos: Boolean = true,
+    val nick: Boolean = true,
+    val email: Boolean = false,
+    val telefono: Boolean = false,
+    val foto: Boolean = false,
+) {
+    fun valor(campo: CampoVisibilidad): Boolean = when (campo) {
+        CampoVisibilidad.NOMBRE -> nombre
+        CampoVisibilidad.APELLIDOS -> apellidos
+        CampoVisibilidad.NICK -> nick
+        CampoVisibilidad.EMAIL -> email
+        CampoVisibilidad.TELEFONO -> telefono
+        CampoVisibilidad.FOTO -> foto
+    }
+
+    fun con(campo: CampoVisibilidad, valor: Boolean): VisibilidadCamarero = when (campo) {
+        CampoVisibilidad.NOMBRE -> copy(nombre = valor)
+        CampoVisibilidad.APELLIDOS -> copy(apellidos = valor)
+        CampoVisibilidad.NICK -> copy(nick = valor)
+        CampoVisibilidad.EMAIL -> copy(email = valor)
+        CampoVisibilidad.TELEFONO -> copy(telefono = valor)
+        CampoVisibilidad.FOTO -> copy(foto = valor)
+    }
+
+    companion object {
+        val DEFAULT = VisibilidadCamarero()
     }
 }
 

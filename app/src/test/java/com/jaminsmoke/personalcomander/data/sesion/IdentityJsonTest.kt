@@ -54,6 +54,36 @@ class IdentityJsonTest {
     }
 
     @Test
+    fun parseVisibilidad_defaults_si_faltan_campos() {
+        val v = IdentityJson.parseVisibilidad("{}")
+        assertEquals(true, v.nombre)
+        assertEquals(true, v.apellidos)
+        assertEquals(true, v.nick)
+        assertEquals(false, v.email)
+        assertEquals(false, v.telefono)
+        assertEquals(false, v.foto)
+    }
+
+    @Test
+    fun parseVisibilidad_respeta_opt_in() {
+        val v = IdentityJson.parseVisibilidad(
+            """{"nombre":true,"apellidos":true,"nick":true,"email":true,"telefono":false,"foto":true}""",
+        )
+        assertTrue(v.email)
+        assertFalse(v.telefono)
+        assertTrue(v.foto)
+        assertEquals(true, v.valor(CampoVisibilidad.EMAIL))
+        assertEquals(false, v.con(CampoVisibilidad.EMAIL, false).email)
+    }
+
+    @Test
+    fun cuerpoVisibilidad_es_parcial() {
+        assertEquals("""{"foto":true}""", IdentityJson.cuerpoVisibilidad(CampoVisibilidad.FOTO, true))
+        val completo = IdentityJson.parseVisibilidad(IdentityJson.cuerpoVisibilidadCompleto(VisibilidadCamarero.DEFAULT))
+        assertEquals(VisibilidadCamarero.DEFAULT, completo)
+    }
+
+    @Test
     fun parseLogin() {
         val body = """
             {"token":"abc","camarero":{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com","telefono":null,"foto_url":"/v1/camareros/me/foto"},"qr":"phid1:u1:c1:sig"}
