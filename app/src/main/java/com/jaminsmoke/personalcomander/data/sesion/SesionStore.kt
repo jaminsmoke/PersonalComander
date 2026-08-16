@@ -10,9 +10,16 @@ class SesionStore(context: Context) {
     private val gson = Gson()
 
     var identityBaseUrl: String
-        get() = prefs.getString(KEY_URL, DEFAULT_IDENTITY_URL) ?: DEFAULT_IDENTITY_URL
+        get() {
+            val stored = prefs.getString(KEY_URL, null)
+            val efectiva = urlIdentityEfectiva(stored)
+            if (!stored.isNullOrBlank() && esIdentityDockerLocal(stored)) {
+                prefs.edit().putString(KEY_URL, efectiva).apply()
+            }
+            return efectiva
+        }
         set(value) {
-            prefs.edit().putString(KEY_URL, value.trim()).apply()
+            prefs.edit().putString(KEY_URL, urlIdentityEfectiva(value)).apply()
         }
 
     fun cargar(): ModoSesion {
@@ -122,8 +129,25 @@ class SesionStore(context: Context) {
     }
 
     companion object {
-        /** Servicio camareros de Identity (no el de negocio `:8082`). */
-        const val DEFAULT_IDENTITY_URL = "http://10.0.2.2:8080"
+        /**
+         * Servicio camareros de Identity en el VPS (Docker en el servidor, igual que prod).
+         * No es Docker del host ni el servicio negocio `:8082`.
+         */
+        const val DEFAULT_IDENTITY_URL = "https://camareros.siberia.solutions"
+
+        fun urlIdentityEfectiva(guardada: String?): String {
+            val t = guardada?.trim().orEmpty()
+            if (t.isEmpty() || esIdentityDockerLocal(t)) return DEFAULT_IDENTITY_URL
+            return t.trimEnd('/')
+        }
+
+        fun esIdentityDockerLocal(url: String): Boolean {
+            val t = url.trim().trimEnd('/').lowercase()
+            return t == "http://10.0.2.2:8080" ||
+                t == "http://127.0.0.1:8080" ||
+                t == "http://localhost:8080"
+        }
+
         private const val PREFS = "pc_sesion"
         private const val KEY_URL = "identity_base_url"
         private const val KEY_TOKEN = "token"

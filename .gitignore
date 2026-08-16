@@ -29,3 +29,4 @@ emulador.bat
 .claude/
 skills-lock.json
 .family/
+.env

@@ -15,10 +15,11 @@ data class IdentityRespuesta<T>(
 
 /**
  * Cliente HTTP del **servicio camareros** de PersonalHostel Identity
- * (`:8080` en local / emulador). Misma pila que [com.jaminsmoke.personalcomander.data.TpvCliente].
+ * (VPS HTTPS; Identity corre en Docker en el servidor, como en producción).
+ * Misma pila que [com.jaminsmoke.personalcomander.data.TpvCliente].
  *
- * No apunta al servicio negocio (`:8082`). Las membresías llegan por
- * [Rutas.ME_ESTABLECIMIENTOS], que Identity consulta internamente a la BD de negocio.
+ * No apunta al Docker del host ni al servicio negocio (`:8082`). Las membresías
+ * llegan por [Rutas.ME_ESTABLECIMIENTOS], que Identity consulta internamente a la BD de negocio.
  */
 class IdentityCliente(
     private val baseUrl: String,

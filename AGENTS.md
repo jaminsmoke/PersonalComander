@@ -4,7 +4,7 @@
 
 **Personal Comander** is the **waiter-facing** Android app of the PersonalHostel family: table board, touch/voice orders, POS catalog sync, and daily revenue. It is the specialized tool for **camareros** — one waiter, one phone, one floor shift.
 
-It is **not** the venue back office. That job belongs to **Personal Bar** (sibling repo): LAN room node, expo queues, whitelist of the establishment, canonical map. Bar assigns existing waiter accounts to the business (consulting Identity); it does not create or edit waiter identity. **Identity** (VPS / Docker) is the source of truth for waiter accounts, businesses and memberships. Local Room / session prefs are a cache and fallback. The nick shown in venues is owned here (`PVTI_lAHOBM87Yc4BgJWOzg2gWTY`).
+It is **not** the venue back office. That job belongs to **Personal Bar** (sibling repo): LAN room node, expo queues, whitelist of the establishment, canonical map. Bar assigns existing waiter accounts to the business (consulting Identity); it does not create or edit waiter identity. **Identity** (VPS; Docker on the server, same as production) is the source of truth for waiter accounts, businesses and memberships. Local Room / session prefs are a cache and fallback. The nick shown in venues is owned here (`PVTI_lAHOBM87Yc4BgJWOzg2gWTY`).
 
 - Package: `com.jaminsmoke.personalcomander`
 - Min SDK: 24 · Target SDK: 36 · Compile SDK: 37
@@ -58,7 +58,7 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 
 La UI de **Comander** está pensada para **móvil en vertical** (AVD `Pixel_9a`, portrait). Sigue siendo responsive, pero las pruebas visuales van en ese emulador.
 
-Personal Bar (repo hermano) se prueba en **tablet apaisada**. Dos AVDs a la vez: el teléfono no ve el tablet por `10.0.2.2` a menos que el host reenvíe el puerto (`adb -s emulator-5556 forward tcp:8787 tcp:8787`) y Comander apunte a `10.0.2.2:8787`. Identity servicio **camareros** en Docker del host: `http://10.0.2.2:8080`. El servicio **negocio** es `:8082` (Bar / Identity Web), no Commander.
+Personal Bar (repo hermano) se prueba en **tablet apaisada**. Dos AVDs a la vez: el teléfono no ve el tablet por `10.0.2.2` a menos que el host reenvíe el puerto (`adb -s emulator-5556 forward tcp:8787 tcp:8787`) y Comander apunte a `10.0.2.2:8787`. Identity servicio **camareros** en el VPS (`https://camareros.siberia.solutions`; Docker en el servidor, no en el host). El servicio **negocio** es `:8082` (Bar / Identity Web), no Commander.
 
 ```bash
 # Typecheck
@@ -92,7 +92,7 @@ Familia de producto de hostelería. Owner GitHub: [`jaminsmoke`](https://github.
 |---|---|---|---|
 | **Personal Comander** (este) | [`jaminsmoke/PersonalComander`](https://github.com/jaminsmoke/PersonalComander) | App del camarero (móvil vertical): mesas, comanda, cuenta profesional | [Project 9](https://github.com/users/jaminsmoke/projects/9) |
 | **Personal Bar** | [`jaminsmoke/PersonalBar`](https://github.com/jaminsmoke/PersonalBar) | Puesto del negocio (tablet apaisada): nodo LAN `:8787`, colas, lista blanca, mapa | [Project 11](https://github.com/users/jaminsmoke/projects/11) |
-| **PersonalHostel Identity** | [`jaminsmoke/PersonalHostel-Identity`](https://github.com/jaminsmoke/PersonalHostel-Identity) | Registro canónico (Docker/VPS): camareros `:8080`, negocio `:8082` | [Project 10](https://github.com/users/jaminsmoke/projects/10) |
+| **PersonalHostel Identity** | [`jaminsmoke/PersonalHostel-Identity`](https://github.com/jaminsmoke/PersonalHostel-Identity) | Registro canónico (VPS, Docker en el servidor): camareros `:8080`, negocio `:8082` | [Project 10](https://github.com/users/jaminsmoke/projects/10) |
 
 Kanban: cada app tiene el suyo. Cambio que necesite al otro lado → Detectado en **su** Project. Commander no llama a `:8082`.
 
@@ -102,7 +102,7 @@ Acordado con Bar (14-08-2026) y matizado el mismo día: Identity es la **fuente 
 
 | Capa / app | Oficio | Quién | Qué no hace |
 |---|---|---|---|
-| **Identity** | Registro canónico: cuentas camarero (`:8080`), cuentas negocio y establecimientos (`:8082`). | Docker / VPS. | No es el nodo de sala. |
+| **Identity** | Registro canónico: cuentas camarero (`:8080`), cuentas negocio y establecimientos (`:8082`). | VPS (Docker en el servidor, como prod). | No es el nodo de sala. No se consume desde Docker del host. |
 | **Commander** (este repo) | Herramienta **del camarero**: mesas, comanda (toque y voz), alta/edición visual de la cuenta profesional (registro, perfil, QR, nick). SQLite/prefs = fallback. | Un camarero en sala, móvil vertical. | No gestiona el negocio, no llama a `:8082`, no es el nodo LAN ni la cola de expo. |
 | **Personal Bar** | Puesto del **negocio**: nodo LAN, colas, lista blanca, mapa de servicio. Alta visual de establecimientos; **consulta** Identity (no es el registro). | Tablet apaisada; **varios** camareros de servicio a la vez. | No crea ni edita la cuenta del camarero; solo **asigna** cuentas ya existentes. |
 
