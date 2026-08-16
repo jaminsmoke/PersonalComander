@@ -75,6 +75,21 @@ class SesionStore(context: Context) {
         return IdentityJson.parseEstablecimientos(json) ?: emptyList()
     }
 
+    fun cargarVisibilidad(): VisibilidadCamarero {
+        val json = prefs.getString(KEY_VISIBILIDAD, null) ?: return VisibilidadCamarero.DEFAULT
+        return try {
+            IdentityJson.parseVisibilidad(json)
+        } catch (_: Exception) {
+            VisibilidadCamarero.DEFAULT
+        }
+    }
+
+    fun guardarVisibilidad(visibilidad: VisibilidadCamarero) {
+        prefs.edit()
+            .putString(KEY_VISIBILIDAD, IdentityJson.cuerpoVisibilidadCompleto(visibilidad))
+            .apply()
+    }
+
     fun guardarMembresias(lista: List<MembresiaEstablecimiento>) {
         val arr = JsonArray()
         lista.forEach { m ->
@@ -121,5 +136,6 @@ class SesionStore(context: Context) {
         private const val KEY_BAR_NOMBRE = "bar_nombre"
         private const val KEY_BAR_SESION_TRABAJO = "bar_sesion_trabajo"
         private const val KEY_MEMBRESIAS = "membresias_identity"
+        private const val KEY_VISIBILIDAD = "visibilidad"
     }
 }

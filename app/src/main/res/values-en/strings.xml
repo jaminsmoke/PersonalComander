@@ -287,6 +287,17 @@
     <string name="sesion_qr_desc_sin_url">Credential for the Bar node. Identity has not published the web profile yet.</string>
     <string name="sesion_qr_abrir">Open my profile</string>
     <string name="sesion_qr_desc_img">Public profile QR code</string>
+    <string name="sesion_visibilidad_titulo">What your profile shows</string>
+    <string name="sesion_visibilidad_desc">Anyone who opens your public Identity profile will see these fields. They are stored there, not on this phone.</string>
+    <string name="sesion_visibilidad_nombre">First name</string>
+    <string name="sesion_visibilidad_nombre_hint">Turning this off leaves the profile almost empty.</string>
+    <string name="sesion_visibilidad_apellidos">Last name</string>
+    <string name="sesion_visibilidad_nick">Nickname</string>
+    <string name="sesion_visibilidad_email">Email</string>
+    <string name="sesion_visibilidad_telefono">Phone</string>
+    <string name="sesion_visibilidad_foto">Photo</string>
+    <string name="sesion_visibilidad_foto_hint">You need an uploaded photo. Otherwise the profile shows no avatar.</string>
+    <string name="sesion_visibilidad_ok">Visibility updated in Identity.</string>
     <string name="sesion_desconectar_bar">End shift</string>
     <string name="sesion_empezar_jornada">Start work session</string>
     <string name="sesion_terminar_jornada">End work session</string>

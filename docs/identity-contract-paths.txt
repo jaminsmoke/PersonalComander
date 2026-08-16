@@ -9,3 +9,4 @@
 /v1/camareros/me/revocar
 /v1/camareros/me/foto
 /v1/camareros/me/establecimientos
+/v1/camareros/me/visibilidad

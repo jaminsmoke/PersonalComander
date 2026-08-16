@@ -29,6 +29,9 @@ class SesionRepository(
     private val _membresias = MutableStateFlow(store.cargarMembresias())
     val membresias: StateFlow<List<MembresiaEstablecimiento>> = _membresias.asStateFlow()
 
+    private val _visibilidad = MutableStateFlow(store.cargarVisibilidad())
+    val visibilidad: StateFlow<VisibilidadCamarero> = _visibilidad.asStateFlow()
+
     var identityBaseUrl: String
         get() = store.identityBaseUrl
         set(value) {
@@ -92,6 +95,7 @@ class SesionRepository(
             persistir(perfil, qr, token, fichaUrl)
             cargarFoto(token, perfil.fotoUrl)
             refrescarMembresias(token)
+            refrescarVisibilidad(token)
             revalidarTurno()
         }
     }
@@ -181,6 +185,7 @@ class SesionRepository(
         store.limpiarTodo()
         _foto.value = null
         _membresias.value = emptyList()
+        _visibilidad.value = VisibilidadCamarero.DEFAULT
         _modo.value = ModoSesion.Local
     }
 
@@ -367,6 +372,26 @@ class SesionRepository(
         persistir(sesion.perfil, sesion.qr, token, sesion.fichaUrl)
         cargarFoto(token, sesion.perfil.fotoUrl)
         refrescarMembresias(token)
+        refrescarVisibilidad(token)
+    }
+
+    suspend fun actualizarVisibilidad(
+        campo: CampoVisibilidad,
+        valor: Boolean,
+    ): IdentityRespuesta<VisibilidadCamarero> {
+        val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
+        return withContext(Dispatchers.IO) {
+            val anterior = _visibilidad.value
+            _visibilidad.value = anterior.con(campo, valor)
+            val r = cliente().actualizarVisibilidad(token, campo, valor)
+            if (r.ok && r.valor != null) {
+                store.guardarVisibilidad(r.valor)
+                _visibilidad.value = r.valor
+            } else {
+                _visibilidad.value = anterior
+            }
+            r
+        }
     }
 
     /** Identity gana si responde; red caída o cuerpo inválido conservan la cache. */
@@ -375,6 +400,14 @@ class SesionRepository(
         if (!r.ok || r.valor == null) return
         store.guardarMembresias(r.valor)
         _membresias.value = r.valor
+    }
+
+    /** Identity gana si responde; red caída o cuerpo inválido conservan la cache. */
+    private fun refrescarVisibilidad(token: String) {
+        val r = cliente().meVisibilidad(token)
+        if (!r.ok || r.valor == null) return
+        store.guardarVisibilidad(r.valor)
+        _visibilidad.value = r.valor
     }
 
     private fun cargarFoto(token: String, fotoUrl: String?) {
