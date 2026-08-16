@@ -17,6 +17,7 @@ object IdentityJson {
         val token: String?,
         val perfil: PerfilCamarero,
         val qr: String,
+        val fichaUrl: String? = null,
     )
 
     data class IdentityError(
@@ -28,6 +29,12 @@ object IdentityJson {
         val id: String,
         val qr: String,
         val dataOrigin: DataOrigin,
+        val fichaUrl: String? = null,
+    )
+
+    data class QrIdentity(
+        val qr: String,
+        val fichaUrl: String? = null,
     )
 
     fun parseError(body: String): IdentityError {
@@ -57,6 +64,7 @@ object IdentityJson {
             id = o.get("id").asString,
             qr = o.get("qr").asString,
             dataOrigin = parseDataOrigin(o),
+            fichaUrl = textoOpcional(o, "ficha_url"),
         )
     }
 
@@ -107,11 +115,23 @@ object IdentityJson {
             token = o.get("token").asString,
             perfil = parsePerfil(o.get("camarero")),
             qr = o.get("qr").asString,
+            fichaUrl = textoOpcional(o, "ficha_url"),
         )
     }
 
-    fun parseQr(body: String): String =
-        JsonParser.parseString(body).asJsonObject.get("qr").asString
+    fun parseQr(body: String): QrIdentity {
+        val o = JsonParser.parseString(body).asJsonObject
+        return QrIdentity(
+            qr = o.get("qr").asString,
+            fichaUrl = textoOpcional(o, "ficha_url"),
+        )
+    }
+
+    fun textoOpcional(o: JsonObject, clave: String): String? {
+        val el = o.get(clave) ?: return null
+        if (el.isJsonNull || !el.isJsonPrimitive) return null
+        return el.asString.trim().takeIf { it.isNotEmpty() }
+    }
 
     fun parseFotoUrl(body: String): String? {
         val el = JsonParser.parseString(body).asJsonObject.get("foto_url")

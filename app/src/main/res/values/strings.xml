@@ -73,8 +73,8 @@
     <string name="gestion_invitaciones">Invitaciones</string>
     <string name="gestion_locales_ir_turno">Turno en Ajustes</string>
     <string name="gestion_invitaciones_vacio_titulo">Sin invitaciones</string>
-    <string name="gestion_invitaciones_vacio_desc">Cuando un local te invite, aparecerán aquí. Hoy el alta es enseñar tu QR en barra.</string>
-    <string name="gestion_invitaciones_ver_qr">Ver mi QR</string>
+    <string name="gestion_invitaciones_vacio_desc">Cuando un local te invite, aparecerán aquí.</string>
+    <string name="gestion_invitaciones_ver_qr">Ver mi ficha</string>
 
     <!-- Menu Screen -->
     <string name="menu_title">Gestión del menú</string>
@@ -258,7 +258,7 @@
     <string name="sesion_renovar">Renovar clave</string>
     <string name="sesion_renovar_titulo">Renovar credencial</string>
     <string name="sesion_renovar_confirm">Se emite un QR nuevo. El anterior deja de valer y te desligas del establecimiento si estabas conectado a un Bar.</string>
-    <string name="sesion_renovar_ok">Clave renovada. Enseña el QR nuevo en barra.</string>
+    <string name="sesion_renovar_ok">Clave renovada. El QR apunta a tu ficha en Identity.</string>
     <string name="sesion_revocar">Revocar clave</string>
     <string name="sesion_revocar_titulo">Revocar credencial</string>
     <string name="sesion_revocar_confirm">El QR deja de valer. La cuenta sigue activa: podrás renovar desde este móvil. No cierres sesión o no podrás entrar de nuevo.</string>
@@ -282,9 +282,11 @@
     <string name="sesion_turno_activo">Activo · %1$s</string>
     <string name="sesion_turno_en_nodo">En nodo · %1$s</string>
     <string name="sesion_turno_nodo_pendiente">Pendiente · %1$s</string>
-    <string name="sesion_qr_titulo">Credencial QR</string>
-    <string name="sesion_qr_desc">Enséñalo en barra para que te den de alta en el establecimiento.</string>
-    <string name="sesion_qr_desc_img">Código QR de credencial de camarero</string>
+    <string name="sesion_qr_titulo">Mi ficha</string>
+    <string name="sesion_qr_desc">Escanea para abrir tu ficha pública en Identity. El enlace está verificado con tu sesión.</string>
+    <string name="sesion_qr_desc_sin_url">Credencial para el nodo Bar. Identity aún no ha publicado la ficha web.</string>
+    <string name="sesion_qr_abrir">Ver mi ficha</string>
+    <string name="sesion_qr_desc_img">Código QR de la ficha pública</string>
     <string name="sesion_desconectar_bar">Desactivar turno</string>
     <string name="sesion_empezar_jornada">Empezar jornada</string>
     <string name="sesion_terminar_jornada">Terminar jornada</string>

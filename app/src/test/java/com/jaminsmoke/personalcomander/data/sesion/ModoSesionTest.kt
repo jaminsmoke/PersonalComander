@@ -36,6 +36,8 @@ class ModoSesionTest {
         assertEquals("AG", perfil.iniciales)
         assertEquals("tok", modo.token)
         assertEquals("phid1:a:b:sig", modo.qr)
+        assertNull(modo.fichaUrl)
+        assertEquals("phid1:a:b:sig", modo.qrVisible)
         assertFalse(modo.credencialRevocada)
     }
 
@@ -114,6 +116,17 @@ class ModoSesionTest {
         assertEquals("Lucía", conNick.mote)
         assertEquals("Lucía", modo.etiquetaHeader())
         assertEquals("Ana García", conNick.nombreCompleto)
+    }
+
+    @Test
+    fun qrVisible_usa_ficha_http_y_no_inventa() {
+        assertEquals("phid1:a:b:sig", qrVisibleDe("phid1:a:b:sig", null))
+        assertEquals(
+            "https://ficha.example/ficha?qr=phid1:a:b:sig",
+            qrVisibleDe("phid1:a:b:sig", "https://ficha.example/ficha?qr=phid1:a:b:sig"),
+        )
+        assertEquals("phid1:a:b:sig", qrVisibleDe("phid1:a:b:sig", "javascript:alert(1)"))
+        assertNull(qrVisibleDe(null, "   "))
     }
 
     @Test

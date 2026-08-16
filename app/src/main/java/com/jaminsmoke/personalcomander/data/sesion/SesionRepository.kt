@@ -72,13 +72,24 @@ class SesionRepository(
             }
             val perfil = me.valor ?: return@withContext
             val qrResp = cliente().meQr(token)
-            val qr = when {
-                qrResp.codigo == 409 || qrResp.code == IdentityJson.CODE_CREDENTIAL_REVOKED -> null
-                qrResp.ok -> qrResp.valor
-                else -> _modo.value.qr
+            val qr: String?
+            val fichaUrl: String?
+            when {
+                qrResp.codigo == 409 || qrResp.code == IdentityJson.CODE_CREDENTIAL_REVOKED -> {
+                    qr = null
+                    fichaUrl = null
+                }
+                qrResp.ok && qrResp.valor != null -> {
+                    qr = qrResp.valor.qr
+                    fichaUrl = qrResp.valor.fichaUrl
+                }
+                else -> {
+                    qr = _modo.value.qr
+                    fichaUrl = _modo.value.fichaUrl
+                }
             }
             if (qr == null && _modo.value is ModoSesion.Establecimiento) desconectarBar()
-            persistir(perfil, qr, token)
+            persistir(perfil, qr, token, fichaUrl)
             cargarFoto(token, perfil.fotoUrl)
             refrescarMembresias(token)
             revalidarTurno()
@@ -104,10 +115,14 @@ class SesionRepository(
             val r = cliente().renovar(token)
             if (r.ok && r.valor != null) {
                 desconectarBar()
-                val perfil = _modo.value.perfil ?: return@withContext r
-                persistir(perfil, r.valor, token)
+                val perfil = _modo.value.perfil ?: return@withContext IdentityRespuesta(
+                    true,
+                    r.valor.qr,
+                    codigo = r.codigo,
+                )
+                persistir(perfil, r.valor.qr, token, r.valor.fichaUrl)
             }
-            r
+            IdentityRespuesta(r.ok, r.valor?.qr, error = r.error, codigo = r.codigo, code = r.code)
         }
     }
 
@@ -118,7 +133,7 @@ class SesionRepository(
             if (r.ok) {
                 desconectarBar()
                 val perfil = _modo.value.perfil ?: return@withContext r
-                persistir(perfil, qr = null, token)
+                persistir(perfil, qr = null, token = token, fichaUrl = null)
             }
             r
         }
@@ -188,6 +203,7 @@ class SesionRepository(
                 admitido = sesion?.admitido == true,
                 nombreEstablecimiento = nombre,
                 sesionTrabajo = false,
+                fichaUrl = actual.fichaUrl,
             )
             store.guardarEstablecimiento(establecimiento)
             _modo.value = establecimiento
@@ -211,8 +227,8 @@ class SesionRepository(
             scope.launch(Dispatchers.IO) { BarLanCliente.postCortar(host, puerto, qr) }
         }
         store.limpiarBar()
-        val identidad = ModoSesion.Identidad(actual.perfil, actual.qr, actual.token)
-        store.guardarIdentidad(identidad.perfil, identidad.qr, identidad.token)
+        val identidad = ModoSesion.Identidad(actual.perfil, actual.qr, actual.token, actual.fichaUrl)
+        store.guardarIdentidad(identidad.perfil, identidad.qr, identidad.token, identidad.fichaUrl)
         _modo.value = identidad
     }
 
@@ -327,15 +343,20 @@ class SesionRepository(
         EscaneadorRed.escanear(listOf(BarLanCliente.PUERTO))
     }
 
-    private fun persistir(perfil: PerfilCamarero, qr: String?, token: String) {
+    private fun persistir(
+        perfil: PerfilCamarero,
+        qr: String?,
+        token: String,
+        fichaUrl: String? = _modo.value.fichaUrl,
+    ) {
         val actual = _modo.value
         if (actual is ModoSesion.Establecimiento) {
-            val establecimiento = actual.copy(perfil = perfil, qr = qr, token = token)
+            val establecimiento = actual.copy(perfil = perfil, qr = qr, token = token, fichaUrl = fichaUrl)
             store.guardarEstablecimiento(establecimiento)
             _modo.value = establecimiento
         } else {
-            store.guardarIdentidad(perfil, qr, token)
-            _modo.value = ModoSesion.Identidad(perfil, qr, token)
+            store.guardarIdentidad(perfil, qr, token, fichaUrl)
+            _modo.value = ModoSesion.Identidad(perfil, qr, token, fichaUrl)
         }
     }
 
@@ -343,7 +364,7 @@ class SesionRepository(
         val sesion = r.valor ?: return
         val token = sesion.token ?: return
         if (!r.ok) return
-        persistir(sesion.perfil, sesion.qr, token)
+        persistir(sesion.perfil, sesion.qr, token, sesion.fichaUrl)
         cargarFoto(token, sesion.perfil.fotoUrl)
         refrescarMembresias(token)
     }

@@ -13,6 +13,8 @@ sealed class ModoSesion {
         val perfil: PerfilCamarero,
         val qr: String?,
         val token: String,
+        /** URL pública de ficha que manda Identity. No se inventa en Commander. */
+        val fichaUrl: String? = null,
     ) : ModoSesion()
 
     data class Establecimiento(
@@ -26,6 +28,8 @@ sealed class ModoSesion {
         val nombreEstablecimiento: String? = null,
         /** Jornada concedida por Bar (`POST /v1/sesion/iniciar`). Distinto de [admitido]. */
         val sesionTrabajo: Boolean = false,
+        /** URL pública de ficha que manda Identity. No se inventa en Commander. */
+        val fichaUrl: String? = null,
     ) : ModoSesion()
 }
 
@@ -140,6 +144,23 @@ val ModoSesion.qr: String?
         is ModoSesion.Establecimiento -> m.qr
         ModoSesion.Local -> null
     }
+
+val ModoSesion.fichaUrl: String?
+    get() = when (val m = this) {
+        is ModoSesion.Identidad -> m.fichaUrl
+        is ModoSesion.Establecimiento -> m.fichaUrl
+        ModoSesion.Local -> null
+    }
+
+/** Payload del QR visible: `ficha_url` http(s) de Identity, o el phid1 si no hay URL. */
+val ModoSesion.qrVisible: String?
+    get() = qrVisibleDe(qr, fichaUrl)
+
+fun qrVisibleDe(qr: String?, fichaUrl: String?): String? {
+    val url = fichaUrl?.trim().orEmpty()
+    if (url.startsWith("https://") || url.startsWith("http://")) return url
+    return qr
+}
 
 fun ModoSesion.etiquetaHeader(): String? = when (this) {
     ModoSesion.Local -> null
