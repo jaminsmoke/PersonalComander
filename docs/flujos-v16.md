@@ -1,7 +1,7 @@
 # Flujos v1.6
 
-!!! warning "Estado de esta página"
-    Estos flujos están en desarrollo en `main` y no forman parte todavía del APK público v1.5. La [release actual](https://github.com/jaminsmoke/PersonalComander/releases/latest) sigue siendo v1.5.
+!!! note "Estado de esta página"
+    Estos flujos forman parte del APK **v1.6**. La [release actual](https://github.com/jaminsmoke/PersonalComander/releases/latest) es v1.6.
 
 Esta página conecta la documentación técnica con el [manual de usuario de la wiki](https://github.com/jaminsmoke/PersonalComander/wiki). Describe qué ocurre en la aplicación cuando se usa identidad de camarero y cuando el dispositivo se liga a un establecimiento.
 
@@ -15,10 +15,10 @@ Bar no crea cuentas de camarero: las asigna al establecimiento. El nick visible 
 
 ## Cuenta del camarero
 
-1. Desde **Ajustes**, abre **Cuenta**.
-2. Regístrate o inicia sesión contra Identity.
-3. Abre **Perfil** para revisar nombre, email, teléfono y avatar.
-4. El perfil muestra el QR de credencial, que se puede renovar o revocar.
+1. En el header, pulsa **Entrar** (`PcSesionChip`; no hace falta ir a Ajustes).
+2. Inicia sesión o regístrate contra Identity en el VPS (`https://camareros.siberia.solutions`).
+3. Con sesión, el mismo chip (avatar + nick) abre **Mi perfil**: nick, foto, visibilidad de ficha, QR y **Ver mi ficha**.
+4. El turno en un Bar de la red local se activa en **Ajustes → Turno en el establecimiento**.
 
 Revocar el QR invalida la credencial actual. Renovarlo genera una nueva credencial. Cerrar sesión no elimina la cuenta; borrar la cuenta es una acción separada y requiere confirmación.
 
@@ -43,10 +43,10 @@ El contrato de payload, los códigos HTTP y la idempotencia están documentados 
 
 ## Estado de publicación
 
-| Flujo | v1.5 | v1.6 en `main` |
+| Flujo | v1.5 | v1.6 |
 |---|---:|---:|
 | Board, mesas y comandas locales | Disponible | Disponible |
 | Voz y parser on-device | Disponible | Disponible |
 | TPV y backup JSON | Disponible | Disponible |
-| Cuenta, perfil y QR | No incluido | En desarrollo |
-| Establecimiento, salas y ronda a Bar | No incluido | En desarrollo |
+| Cuenta, perfil, QR y visibilidad | No incluido | Disponible |
+| Establecimiento, salas y ronda a Bar | No incluido | Disponible |

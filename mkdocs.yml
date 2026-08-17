@@ -57,7 +57,7 @@ nav:
   - Inicio: index.md
   - Wiki: https://github.com/jaminsmoke/PersonalComander/wiki
   - Documentación:
-    - Flujos v1.6 (en desarrollo): flujos-v16.md
+    - Flujos v1.6: flujos-v16.md
     - Arquitectura: arquitectura.md
     - Modelo de datos: data-model.md
     - Voz: voz.md

@@ -27,8 +27,8 @@ Manual en la [Wiki](https://github.com/jaminsmoke/PersonalComander/wiki) · [Doc
 
 <div class="pc-aviso" markdown>
 
-!!! info "v1.6 en desarrollo"
-    El APK actual es **v1.5**. Los flujos de cuenta de camarero, establecimiento, salas y Personal Bar llegan en v1.6. [Detalle de flujos](flujos-v16.md).
+!!! info "v1.6"
+    El APK actual es **v1.6**: cuenta de camarero (Identity en el VPS), ficha pública, visibilidad y turno LAN con Personal Bar. [Detalle de flujos](flujos-v16.md).
 
 </div>
 
@@ -74,9 +74,9 @@ Manual en la [Wiki](https://github.com/jaminsmoke/PersonalComander/wiki) · [Doc
 
     Interfaz en español e inglés.
 
-- :material-account-network: **Cuenta y sala (v1.6)**
+- :material-account-network: **Cuenta y sala**
 
-    Perfil de camarero, QR, establecimiento, salas y envío de rondas a Personal Bar. En desarrollo.
+    Perfil de camarero, QR de ficha pública, visibilidad y envío de rondas a Personal Bar.
 
 </div>
 

@@ -8,7 +8,7 @@ It is **not** the venue back office. That job belongs to **Personal Bar** (sibli
 
 - Package: `com.jaminsmoke.personalcomander`
 - Min SDK: 24 · Target SDK: 36 · Compile SDK: 37
-- Version: 1.5 (versionCode 6)
+- Version: 1.6 (versionCode 7)
 - Repo: `jaminsmoke/PersonalComander`
 
 ## Stack
@@ -158,7 +158,7 @@ Detectado → Debate → Roadmap → Ejecutando → Verificando → Changelog
 
 **No skipping**: every item advances in order. Exception: `Cancelado` → Changelog.
 
-**Version always > latest release**: consult `gh release list`, pick the next one. Latest publicada: **v1.5**. Release en curso: **v1.6**. Ítems posteriores: **v1.7** (opción ya creada en el campo Versión).
+**Version always > latest release**: consult `gh release list`. Tras publicar **v1.6**, los ítems nuevos van a **v1.7**.
 
 #### 1. Detectado — Describir el problema a fondo
 
@@ -281,7 +281,7 @@ Con la decisión ya tomada y acordada en la fase anterior, detallar **mucho más
 KANBAN="bun run devartifacts/jarvis-skills/packages/kanban-cli/cli.ts"
 
 # Create item
-$KANBAN create --title "..." --tipo Bug --area UI/UX --priority Alta --version "v1.6"
+$KANBAN create --title "..." --tipo Bug --area UI/UX --priority Alta --version "v1.7"
 
 # List
 $KANBAN list
