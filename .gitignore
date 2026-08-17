@@ -30,3 +30,5 @@ emulador.bat
 skills-lock.json
 .family/
 .env
+__pycache__/
+*.pyc
