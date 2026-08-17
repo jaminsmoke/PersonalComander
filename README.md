@@ -13,7 +13,7 @@
 [![License](https://img.shields.io/github/license/jaminsmoke/PersonalComander?color=%23E9C349)](LICENSE)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 
-**v1.5** · Android 7.0+ (API 24) · [🌐 Site](https://jaminsmoke.github.io/PersonalComander/) · [📖 Wiki](https://github.com/jaminsmoke/PersonalComander/wiki)
+**v1.6** · Android 7.0+ (API 24) · [🌐 Site](https://jaminsmoke.github.io/PersonalComander/) · [📖 Wiki](https://github.com/jaminsmoke/PersonalComander/wiki)
 
 </div>
 
@@ -29,7 +29,7 @@
 - 💾 **Backup & restore** — JSON import/export of the whole database.
 - 🌙 **Dark premium theme** — navy & gold design system, dynamic theming on Android 12+.
 - 🌍 **Bilingual** — Spanish and English UI.
-- 👤 **Waiter account and venue connection (v1.6)** — profile, QR credential, rooms and Personal Bar rounds in development.
+- 👤 **Waiter account and venue** — Identity login (header **Entrar**), public profile QR, visibility switches, and Personal Bar LAN shift.
 
 ## 📱 Screenshots
 
@@ -37,7 +37,7 @@
 |:---:|:---:|:---:|:---:|:---:|
 | <img src="docs/screenshots/home.png" width="180"> | <img src="docs/screenshots/mesas_board.png" width="180"> | <img src="docs/screenshots/menu.png" width="180"> | <img src="docs/screenshots/comanda.png" width="180"> | <img src="docs/screenshots/ajustes.png" width="180"> |
 
-The downloadable release is currently **v1.5**. Waiter identity, venue rooms and Personal Bar integration are being prepared for **v1.6** on `main`; see the [v1.6 flow notes](docs/flujos-v16.md).
+The downloadable release is **v1.6**: waiter identity (VPS), public profile QR, LAN shift with Personal Bar. See the [v1.6 flow notes](docs/flujos-v16.md).
 
 ## 🚀 Getting started
 
@@ -72,7 +72,7 @@ The first launch seeds a demo menu and a default table layout, so you can explor
 3. **Order** — add products by tapping or by voice, review the ticket, send it to the kitchen and close it when paid.
 4. **Menu** — manage products, prices, categories and icons.
 5. **Settings** — configure the TPV server, import/export backups, and sync the catalog.
-6. **Account and venue (v1.6)** — sign in, manage the QR credential, connect to a venue and send rounds to Personal Bar. This is in development and not included in the v1.5 APK.
+6. **Account and venue** — tap **Entrar** in the header (not Settings) to sign in with Identity, open the profile chip for QR/visibility, and start a Bar shift from Settings → venue.
 
 ## 🖼️ Regenerar capturas y assets de marca
 
@@ -111,7 +111,7 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 
 ## 🗺️ Roadmap
 
-- **v1.6** — waiter identity, venue rooms, Personal Bar rounds, and documentation validation in PRs.
+- **v1.7** — next cycle (kanban Versión v1.7).
 - Later — premium features (see licensing model).
 
 ## 🤝 Contributing

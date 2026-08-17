@@ -92,7 +92,7 @@ Pendiente de lista blanca **no** es una invitación de cuenta. Las invitaciones 
 
 Si Bar falla el POST, la comanda local permanece enviada y el tablet muestra un aviso.
 
-Este flujo pertenece a v1.6 en desarrollo. La release pública v1.5 funciona en modo Local y no incluye la integración completa de establecimiento.
+Este flujo está en el APK **v1.6**. La v1.5 pública funcionaba en modo Local y no incluía la integración completa de establecimiento.
 
 ## Payload de ronda
 

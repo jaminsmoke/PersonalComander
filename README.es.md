@@ -13,7 +13,7 @@ Español · [English](README.md)
 [![License](https://img.shields.io/github/license/jaminsmoke/PersonalComander?color=%23E9C349)](LICENSE)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 
-**v1.5** · Android 7.0+ (API 24) · [🌐 Sitio](https://jaminsmoke.github.io/PersonalComander/) · [📖 Wiki](https://github.com/jaminsmoke/PersonalComander/wiki)
+**v1.6** · Android 7.0+ (API 24) · [🌐 Sitio](https://jaminsmoke.github.io/PersonalComander/) · [📖 Wiki](https://github.com/jaminsmoke/PersonalComander/wiki)
 
 </div>
 
@@ -29,7 +29,7 @@ Español · [English](README.md)
 - 💾 **Copia de seguridad** — exportación/importación JSON de toda la base de datos.
 - 🌙 **Tema dark premium** — design system navy & gold, theming dinámico en Android 12+.
 - 🌍 **Bilingüe** — interfaz en español e inglés.
-- 👤 **Cuenta de camarero y establecimiento (v1.6)** — perfil, credencial QR, salas y rondas a Personal Bar en desarrollo.
+- 👤 **Cuenta de camarero y establecimiento** — login Identity (chip **Entrar** del header), QR de ficha pública, palancas de visibilidad y turno Bar en LAN.
 
 ## 📱 Capturas
 
@@ -37,7 +37,7 @@ Español · [English](README.md)
 |:---:|:---:|:---:|:---:|:---:|
 | <img src="docs/screenshots/home.png" width="180"> | <img src="docs/screenshots/mesas_board.png" width="180"> | <img src="docs/screenshots/menu.png" width="180"> | <img src="docs/screenshots/comanda.png" width="180"> | <img src="docs/screenshots/ajustes.png" width="180"> |
 
-La release descargable actual es la **v1.5**. La identidad del camarero, las salas del establecimiento y la integración con Personal Bar se preparan para la **v1.6** en `main`; consulta las [notas de flujos v1.6](docs/flujos-v16.md).
+La release descargable es la **v1.6**: identidad del camarero (VPS), QR de ficha pública y turno LAN con Personal Bar. Consulta las [notas de flujos v1.6](docs/flujos-v16.md).
 
 ## 🚀 Primeros pasos
 
@@ -72,7 +72,7 @@ En el primer arranque la app crea un menú de demostración y un plano de mesas 
 3. **Comanda** — añade productos por voz o con el dedo, revisa la cuenta, envíala a cocina y ciérrala al cobrar.
 4. **Menú** — gestiona productos, precios, categorías e iconos.
 5. **Ajustes** — configura el servidor TPV, importa/exporta copias y sincroniza el catálogo.
-6. **Cuenta y establecimiento (v1.6)** — inicia sesión, gestiona la credencial QR, conecta el local y envía rondas a Personal Bar. Está en desarrollo y no se incluye en el APK v1.5.
+6. **Cuenta y establecimiento** — pulsa **Entrar** en el header (no en Ajustes) para iniciar sesión en Identity, abre el chip de perfil para QR/visibilidad, y activa el turno Bar en Ajustes → establecimiento.
 
 ## 🖼️ Regenerar capturas y assets de marca
 
@@ -111,7 +111,7 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 
 ## 🗺️ Roadmap
 
-- **v1.6** — identidad del camarero, salas del establecimiento, rondas a Personal Bar y validación de documentación en PRs.
+- **v1.7** — siguiente ciclo (campo kanban Versión v1.7).
 - Más adelante — funcionalidades premium (ver modelo de licencia).
 
 ## 🤝 Contribuir
