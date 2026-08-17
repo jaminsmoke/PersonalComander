@@ -55,9 +55,16 @@ markdown_extensions:
 
 nav:
   - Inicio: index.md
-  - Wiki: https://github.com/jaminsmoke/PersonalComander/wiki
-  - Documentación:
-    - Flujos v1.6: flujos-v16.md
+  - Manual:
+    - manual/index.md
+    - Instalación: manual/instalacion.md
+    - Board de mesas: manual/mesas.md
+    - Comandas: manual/comandas.md
+    - Carta: manual/carta.md
+    - Ajustes: manual/ajustes.md
+    - Cuenta y turno: manual/cuenta.md
+    - FAQ: manual/faq.md
+  - Técnica:
     - Arquitectura: arquitectura.md
     - Modelo de datos: data-model.md
     - Voz: voz.md

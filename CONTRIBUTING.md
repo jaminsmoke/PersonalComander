@@ -50,6 +50,10 @@ Antes de abrir un PR, verifica localmente:
 
 # Lint
 ./gradlew lint
+
+# Documentación del sitio (MkDocs)
+python scripts/check_docs_links.py
+python scripts/check_docs_structure.py
 ```
 
 - Todos los tests deben pasar y el lint no debe introducir errores nuevos.

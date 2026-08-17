@@ -33,7 +33,7 @@ La app puede importar el catálogo de productos desde un **servidor TPV en la re
 
 La sincronización TPV solo actualiza el catálogo local. No es el mismo canal que la conexión a Personal Bar: el TPV entrega productos y el Bar recibe rondas de comandas.
 
-En modo Establecimiento la carta puede ser de solo lectura, porque el catálogo del local se considera la fuente compartida. El flujo de cuenta, establecimiento y Bar está descrito en [Flujos v1.6](flujos-v16.md).
+En modo Establecimiento la carta puede ser de solo lectura, porque el catálogo del local se considera la fuente compartida. El flujo de cuenta, establecimiento y Bar está en [Cuenta y turno](manual/cuenta.md).
 
 ## Protocolo de sala
 

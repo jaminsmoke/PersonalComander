@@ -2,14 +2,7 @@ name: docs-check
 
 on:
   pull_request:
-    paths:
-      - "mkdocs.yml"
-      - "requirements-docs.txt"
-      - "docs/**"
-      - "README.md"
-      - "README.es.md"
-      - "scripts/check_docs_links.py"
-      - ".github/workflows/docs-check.yml"
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -32,6 +25,11 @@ jobs:
 
       - name: Check local links and assets
         run: python scripts/check_docs_links.py
+
+      - name: Check documentation structure
+        run: |
+          python scripts/check_docs_structure.py --selftest
+          python scripts/check_docs_structure.py
 
       - name: Build MkDocs strictly
         run: mkdocs build --strict --site-dir site

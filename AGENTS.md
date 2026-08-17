@@ -497,6 +497,6 @@ bash scripts/capture_screens.sh     # 5 capturas desde emulador (adb + uiautomat
 ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
 ```
 
-Ejecutarlos tras cada rebranding/rediseño de UI para no desincronizar README/sitio/wiki.
+Ejecutarlos tras cada rebranding/rediseño de UI para no desincronizar README y el sitio (la wiki de GitHub es solo un puente al manual).
 
 `.agents/skills/` contains installed skills (via `npx skills`). `.claude/`, `skills-lock.json` are agent-specific — all gitignored.
