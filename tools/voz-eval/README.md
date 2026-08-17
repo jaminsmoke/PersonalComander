@@ -49,7 +49,7 @@ python tools/voz-eval/generate_audio.py --voices es-ES,es-MX,es-AR --snr clean,b
 
 ## 4. Captura en emulador (inject, no loopback)
 
-Pixel_9a (API 36). Instalar debug, conceder micro (el servicio STT aún lo pide):
+Movil-Pixel10a (API 37.1). Instalar debug, conceder micro (el servicio STT aún lo pide):
 
 ```bash
 ./gradlew installDebug
@@ -59,7 +59,7 @@ python tools/voz-eval/run_ondevice.py
 
 Activity debug: `com.jaminsmoke.personalcomander/.debug.VozEvalActivity`.
 
-Verificado en Pixel_9a (API 36): GMS **sí** transcribe el PCM inyectado. El resultado
+Verificado en Movil-Pixel10a (API 37.1, GMS Play Store): GMS **sí** transcribe el PCM inyectado. El resultado
 llega en `onPartialResults` y el motor cierra con `ERROR_NO_MATCH` (7); el harness
 guarda el último parcial. El reconocedor online (`NetworkSpeechRecognizer`) es el
 que responde; SODA offline no tiene pack `es-ES` en este AVD. El loopback
