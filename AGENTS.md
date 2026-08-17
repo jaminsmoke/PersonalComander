@@ -45,9 +45,10 @@ app/src/main/java/com/jaminsmoke/personalcomander/
     ├── HomeScreen.kt / HomeViewModel.kt
     ├── MesasScreen.kt / MesasViewModel.kt / MesasBoard.kt  # Board + list views
     ├── ComandaScreen.kt / ComandaViewModel.kt               # Order taking
-    ├── MenuScreen.kt / MenuViewModel.kt                     # Product CRUD
-    ├── AjustesScreen.kt / AjustesViewModel.kt               # TPV sync, backup, sesión
-    ├── sesion/               # Auth, perfil QR (ZXing)
+    ├── MenuScreen.kt / MenuViewModel.kt                     # Product CRUD (Carta, desde Gestión)
+    ├── AjustesScreen.kt / AjustesViewModel.kt               # TPV, backup, URL Identity, Bar LAN
+    ├── gestion/              # Hub Gestión (Carta, Locales, Invitaciones)
+    ├── sesion/               # Auth, perfil (QR, visibilidad, nick)
     ├── Voz.kt / VozParser.kt     # Voice recognition + NL parser
     ├── Formato.kt                # Double.formatoEuro() extension
     ├── ShimmerEffect.kt          # Loading skeleton
@@ -81,6 +82,42 @@ python scripts/check_family_contracts.py --selftest
 # Jornada: POST /v1/sesion/iniciar + heartbeat; sin jornada las rondas son 403.
 # python scripts/check_family_contracts.py --identity-openapi … --negocio-openapi … --bar-module …
 ```
+
+## Mapa de pantallas (agentes)
+
+UI **móvil vertical** (`Pixel_9a`). NavHost: `ui/PersonalComanderApp.kt`. **No busques el login diario en Ajustes.**
+
+Barra inferior (solo rutas top-level; se oculta en `auth`, `perfil` y `comanda/{id}`):
+
+| Tab (string) | Ruta | Pantalla | Qué es |
+|---|---|---|---|
+| Resumen | `home` | `HomeScreen.kt` | Facturado hoy + accesos rápidos |
+| Mesas | `mesas` | `MesasScreen.kt` | Tablero. **Sin** chip de sesión |
+| Gestión | `menu` | `GestionScreen.kt` | Hub: Carta, Locales, Invitaciones |
+| Ajustes | `ajustes` | `AjustesScreen.kt` | TPV, backup, URL Identity (escape), Bar LAN |
+
+### Sesión (Identity)
+
+El camino diario está en el **header**, no en Ajustes. `PcSesionChip` vive en `PcBrandHeader.actions` de Home, Gestión y Ajustes (`PcSesionChip.kt`).
+
+| Qué ves | Gesto | Ruta | Archivo |
+|---|---|---|---|
+| TextButton **Entrar** (modo Local) | tap | `auth` | `AuthScreen.kt` — título «Iniciar sesión» |
+| Chip avatar + nick (hay sesión) | tap | `perfil` | `PerfilScreen.kt` — título «Mi perfil» |
+| **Standalone** / nombre del local (`PcTurnoIndicador`, bajo el título) | tap | `auth` si Local; `ajustes` si hay sesión | Home y Gestión |
+
+**Iniciar sesión (`auth`):** pestañas Entrar / Registro. Campos **Correo** y **Contraseña** (no «Email»). Botón amarillo **Entrar**. **No hay URL de Identity.** Default: `SesionStore.DEFAULT_IDENTITY_URL` = `https://camareros.siberia.solutions` (VPS; Docker en el servidor). Prefs con Docker local (`10.0.2.2:8080`) se reescriben al VPS.
+
+**Mi perfil (`perfil`):** nick, foto, «Qué se ve en tu ficha» (6 switches contra Identity), QR, **Ver mi ficha**, renovar/revocar clave, cerrar sesión. Visibilidad y ficha **no** están en Ajustes.
+
+**Ajustes — Cuenta de camarero:** campo «URL del servicio camareros» (escape; no es el login diario) y un botón que abre `auth` o `perfil`. **Ajustes — Turno en el establecimiento:** Bar LAN `:8787` (`10.0.2.2` en emulador con `adb forward`). Commander no llama a `:8082`.
+
+Hay **otros** «Entrar» en `CuentaCard` y `SalaCard` si Local. Son atajos, no el flujo de uso.
+
+### Gestión y sala
+
+- Hub Gestión: Carta (`MenuScreen`), Locales (membresías Identity), Invitaciones (QR / ficha).
+- Mesas → tap mesa → `comanda/{mesaId}` (`ComandaScreen.kt`). Voz y comanda viven ahí.
 
 ## Familia PersonalHostel
 
