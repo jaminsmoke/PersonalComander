@@ -158,7 +158,7 @@ Detectado → Debate → Roadmap → Ejecutando → Verificando → Changelog
 
 **No skipping**: every item advances in order. Exception: `Cancelado` → Changelog.
 
-**Version always > latest release**: consult `gh release list`, pick the next one (currently v1.6).
+**Version always > latest release**: consult `gh release list`, pick the next one. Latest publicada: **v1.5**. Release en curso: **v1.6**. Ítems posteriores: **v1.7** (opción ya creada en el campo Versión).
 
 #### 1. Detectado — Describir el problema a fondo
 
@@ -347,7 +347,7 @@ Each item's body evolves through the lifecycle. The CLI generates a template at 
 | Prioridad | SingleSelect | Alta, Media, Baja |
 | Tipo | SingleSelect | Bug, Feature, Mejora, Tarea |
 | Área principal | SingleSelect | UI/UX, Datos, Voz, Sync, Android, Build/CI, Docs |
-| Versión | SingleSelect | v1.4, v1.5, v1.6... |
+| Versión | SingleSelect | v1.4, v1.5, v1.6, v1.7... |
 | Decision | SingleSelect | Pendiente, Aprobado, Diferido, Cancelado |
 | HighLighted | SingleSelect | Yes, No (for changelog highlights) |
 | Inicio exacto | Text | ISO-8601 UTC timestamp |
