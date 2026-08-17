@@ -100,16 +100,32 @@ class SesionRepository(
         }
     }
 
-    suspend fun actualizarNick(nick: String): IdentityRespuesta<PerfilCamarero> {
+    suspend fun actualizarFicha(
+        nick: String,
+        direccion: String?,
+        ciudad: String?,
+    ): IdentityRespuesta<PerfilCamarero> {
         val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
-        val limpio = nick.trim()
-        if (limpio.isEmpty()) return IdentityRespuesta(false, error = "Nick vacío")
+        val nickLimpio = nick.trim()
+        if (nickLimpio.isEmpty()) return IdentityRespuesta(false, error = "Nick vacío")
+        val dir = direccion?.trim()?.ifEmpty { null }
+        val ciu = ciudad?.trim()?.ifEmpty { null }
         return withContext(Dispatchers.IO) {
-            val r = cliente().actualizarPerfil(token, limpio)
+            val r = cliente().actualizarPerfil(token, nickLimpio, dir, ciu)
             if (r.ok && r.valor != null) {
                 persistir(r.valor, _modo.value.qr, token)
             }
             r
+        }
+    }
+
+    suspend fun cambiarPassword(
+        passwordActual: String,
+        passwordNueva: String,
+    ): IdentityRespuesta<Unit> {
+        val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
+        return withContext(Dispatchers.IO) {
+            cliente().cambiarPassword(token, passwordActual, passwordNueva)
         }
     }
 

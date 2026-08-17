@@ -91,13 +91,30 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
         repo.cerrarSesion()
     }
 
-    fun actualizarNick(nick: String) {
+    fun actualizarFicha(nick: String, direccion: String, ciudad: String) {
         viewModelScope.launch {
             _busy.value = true
-            val r = repo.actualizarNick(nick)
+            val r = repo.actualizarFicha(nick, direccion, ciudad)
             _busy.value = false
-            _mensaje.value = if (r.ok) ctx.getString(R.string.sesion_nick_ok)
+            _mensaje.value = if (r.ok) ctx.getString(R.string.sesion_ficha_ok)
             else r.error ?: ctx.getString(R.string.sesion_error_generico)
+        }
+    }
+
+    fun cambiarPassword(passwordActual: String, passwordNueva: String) {
+        viewModelScope.launch {
+            _busy.value = true
+            val r = repo.cambiarPassword(passwordActual, passwordNueva)
+            _busy.value = false
+            _mensaje.value = if (r.ok) {
+                ctx.getString(R.string.sesion_password_cambiada)
+            } else {
+                when (r.code) {
+                    IdentityJson.CODE_PASSWORD_INCORRECTA ->
+                        ctx.getString(R.string.sesion_password_actual_incorrecta)
+                    else -> r.error ?: ctx.getString(R.string.sesion_error_generico)
+                }
+            }
         }
     }
 

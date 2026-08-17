@@ -10,3 +10,4 @@
 /v1/camareros/me/foto
 /v1/camareros/me/establecimientos
 /v1/camareros/me/visibilidad
+/v1/camareros/me/password

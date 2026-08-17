@@ -65,6 +65,10 @@ data class PerfilCamarero(
     val fotoUrl: String? = null,
     /** Mote visible en establecimientos (colas, voz). Distinto del nombre legal. */
     val nick: String? = null,
+    /** Dirección de la ficha. Identity; null si no informada o prefs viejos. */
+    val direccion: String? = null,
+    /** Ciudad de la ficha. Identity; null si no informada o prefs viejos. */
+    val ciudad: String? = null,
     /** Linaje Identity. Null en prefs viejos: [origen] cae a Real. */
     val dataOrigin: DataOrigin? = DataOrigin.Real,
 ) {

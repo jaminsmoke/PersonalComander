@@ -34,6 +34,7 @@ class IdentityCliente(
         const val ME_FOTO = "/v1/camareros/me/foto"
         const val ME_ESTABLECIMIENTOS = "/v1/camareros/me/establecimientos"
         const val ME_VISIBILIDAD = "/v1/camareros/me/visibilidad"
+        const val ME_PASSWORD = "/v1/camareros/me/password"
 
         fun todas(): List<String> = listOf(
             REGISTRO,
@@ -45,6 +46,7 @@ class IdentityCliente(
             ME_FOTO,
             ME_ESTABLECIMIENTOS,
             ME_VISIBILIDAD,
+            ME_PASSWORD,
         )
     }
 
@@ -95,15 +97,40 @@ class IdentityCliente(
         return IdentityRespuesta(true, IdentityJson.parseLogin(http.cuerpo), codigo = http.codigo)
     }
 
-    fun actualizarPerfil(token: String, nick: String): IdentityRespuesta<PerfilCamarero> {
-        val payload = JsonObject().apply { addProperty("nick", nick) }
-        val http = patch(Rutas.ME, payload.toString(), token)
+    fun actualizarPerfil(
+        token: String,
+        nick: String,
+        direccion: String?,
+        ciudad: String?,
+    ): IdentityRespuesta<PerfilCamarero> {
+        val payload = IdentityJson.cuerpoPerfilPatch(
+            nick = nick,
+            direccion = direccion,
+            ciudad = ciudad,
+            incluirDireccion = true,
+            incluirCiudad = true,
+        )
+        val http = patch(Rutas.ME, payload, token)
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(
             true,
             IdentityJson.parsePerfil(com.google.gson.JsonParser.parseString(http.cuerpo)),
             codigo = http.codigo,
         )
+    }
+
+    fun cambiarPassword(
+        token: String,
+        passwordActual: String,
+        passwordNueva: String,
+    ): IdentityRespuesta<Unit> {
+        val http = post(
+            Rutas.ME_PASSWORD,
+            IdentityJson.cuerpoCambioPassword(passwordActual, passwordNueva),
+            token,
+        )
+        if (http.codigo !in 200..299) return errorDe(http)
+        return IdentityRespuesta(true, Unit, codigo = http.codigo)
     }
 
     fun me(token: String): IdentityRespuesta<PerfilCamarero> {
