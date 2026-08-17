@@ -85,8 +85,16 @@ fun PerfilScreen(
     var confirmarRenovar by remember { mutableStateOf(false) }
     var confirmarRevocar by remember { mutableStateOf(false) }
     var confirmarBorrar by remember { mutableStateOf(false) }
+    var confirmarPassword by remember { mutableStateOf(false) }
     var passwordBorrar by remember { mutableStateOf("") }
+    var passwordActual by remember { mutableStateOf("") }
+    var passwordNueva by remember { mutableStateOf("") }
+    var passwordNueva2 by remember { mutableStateOf("") }
     var nickEdit by remember(perfil?.id, perfil?.nick) { mutableStateOf(perfil?.mote.orEmpty()) }
+    var direccionEdit by remember(perfil?.id, perfil?.direccion) {
+        mutableStateOf(perfil?.direccion.orEmpty())
+    }
+    var ciudadEdit by remember(perfil?.id, perfil?.ciudad) { mutableStateOf(perfil?.ciudad.orEmpty()) }
 
     val picker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia(),
@@ -149,10 +157,28 @@ fun PerfilScreen(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                OutlinedTextField(
+                    value = direccionEdit,
+                    onValueChange = { direccionEdit = it },
+                    label = { Text(stringResource(R.string.sesion_direccion)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = ciudadEdit,
+                    onValueChange = { ciudadEdit = it },
+                    label = { Text(stringResource(R.string.sesion_ciudad)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 PcSecondaryButton(
-                    text = stringResource(R.string.sesion_nick_guardar),
-                    onClick = { viewModel.actualizarNick(nickEdit) },
-                    enabled = !busy && nickEdit.trim().isNotEmpty() && nickEdit.trim() != perfil.nick,
+                    text = stringResource(R.string.sesion_ficha_guardar),
+                    onClick = { viewModel.actualizarFicha(nickEdit, direccionEdit, ciudadEdit) },
+                    enabled = !busy && nickEdit.trim().isNotEmpty() && (
+                        nickEdit.trim() != perfil.nick.orEmpty() ||
+                            direccionEdit.trim() != perfil.direccion.orEmpty() ||
+                            ciudadEdit.trim() != perfil.ciudad.orEmpty()
+                        ),
                     modifier = Modifier.fillMaxWidth(),
                 )
                 when (val actual = modo) {
@@ -238,6 +264,18 @@ fun PerfilScreen(
                             onCheckedChange = { viewModel.setVisibilidad(CampoVisibilidad.TELEFONO, it) },
                         )
                         FilaVisibilidad(
+                            titulo = stringResource(R.string.sesion_visibilidad_direccion),
+                            checked = visibilidad.direccion,
+                            enabled = !busy,
+                            onCheckedChange = { viewModel.setVisibilidad(CampoVisibilidad.DIRECCION, it) },
+                        )
+                        FilaVisibilidad(
+                            titulo = stringResource(R.string.sesion_visibilidad_ciudad),
+                            checked = visibilidad.ciudad,
+                            enabled = !busy,
+                            onCheckedChange = { viewModel.setVisibilidad(CampoVisibilidad.CIUDAD, it) },
+                        )
+                        FilaVisibilidad(
                             titulo = stringResource(R.string.sesion_visibilidad_foto),
                             hint = stringResource(R.string.sesion_visibilidad_foto_hint),
                             checked = visibilidad.foto,
@@ -315,6 +353,12 @@ fun PerfilScreen(
                     )
                 }
                 PcSecondaryButton(
+                    text = stringResource(R.string.sesion_password_cambiar),
+                    onClick = { confirmarPassword = true },
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                PcSecondaryButton(
                     text = stringResource(R.string.sesion_cerrar),
                     onClick = { viewModel.cerrarSesion() },
                     modifier = Modifier.fillMaxWidth(),
@@ -368,6 +412,74 @@ fun PerfilScreen(
                 TextButton(onClick = { confirmarRevocar = false }) {
                     Text(stringResource(R.string.menu_cancel))
                 }
+            },
+        )
+    }
+    if (confirmarPassword) {
+        val passwordLista = passwordActual.length >= 8 &&
+            passwordNueva.length >= 8 &&
+            passwordNueva == passwordNueva2
+        AlertDialog(
+            onDismissRequest = {
+                confirmarPassword = false
+                passwordActual = ""
+                passwordNueva = ""
+                passwordNueva2 = ""
+            },
+            title = { Text(stringResource(R.string.sesion_password_cambiar_titulo)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.sesion_password_cambiar_desc))
+                    OutlinedTextField(
+                        value = passwordActual,
+                        onValueChange = { passwordActual = it },
+                        label = { Text(stringResource(R.string.sesion_password_actual)) },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = passwordNueva,
+                        onValueChange = { passwordNueva = it },
+                        label = { Text(stringResource(R.string.sesion_password_nueva)) },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = passwordNueva2,
+                        onValueChange = { passwordNueva2 = it },
+                        label = { Text(stringResource(R.string.sesion_password_nueva_repetir)) },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val actual = passwordActual
+                        val nueva = passwordNueva
+                        confirmarPassword = false
+                        passwordActual = ""
+                        passwordNueva = ""
+                        passwordNueva2 = ""
+                        viewModel.cambiarPassword(actual, nueva)
+                    },
+                    enabled = passwordLista,
+                ) { Text(stringResource(R.string.sesion_password_cambiar)) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    confirmarPassword = false
+                    passwordActual = ""
+                    passwordNueva = ""
+                    passwordNueva2 = ""
+                }) { Text(stringResource(R.string.menu_cancel)) }
             },
         )
     }

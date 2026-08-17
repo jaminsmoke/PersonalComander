@@ -78,6 +78,8 @@ object IdentityJson {
             telefono = o.get("telefono")?.takeUnless { it.isJsonNull }?.asString,
             fotoUrl = o.get("foto_url")?.takeUnless { it.isJsonNull }?.asString,
             nick = o.get("nick")?.takeUnless { it.isJsonNull }?.asString?.trim()?.ifBlank { null },
+            direccion = textoOpcional(o, "direccion"),
+            ciudad = textoOpcional(o, "ciudad"),
             dataOrigin = parseDataOrigin(o),
         )
     }
@@ -147,6 +149,8 @@ object IdentityJson {
             nick = booleanODefault(o, "nick", true),
             email = booleanODefault(o, "email", false),
             telefono = booleanODefault(o, "telefono", false),
+            direccion = booleanODefault(o, "direccion", false),
+            ciudad = booleanODefault(o, "ciudad", false),
             foto = booleanODefault(o, "foto", false),
         )
     }
@@ -160,9 +164,34 @@ object IdentityJson {
         addProperty("nick", v.nick)
         addProperty("email", v.email)
         addProperty("telefono", v.telefono)
+        addProperty("direccion", v.direccion)
+        addProperty("ciudad", v.ciudad)
         addProperty("foto", v.foto)
     }.toString()
 
+    /**
+     * PATCH `/v1/camareros/me`. Identity exige al menos un campo.
+     * [incluirDireccion]/[incluirCiudad] permiten mandar vacío para borrar.
+     */
+    fun cuerpoPerfilPatch(
+        nick: String? = null,
+        direccion: String? = null,
+        ciudad: String? = null,
+        incluirDireccion: Boolean = false,
+        incluirCiudad: Boolean = false,
+    ): String {
+        val o = JsonObject()
+        if (nick != null) o.addProperty("nick", nick)
+        if (incluirDireccion) o.addProperty("direccion", direccion.orEmpty())
+        if (incluirCiudad) o.addProperty("ciudad", ciudad.orEmpty())
+        return o.toString()
+    }
+
+    fun cuerpoCambioPassword(passwordActual: String, passwordNueva: String): String =
+        JsonObject().apply {
+            addProperty("password_actual", passwordActual)
+            addProperty("password_nueva", passwordNueva)
+        }.toString()
 
     fun parseFotoUrl(body: String): String? {
         val el = JsonParser.parseString(body).asJsonObject.get("foto_url")
@@ -216,6 +245,8 @@ enum class CampoVisibilidad(val wire: String) {
     NICK("nick"),
     EMAIL("email"),
     TELEFONO("telefono"),
+    DIRECCION("direccion"),
+    CIUDAD("ciudad"),
     FOTO("foto"),
 }
 
@@ -226,6 +257,8 @@ data class VisibilidadCamarero(
     val nick: Boolean = true,
     val email: Boolean = false,
     val telefono: Boolean = false,
+    val direccion: Boolean = false,
+    val ciudad: Boolean = false,
     val foto: Boolean = false,
 ) {
     fun valor(campo: CampoVisibilidad): Boolean = when (campo) {
@@ -234,6 +267,8 @@ data class VisibilidadCamarero(
         CampoVisibilidad.NICK -> nick
         CampoVisibilidad.EMAIL -> email
         CampoVisibilidad.TELEFONO -> telefono
+        CampoVisibilidad.DIRECCION -> direccion
+        CampoVisibilidad.CIUDAD -> ciudad
         CampoVisibilidad.FOTO -> foto
     }
 
@@ -243,6 +278,8 @@ data class VisibilidadCamarero(
         CampoVisibilidad.NICK -> copy(nick = valor)
         CampoVisibilidad.EMAIL -> copy(email = valor)
         CampoVisibilidad.TELEFONO -> copy(telefono = valor)
+        CampoVisibilidad.DIRECCION -> copy(direccion = valor)
+        CampoVisibilidad.CIUDAD -> copy(ciudad = valor)
         CampoVisibilidad.FOTO -> copy(foto = valor)
     }
 

@@ -61,19 +61,25 @@ class IdentityJsonTest {
         assertEquals(true, v.nick)
         assertEquals(false, v.email)
         assertEquals(false, v.telefono)
+        assertEquals(false, v.direccion)
+        assertEquals(false, v.ciudad)
         assertEquals(false, v.foto)
     }
 
     @Test
     fun parseVisibilidad_respeta_opt_in() {
         val v = IdentityJson.parseVisibilidad(
-            """{"nombre":true,"apellidos":true,"nick":true,"email":true,"telefono":false,"foto":true}""",
+            """{"nombre":true,"apellidos":true,"nick":true,"email":true,"telefono":false,"direccion":true,"ciudad":true,"foto":true}""",
         )
         assertTrue(v.email)
         assertFalse(v.telefono)
+        assertTrue(v.direccion)
+        assertTrue(v.ciudad)
         assertTrue(v.foto)
         assertEquals(true, v.valor(CampoVisibilidad.EMAIL))
         assertEquals(false, v.con(CampoVisibilidad.EMAIL, false).email)
+        assertEquals(true, v.valor(CampoVisibilidad.DIRECCION))
+        assertEquals(false, v.con(CampoVisibilidad.CIUDAD, false).ciudad)
     }
 
     @Test
@@ -120,7 +126,45 @@ class IdentityJsonTest {
         assertEquals(null, perfil.fotoUrl)
         assertEquals(null, perfil.telefono)
         assertEquals(null, perfil.nick)
+        assertEquals(null, perfil.direccion)
+        assertEquals(null, perfil.ciudad)
         assertEquals(DataOrigin.Real, perfil.origen)
+    }
+
+    @Test
+    fun parsePerfil_con_direccion_ciudad() {
+        val perfil = IdentityJson.parsePerfil(
+            com.google.gson.JsonParser.parseString(
+                """{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com","direccion":"Calle Mayor 1","ciudad":"Madrid"}""",
+            ),
+        )
+        assertEquals("Calle Mayor 1", perfil.direccion)
+        assertEquals("Madrid", perfil.ciudad)
+    }
+
+    @Test
+    fun cuerpoPerfilPatch_parcial_nick() {
+        assertEquals("""{"nick":"Anita"}""", IdentityJson.cuerpoPerfilPatch(nick = "Anita"))
+    }
+
+    @Test
+    fun cuerpoPerfilPatch_ficha_completa() {
+        val json = IdentityJson.cuerpoPerfilPatch(
+            nick = "Anita",
+            direccion = "Calle Mayor 1",
+            ciudad = "",
+            incluirDireccion = true,
+            incluirCiudad = true,
+        )
+        assertEquals("""{"nick":"Anita","direccion":"Calle Mayor 1","ciudad":""}""", json)
+    }
+
+    @Test
+    fun cuerpoCambioPassword() {
+        assertEquals(
+            """{"password_actual":"vieja-1234","password_nueva":"nueva-5678"}""",
+            IdentityJson.cuerpoCambioPassword("vieja-1234", "nueva-5678"),
+        )
     }
 
     @Test
