@@ -57,19 +57,19 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 
 ## Build & run
 
-La UI de **Comander** está pensada para **móvil en vertical** (AVD `Pixel_9a`, portrait). Sigue siendo responsive, pero las pruebas visuales van en ese emulador.
+La UI de **Comander** está pensada para **móvil en vertical** (AVD `Movil-Pixel10a`, portrait). Sigue siendo responsive, pero las pruebas visuales van en ese emulador. Arranque por defecto: locale `es-ES` y zona `Europe/Madrid` (`emulador.bat`).
 
-Personal Bar (repo hermano) se prueba en **tablet apaisada**. Dos AVDs a la vez: el teléfono no ve el tablet por `10.0.2.2` a menos que el host reenvíe el puerto (`adb -s emulator-5556 forward tcp:8787 tcp:8787`) y Comander apunte a `10.0.2.2:8787`. Identity servicio **camareros** en el VPS (`https://camareros.siberia.solutions`; Docker en el servidor, no en el host). El servicio **negocio** es `:8082` (Bar / Identity Web), no Commander.
+Personal Bar (repo hermano) se prueba en **tablet apaisada** (AVD `Tablet-PixelTablet`). Dos AVDs a la vez: el teléfono no ve el tablet por `10.0.2.2` a menos que el host reenvíe el puerto (`adb -s emulator-5556 forward tcp:8787 tcp:8787`) y Comander apunte a `10.0.2.2:8787`. Identity servicio **camareros** en el VPS (`https://camareros.siberia.solutions`; Docker en el servidor, no en el host). El servicio **negocio** es `:8082` (Bar / Identity Web), no Commander.
 
 ```bash
 # Typecheck
 ./gradlew assembleDebug
 
-# Install on emulator (Pixel_9a AVD, portrait)
+# Install on emulator (Movil-Pixel10a AVD, portrait)
 ./gradlew installDebug
 
 # Launch emulator
-emulador.bat   # Windows; or: emulator -avd Pixel_9a
+emulador.bat   # Windows; or: emulator -avd Movil-Pixel10a -timezone Europe/Madrid -change-locale es-ES
 
 # Tests
 ./gradlew test                         # unit
@@ -85,7 +85,7 @@ python scripts/check_family_contracts.py --selftest
 
 ## Mapa de pantallas (agentes)
 
-UI **móvil vertical** (`Pixel_9a`). NavHost: `ui/PersonalComanderApp.kt`. **No busques el login diario en Ajustes.**
+UI **móvil vertical** (`Movil-Pixel10a`). NavHost: `ui/PersonalComanderApp.kt`. **No busques el login diario en Ajustes.**
 
 Barra inferior (solo rutas top-level; se oculta en `auth`, `perfil` y `comanda/{id}`):
 
@@ -481,7 +481,7 @@ devartifacts/                 # gitignored
 └── jarvis-skills/            # cloned skills repo
     └── packages/kanban-cli/  # bun install'd
 
-emulador.bat                  # launches Pixel_9a AVD
+emulador.bat                  # launches Movil-Pixel10a AVD (es-ES, Europe/Madrid)
 .kanbanrc.json                # local Project IDs (gitignored)
 .kanbanrc.json.template       # versioned reproducible reference
 ```

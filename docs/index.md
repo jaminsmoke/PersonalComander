@@ -114,7 +114,7 @@ Manual en la [Wiki](https://github.com/jaminsmoke/PersonalComander/wiki) · [Doc
 ## Requisitos
 
 - **Android 7.0+** (API 24)
-- Un dispositivo o emulador con pantalla táctil (tablet recomendada para el board)
+- Un dispositivo o emulador con pantalla táctil (móvil vertical; AVD `Movil-Pixel10a`)
 - Para la sincronización TPV: red local con el servidor del TPV
 
 ## Comunidad y ayuda
