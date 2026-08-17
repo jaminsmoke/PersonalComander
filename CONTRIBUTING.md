@@ -54,6 +54,7 @@ Antes de abrir un PR, verifica localmente:
 # Documentación del sitio (MkDocs)
 python scripts/check_docs_links.py
 python scripts/check_docs_structure.py
+python scripts/check_docs_cobertura.py
 ```
 
 - Todos los tests deben pasar y el lint no debe introducir errores nuevos.

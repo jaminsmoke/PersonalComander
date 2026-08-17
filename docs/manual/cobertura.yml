@@ -1,0 +1,85 @@
+# Superficies de oficio que el manual debe nombrar.
+#
+# El script scripts/check_docs_cobertura.py extrae rutas, tabs y el hub
+# Gestión del código. Cada id tiene que estar aquí con page+needles
+# o con omit (motivo). Si nace un composable y no hay fila, CI falla.
+
+routes:
+  home:
+    page: manual/resumen.md
+    needles:
+      - Resumen
+      - facturado
+  mesas:
+    page: manual/mesas.md
+    needles:
+      - Mesas
+      - semáforo
+  menu:
+    page: manual/carta.md
+    needles:
+      - Gestión
+  ajustes:
+    page: manual/ajustes.md
+    needles:
+      - Ajustes
+      - TPV
+  comanda/{mesaId}:
+    page: manual/comandas.md
+    needles:
+      - Comanda
+      - para recoger
+  auth:
+    page: manual/cuenta.md
+    needles:
+      - Entrar
+      - Registro
+  perfil:
+    page: manual/cuenta.md
+    needles:
+      - perfil
+      - visibilidad
+
+tabs:
+  HOME:
+    page: manual/resumen.md
+    needles:
+      - Resumen
+  MESAS:
+    page: manual/mesas.md
+    needles:
+      - Mesas
+  MENU:
+    page: manual/carta.md
+    needles:
+      - Gestión
+  AJUSTES:
+    page: manual/ajustes.md
+    needles:
+      - Ajustes
+
+gestion:
+  CARTA:
+    page: manual/carta.md
+    needles:
+      - Carta
+  LOCALES:
+    page: manual/locales.md
+    needles:
+      - Locales
+      - membresías
+  INVITACIONES:
+    page: manual/invitaciones.md
+    needles:
+      - Invitaciones
+
+extras:
+  turno_indicador:
+    page: manual/cuenta.md
+    needles:
+      - Standalone
+  recoger:
+    page: manual/comandas.md
+    needles:
+      - para recoger
+      - servido

@@ -7,9 +7,12 @@ Commander es la app del teléfono: mesas, comanda (toque y voz) y cuenta profesi
 | Sección | Qué cubre |
 |---|---|
 | [Instalación](instalacion.md) | APK, primer arranque y requisitos |
+| [Resumen](resumen.md) | Facturado hoy, mesas y atajos |
 | [Board de mesas](mesas.md) | Plano, semáforo, salas y gestos |
-| [Comandas](comandas.md) | Voz, táctil y ciclo de la comanda |
+| [Comandas](comandas.md) | Voz, táctil, recoger y ciclo |
 | [Carta](carta.md) | Productos desde Gestión |
+| [Locales](locales.md) | Membresías Identity |
+| [Invitaciones](invitaciones.md) | Invitaciones de un local |
 | [Ajustes](ajustes.md) | TPV, copias y URL de Identity |
 | [Cuenta y turno](cuenta.md) | Entrar, perfil, QR y Personal Bar |
 | [FAQ](faq.md) | Preguntas frecuentes |

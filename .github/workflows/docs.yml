@@ -10,6 +10,7 @@ on:
       - "docs/**"
       - "scripts/check_docs_links.py"
       - "scripts/check_docs_structure.py"
+      - "scripts/check_docs_cobertura.py"
       - "README.md"
       - "README.es.md"
       - ".github/workflows/docs.yml"
@@ -53,6 +54,11 @@ jobs:
         run: |
           python scripts/check_docs_structure.py --selftest
           python scripts/check_docs_structure.py
+
+      - name: Check documentation coverage
+        run: |
+          python scripts/check_docs_cobertura.py --selftest
+          python scripts/check_docs_cobertura.py
 
       - name: Validate documentation
         run: mkdocs build --strict --site-dir site
