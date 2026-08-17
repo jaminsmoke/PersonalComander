@@ -58,9 +58,12 @@ nav:
   - Manual:
     - manual/index.md
     - Instalación: manual/instalacion.md
+    - Resumen: manual/resumen.md
     - Board de mesas: manual/mesas.md
     - Comandas: manual/comandas.md
     - Carta: manual/carta.md
+    - Locales: manual/locales.md
+    - Invitaciones: manual/invitaciones.md
     - Ajustes: manual/ajustes.md
     - Cuenta y turno: manual/cuenta.md
     - FAQ: manual/faq.md

@@ -17,4 +17,4 @@ Cada categoría lleva un icono emoji, el mismo que ves en la comanda.
 - **Sync TPV:** importas el catálogo de un TPV en la LAN. El flujo está en [Ajustes](ajustes.md) y el detalle técnico en [Sync TPV](../sync-tpv.md).
 - **Turno en un establecimiento:** la carta puede quedar **bloqueada** para edición local. El local (Personal Bar + lista blanca) es entonces la fuente compartida.
 
-Gestión también agrupa **Locales** (membresías en Identity) e **Invitaciones** (QR / ficha). Eso no es el editor de productos.
+El hub **Gestión** también abre [Locales](locales.md) (membresías) e [Invitaciones](invitaciones.md). No son el editor de productos.

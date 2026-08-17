@@ -25,6 +25,12 @@ El reconocimiento va **en el dispositivo**: no hace falta internet. Entiende can
 
 En modo **Local** o **Identidad**, enviar a cocina no habla con Bar: solo actualiza la base local. En modo **Establecimiento**, Bar reparte la ronda. Si Bar no responde, la comanda **se conserva enviada en el teléfono** y la app avisa; no se pierde el pedido.
 
+## Para recoger y servido
+
+Con turno en un Bar, cuando barra o cocina marca el ticket listo las líneas pasan a **para recoger** (`LISTA`). Un aviso (snackbar o notificación) te lo dice. Al dárselo al cliente, márcalas **servido**.
+
+Sin Bar, enviar a cocina deja las líneas en enviada; no hay cola de expo.
+
 El contrato de esa ronda está en [Protocolo LAN](../sala-protocol.md).
 
 ## Consejos

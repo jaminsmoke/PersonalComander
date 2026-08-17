@@ -31,6 +31,11 @@ jobs:
           python scripts/check_docs_structure.py --selftest
           python scripts/check_docs_structure.py
 
+      - name: Check documentation coverage
+        run: |
+          python scripts/check_docs_cobertura.py --selftest
+          python scripts/check_docs_cobertura.py
+
       - name: Build MkDocs strictly
         run: mkdocs build --strict --site-dir site
 
