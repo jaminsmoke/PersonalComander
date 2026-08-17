@@ -2,7 +2,7 @@
 
 Contrato entre **Personal Comander** (cliente) y **Personal Bar** (nodo). Puerto fijo **8787**. HTTP en claro solo en LAN de confianza.
 
-No confundir con Identity: el **servicio camareros** (`:8080`, HTTPS en producción) es el DNI del camarero y la fuente de verdad de cuentas y membresías. El **servicio negocio** (`:8082`) es de Bar / Identity Web. El nodo de sala sigue siendo Bar LAN.
+No confundir con Identity: el **servicio camareros** (VPS `https://camareros.siberia.solutions`, Docker en el servidor; HTTPS) es el DNI del camarero y la fuente de verdad de cuentas y membresías. El **servicio negocio** (`:8082`) es de Bar / Identity Web. El nodo de sala sigue siendo Bar LAN. Commander no apunta Identity a Docker del host (`10.0.2.2:8080`).
 
 Rutas Identity que Commander llama: [`identity-contract-paths.txt`](identity-contract-paths.txt).
 Rutas Bar que Commander llama: [`bar-contract-paths.txt`](bar-contract-paths.txt). El job CI `Family contracts` las contrasta con Identity `main` (OpenAPI camareros y negocio) y Bar `main` (`BarLanModule.kt`); el informe queda en el summary del job. Aún no es check requerido del ruleset.

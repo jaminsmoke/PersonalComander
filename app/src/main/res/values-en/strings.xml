@@ -320,7 +320,7 @@
     <string name="sesion_banner_solo_lectura">Venue menu (read-only). Changes are made on the Bar.</string>
     <string name="sesion_banner_mapa_solo_lectura">Venue floor plan (read-only). Changes are made on the Bar.</string>
     <string name="sesion_cuenta_title">Waiter account</string>
-    <string name="sesion_cuenta_desc">Identity waiters service (emulator: http://10.0.2.2:8080). The business service (:8082) is for Bar. The account lives in Identity; this phone keeps a cache.</string>
+    <string name="sesion_cuenta_desc">Identity waiters service on the VPS (https://camareros.siberia.solutions). The business service (:8082) is for Bar. The account lives in Identity; this phone keeps a cache.</string>
     <string name="sesion_identity_url">Waiters service URL</string>
     <string name="sesion_sala_title">Venue shift</string>
     <string name="sesion_sala_desc">Start a shift on a Bar on the local network (port 8787). You can be registered at several venues; active at only one. Requires an account and QR.</string>

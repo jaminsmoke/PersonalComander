@@ -320,7 +320,7 @@
     <string name="sesion_banner_solo_lectura">Carta del establecimiento (solo lectura). Los cambios se hacen en el Bar.</string>
     <string name="sesion_banner_mapa_solo_lectura">Mapa del establecimiento (solo lectura). Los cambios se hacen en el Bar.</string>
     <string name="sesion_cuenta_title">Cuenta de camarero</string>
-    <string name="sesion_cuenta_desc">Servicio camareros de Identity (emulador: http://10.0.2.2:8080). El servicio negocio (:8082) es de Bar. La cuenta se guarda en Identity; este móvil cachea una copia.</string>
+    <string name="sesion_cuenta_desc">Servicio camareros de Identity en el VPS (https://camareros.siberia.solutions). El servicio negocio (:8082) es de Bar. La cuenta se guarda en Identity; este móvil cachea una copia.</string>
     <string name="sesion_identity_url">URL del servicio camareros</string>
     <string name="sesion_sala_title">Turno en el establecimiento</string>
     <string name="sesion_sala_desc">Activa el turno en un Bar de la red local (puerto 8787). Puedes estar registrado en varios locales; activo solo en uno. Hace falta cuenta y QR.</string>
