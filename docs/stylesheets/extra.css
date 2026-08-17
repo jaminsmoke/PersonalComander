@@ -20,42 +20,43 @@
   --md-typeset-a-color: #E9C349;
 }
 
-/* Navegación por pestañas: visibles también por debajo del breakpoint nativo */
 .md-tabs {
   display: block;
 }
 
-/* Hero de la landing */
+/* Hero: copy + captura de móvil */
 .pc-hero {
-  text-align: center;
-  padding: 2.5rem 0 1rem;
-}
-
-.pc-hero img {
-  border-radius: 20px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
-  margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 240px);
+  gap: 2rem;
+  align-items: center;
+  text-align: left;
+  padding: 2rem 0 1rem;
 }
 
 .pc-hero h1 {
-  font-size: 2.6rem;
+  font-size: 2.4rem;
   margin-bottom: 0.4rem;
   letter-spacing: -0.02em;
 }
 
-.pc-hero .tagline {
-  font-size: 1.2rem;
-  color: var(--md-default-fg-color--light);
-  margin-bottom: 1.5rem;
+.pc-hero-shot {
+  margin: 0;
 }
 
-.pc-hero .md-button {
-  margin: 0.25rem;
+.pc-hero-shot img {
+  width: 100%;
+  height: auto;
+  border-radius: 28px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
-/* CTA única destacada en el hero */
 .pc-cta {
   margin-top: 1.25rem;
+}
+
+.pc-cta .md-button {
+  margin: 0.25rem 0.5rem 0.25rem 0;
 }
 
 .pc-cta .md-button--primary {
@@ -64,25 +65,15 @@
   box-shadow: 0 4px 16px rgba(233, 195, 73, 0.35);
 }
 
-/* Grupo de features */
-.pc-features {
-  margin-top: 1rem;
-}
-
-.pc-features h2 {
-  margin-top: 2.5rem;
-}
-
-.pc-features h2:first-child {
-  margin-top: 0;
-}
-
-/* Galería de capturas */
 .pc-shots {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 1rem;
+}
+
+.pc-shots .pc-shot-lead {
+  grid-column: span 2;
 }
 
 .pc-shots figure {
@@ -105,43 +96,35 @@
   margin-top: 0.4rem;
 }
 
-/* Aviso v1.6 discreto */
 .pc-aviso {
   margin-top: 2rem;
   opacity: 0.85;
 }
 
-/* Responsive móvil */
 @media screen and (max-width: 76.2344em) {
   .pc-hero {
-    padding: 1.5rem 0 0.5rem;
-  }
-
-  .pc-hero img {
-    width: 96px;
-    border-radius: 16px;
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding: 1.25rem 0 0.5rem;
   }
 
   .pc-hero h1 {
-    font-size: 1.6rem;
+    font-size: 1.7rem;
     line-height: 1.2;
-    word-break: break-word;
   }
 
-  .pc-hero .tagline {
-    font-size: 0.95rem;
-    line-height: 1.4;
-    padding: 0 0.5rem;
+  .pc-hero-shot {
+    max-width: 200px;
+    margin: 0 auto;
   }
 
-  .pc-hero p {
-    padding: 0 0.5rem;
+  .pc-hero-shot img {
+    border-radius: 20px;
   }
 
   .pc-cta .md-button--primary {
     font-size: 0.95rem;
     padding: 0.65rem 1.5rem;
-    border-radius: 6px;
   }
 
   .pc-aviso {
@@ -154,6 +137,10 @@
     gap: 0.75rem;
   }
 
+  .pc-shots .pc-shot-lead {
+    grid-column: span 2;
+  }
+
   .pc-shots figcaption {
     font-size: 0.75rem;
   }
@@ -163,7 +150,6 @@
   }
 }
 
-/* Accesibilidad: sin animaciones si el usuario las desactiva */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

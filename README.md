@@ -2,9 +2,9 @@
 
 <img src="docs/screenshots/home.png" alt="Personal Comander" width="180">
 
-# 🛎️ Personal Comander
+# Personal Comander
 
-**The waiter’s tool** in the PersonalHostel family: table board, touch and voice orders, fast and visual. Personal Bar (sibling) is the **venue** station — queues and LAN node — not a second Commander.
+**The waiter’s tool** in the PersonalHostel family: table board, touch and voice orders, on a phone in portrait. Personal Bar is the **venue** station (queues, LAN node). Identity is the account registry (VPS).
 
 [Español](README.es.md) · English
 
@@ -13,111 +13,52 @@
 [![License](https://img.shields.io/github/license/jaminsmoke/PersonalComander?color=%23E9C349)](LICENSE)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 
-**v1.6** · Android 7.0+ (API 24) · [🌐 Site](https://jaminsmoke.github.io/PersonalComander/) · [📖 Wiki](https://github.com/jaminsmoke/PersonalComander/wiki)
+**v1.6** · Android 7.0+ (API 24) · [🌐 Site](https://jaminsmoke.github.io/PersonalComander/) · [📖 Manual](https://jaminsmoke.github.io/PersonalComander/manual/)
 
 </div>
 
 ---
 
-## ✨ Features
+Product page, user manual and technical docs live on the [site](https://jaminsmoke.github.io/PersonalComander/). This README is for cloning and building the app.
 
-- 🗺️ **Visual table board** — drag & drop tables across zones, zoom, rotate and fit-to-grid. Color-coded **traffic-light status**: free · occupied · in kitchen · reserved · blocked.
-- 🛎️ **Voice-first orders** — take orders by voice ("dos cafés con leche y una tarta") with an on-device Spanish NLP parser and fuzzy product matching. No internet needed.
-- 📋 **Touch orders** — full Comanda screen with category tabs, product search and quantities.
-- 🍔 **Menu management** — products, prices, categories and emoji icons, fully offline.
-- 📡 **POS sync** — pull the product catalog from your local TPV over the LAN.
-- 💾 **Backup & restore** — JSON import/export of the whole database.
-- 🌙 **Dark premium theme** — navy & gold design system, dynamic theming on Android 12+.
-- 🌍 **Bilingual** — Spanish and English UI.
-- 👤 **Waiter account and venue** — Identity login (header **Entrar**), public profile QR, visibility switches, and Personal Bar LAN shift.
-
-## 📱 Screenshots
-
-| Home | Table board | Menu | Order | Settings |
-|:---:|:---:|:---:|:---:|:---:|
-| <img src="docs/screenshots/home.png" width="180"> | <img src="docs/screenshots/mesas_board.png" width="180"> | <img src="docs/screenshots/menu.png" width="180"> | <img src="docs/screenshots/comanda.png" width="180"> | <img src="docs/screenshots/ajustes.png" width="180"> |
-
-The downloadable release is **v1.6**: waiter identity (VPS), public profile QR, LAN shift with Personal Bar. See the [v1.6 flow notes](docs/flujos-v16.md).
-
-## 🚀 Getting started
-
-### Requirements
+## Getting started
 
 - JDK 17+
 - Android SDK with `platforms;android-37`
-- An emulator or device running Android 7.0+ (API 24+)
-
-### Build & run
+- Emulator or device on Android 7.0+ (API 24+). UI target: portrait phone, AVD `Movil-Pixel10a`
 
 ```bash
-# Install on a connected device / emulator
 ./gradlew installDebug
-
-# Run unit tests
 ./gradlew test
-
-# Run instrumentation tests (requires a running emulator)
 ./gradlew connectedAndroidTest
-
-# Lint
 ./gradlew lint
 ```
 
-The first launch seeds a demo menu and a default table layout, so you can explore every screen right away.
+First launch seeds a demo menu and table layout.
 
-## 🧑‍🍳 Usage
+Daily login is **Entrar** in the header, not Settings. Account, profile and Bar shift: [manual](https://jaminsmoke.github.io/PersonalComander/manual/cuenta/).
 
-1. **Home** — daily summary: occupied tables, active orders and revenue so far.
-2. **Tables** — open the board, tap a table to open its order, drag to move it between zones, long-press for reserve/block actions.
-3. **Order** — add products by tapping or by voice, review the ticket, send it to the kitchen and close it when paid.
-4. **Menu** — manage products, prices, categories and icons.
-5. **Settings** — configure the TPV server, import/export backups, and sync the catalog.
-6. **Account and venue** — tap **Entrar** in the header (not Settings) to sign in with Identity, open the profile chip for QR/visibility, and start a Bar shift from Settings → venue.
-
-## 🖼️ Regenerar capturas y assets de marca
-
-Los assets públicos (logo, favicon y capturas de pantalla) se generan con scripts versionados:
+## Docs and screenshots
 
 ```bash
-# Logo y favicon del sitio (desde el escudo de marca ic_brand_shield.webp)
 python scripts/generate_assets.py
-
-# Capturas de pantalla (requiere un emulador activo)
 bash scripts/capture_screens.sh
-
-# Si hay teléfono y tablet activos, seleccionar el teléfono explícitamente
-ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
+# Phone + tablet emulators: ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
+python scripts/check_docs_links.py
+python scripts/check_docs_structure.py
 ```
 
-Ejecútalos después de cualquier cambio de marca o rediseño de UI para mantener coherentes el README, el sitio y la wiki.
+Regenerate public assets after a rebrand or UI redesign so the README and the site stay in sync. Architecture for humans: [docs/arquitectura.md](docs/arquitectura.md). Agent map: [`AGENTS.md`](AGENTS.md).
 
-## 🏗️ Architecture
+## Roadmap
 
-| Layer | Technology |
-|---|---|
-| UI | Jetpack Compose + Material 3 |
-| Navigation | `androidx.navigation.compose` |
-| State | ViewModel + StateFlow |
-| Database | Room (SQLite) with KSP |
-| Serialization | Gson (TPV sync, JSON backup) |
-| Voice | Android `SpeechRecognizer` (on-device) |
-| Min SDK / Target | 24 / 36 |
-
-```
-app/src/main/java/com/jaminsmoke/personalcomander/
-├── data/     # Entities, DAOs, migrations, seed, TPV sync, backup
-└── ui/       # Compose screens, ViewModels, theme, voice + NLP parser
-```
-
-## 🗺️ Roadmap
-
-- **v1.7** — next cycle (kanban Versión v1.7).
+- **v1.7** — current kanban cycle.
 - Later — premium features (see licensing model).
 
-## 🤝 Contributing
+## Contributing
 
-We welcome contributions! Check out the [contributing guide](CONTRIBUTING.md) to get started, and open issues for bugs or feature ideas. For security vulnerabilities, see our [security policy](SECURITY.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md). Security: [SECURITY.md](SECURITY.md).
 
-## 📄 License
+## License
 
-Released under the [MIT License](LICENSE).
+[MIT](LICENSE).

@@ -32,13 +32,13 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 │   ├── CategoriaIcono.kt        # Category → emoji mapping
 │   └── ...
 └── ui/
-    ├── PersonalComanderApp.kt   # NavHost (home → mesas | menu | ajustes | comanda/{id})
+    ├── PersonalComanderApp.kt   # NavHost (home, mesas, gestión, ajustes, auth, perfil, comanda/{id})
     ├── HomeScreen.kt / HomeViewModel.kt
     ├── MesasScreen.kt / MesasViewModel.kt / MesasBoard.kt  # Board + list views
     ├── ComandaScreen.kt / ComandaViewModel.kt              # Order taking
-    ├── MenuScreen.kt / MenuViewModel.kt                    # Product CRUD
-    ├── AjustesScreen.kt / AjustesViewModel.kt              # TPV sync, backup, cuenta y sala
-    ├── sesion/                                             # Auth, perfil, QR y conexión al establecimiento
+    ├── AjustesScreen.kt / AjustesViewModel.kt              # TPV, backup, URL Identity, turno Bar
+    ├── gestion/                                            # Hub Gestión (Carta, Locales, Invitaciones)
+    ├── sesion/                                             # Auth, perfil, QR y visibilidad
     ├── Voz.kt / VozParser.kt     # Voice recognition + NL parser
     ├── Formato.kt                # Double.formatoEuro() extension
     └── theme/                    # Color.kt, Theme.kt, Type.kt
@@ -63,10 +63,7 @@ UI (Compose) → ViewModel (StateFlow) → Repository → Room (SQLite)
 
 ## Voz
 
-- `VozRecognizer` envuelve Android `SpeechRecognizer` con timeouts adaptativos (15/30/45s según el RMS).
-- `VozParser` hace NLP: tokeniza la comanda en español y encuentra productos por match exacto/fuzzy (Levenshtein).
-- Ejemplo: `"dos cafés con leche y una tarta"` → `[(Café con leche, 2), (Tarta de queso, 1)]`.
-- `RMS_UMBRAL_CERCANIA = 6.0f` distingue habla cercana/lejana; hay detección de auriculares Bluetooth.
+El reconocimiento y el parser NLP viven en `Voz.kt` / `VozParser.kt`. Timeouts, Bluetooth y matching están documentados en [Voz](voz.md).
 
 ## Migraciones y schema
 

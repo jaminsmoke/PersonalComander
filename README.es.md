@@ -2,9 +2,9 @@
 
 <img src="docs/screenshots/home.png" alt="Personal Comander" width="180">
 
-# 🛎️ Personal Comander
+# Personal Comander
 
-**La herramienta del camarero** en la familia PersonalHostel: mesas, comandas táctiles y por voz. Personal Bar (repo hermano) es el puesto del **negocio** — colas y nodo LAN — no un segundo Commander.
+**La herramienta del camarero** en la familia PersonalHostel: mesas, comandas táctiles y por voz, en un móvil en vertical. Personal Bar es el puesto del **negocio** (colas, nodo LAN). Identity es el registro de cuentas (VPS).
 
 Español · [English](README.md)
 
@@ -13,111 +13,52 @@ Español · [English](README.md)
 [![License](https://img.shields.io/github/license/jaminsmoke/PersonalComander?color=%23E9C349)](LICENSE)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 
-**v1.6** · Android 7.0+ (API 24) · [🌐 Sitio](https://jaminsmoke.github.io/PersonalComander/) · [📖 Wiki](https://github.com/jaminsmoke/PersonalComander/wiki)
+**v1.6** · Android 7.0+ (API 24) · [🌐 Sitio](https://jaminsmoke.github.io/PersonalComander/) · [📖 Manual](https://jaminsmoke.github.io/PersonalComander/manual/)
 
 </div>
 
 ---
 
-## ✨ Funcionalidades
+La ficha de producto, el manual y la documentación técnica están en el [sitio](https://jaminsmoke.github.io/PersonalComander/). Este README es para clonar y compilar la app.
 
-- 🗺️ **Board visual de mesas** — arrastra mesas entre zonas, zoom, giro y ajuste al grid. **Semáforo de estados**: libre · ocupada · en cocina · reservada · bloqueada.
-- 🛎️ **Comandas por voz** — toma pedidos hablando ("dos cafés con leche y una tarta") con un parser NLP en español y búsqueda difusa de productos. Sin conexión a internet.
-- 📋 **Comandas táctiles** — pantalla de comanda completa con pestañas de categorías, buscador de productos y cantidades.
-- 🍔 **Gestión de menú** — productos, precios, categorías e iconos emoji, totalmente offline.
-- 📡 **Sync TPV** — importa el catálogo de productos desde tu TPV local por LAN.
-- 💾 **Copia de seguridad** — exportación/importación JSON de toda la base de datos.
-- 🌙 **Tema dark premium** — design system navy & gold, theming dinámico en Android 12+.
-- 🌍 **Bilingüe** — interfaz en español e inglés.
-- 👤 **Cuenta de camarero y establecimiento** — login Identity (chip **Entrar** del header), QR de ficha pública, palancas de visibilidad y turno Bar en LAN.
-
-## 📱 Capturas
-
-| Resumen | Board de mesas | Menú | Comanda | Ajustes |
-|:---:|:---:|:---:|:---:|:---:|
-| <img src="docs/screenshots/home.png" width="180"> | <img src="docs/screenshots/mesas_board.png" width="180"> | <img src="docs/screenshots/menu.png" width="180"> | <img src="docs/screenshots/comanda.png" width="180"> | <img src="docs/screenshots/ajustes.png" width="180"> |
-
-La release descargable es la **v1.6**: identidad del camarero (VPS), QR de ficha pública y turno LAN con Personal Bar. Consulta las [notas de flujos v1.6](docs/flujos-v16.md).
-
-## 🚀 Primeros pasos
-
-### Requisitos
+## Primeros pasos
 
 - JDK 17+
 - Android SDK con `platforms;android-37`
-- Un emulador o dispositivo con Android 7.0+ (API 24+)
-
-### Compilar y ejecutar
+- Emulador o dispositivo Android 7.0+ (API 24+). Objetivo de UI: móvil vertical, AVD `Movil-Pixel10a`
 
 ```bash
-# Instalar en un dispositivo/emulador conectado
 ./gradlew installDebug
-
-# Tests unitarios
 ./gradlew test
-
-# Tests de instrumentación (requiere emulador activo)
 ./gradlew connectedAndroidTest
-
-# Lint
 ./gradlew lint
 ```
 
-En el primer arranque la app crea un menú de demostración y un plano de mesas por defecto, así puedes explorar todas las pantallas desde el minuto uno.
+El primer arranque crea un menú y un plano de demostración.
 
-## 🧑‍🍳 Uso
+El login diario es **Entrar** en el header, no Ajustes. Cuenta, perfil y turno Bar: [manual](https://jaminsmoke.github.io/PersonalComander/manual/cuenta/).
 
-1. **Resumen** — resumen del día: mesas ocupadas, pedidos activos y facturado.
-2. **Mesas** — abre el board, toca una mesa para su comanda, arrástrala para moverla de zona, mantén pulsado para reservar/bloquear.
-3. **Comanda** — añade productos por voz o con el dedo, revisa la cuenta, envíala a cocina y ciérrala al cobrar.
-4. **Menú** — gestiona productos, precios, categorías e iconos.
-5. **Ajustes** — configura el servidor TPV, importa/exporta copias y sincroniza el catálogo.
-6. **Cuenta y establecimiento** — pulsa **Entrar** en el header (no en Ajustes) para iniciar sesión en Identity, abre el chip de perfil para QR/visibilidad, y activa el turno Bar en Ajustes → establecimiento.
-
-## 🖼️ Regenerar capturas y assets de marca
-
-Los assets públicos (logo, favicon y capturas) se generan con scripts versionados:
+## Docs y capturas
 
 ```bash
-# Logo y favicon del sitio (desde el escudo de marca ic_brand_shield.webp)
 python scripts/generate_assets.py
-
-# Capturas de pantalla (requiere un emulador activo)
 bash scripts/capture_screens.sh
-
-# Si hay teléfono y tablet activos, seleccionar el teléfono explícitamente
-ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
+# Teléfono y tablet a la vez: ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
+python scripts/check_docs_links.py
+python scripts/check_docs_structure.py
 ```
 
-Ejecútalos tras cualquier cambio de marca o rediseño de UI para mantener coherentes el README, el sitio y la wiki.
+Regenera los assets públicos tras un cambio de marca o de UI para no desincronizar el README y el sitio. Arquitectura para humanos: [docs/arquitectura.md](docs/arquitectura.md). Mapa para agentes: [`AGENTS.md`](AGENTS.md).
 
-## 🏗️ Arquitectura
+## Roadmap
 
-| Capa | Tecnología |
-|---|---|
-| UI | Jetpack Compose + Material 3 |
-| Navegación | `androidx.navigation.compose` |
-| Estado | ViewModel + StateFlow |
-| Base de datos | Room (SQLite) con KSP |
-| Serialización | Gson (sync TPV, backup JSON) |
-| Voz | Android `SpeechRecognizer` (en el dispositivo) |
-| Min SDK / Target | 24 / 36 |
-
-```
-app/src/main/java/com/jaminsmoke/personalcomander/
-├── data/     # Entidades, DAOs, migraciones, seed, sync TPV, backup
-└── ui/       # Pantallas Compose, ViewModels, tema, voz + parser NLP
-```
-
-## 🗺️ Roadmap
-
-- **v1.7** — siguiente ciclo (campo kanban Versión v1.7).
+- **v1.7** — ciclo actual del kanban.
 - Más adelante — funcionalidades premium (ver modelo de licencia).
 
-## 🤝 Contribuir
+## Contribuir
 
-¡Las contribuciones son bienvenidas! Consulta la [guía de contribución](CONTRIBUTING.md) para empezar, y abre issues para bugs o ideas. Para vulnerabilidades de seguridad, consulta la [política de seguridad](SECURITY.md).
+[CONTRIBUTING.md](CONTRIBUTING.md). Seguridad: [SECURITY.md](SECURITY.md).
 
-## 📄 Licencia
+## Licencia
 
-Publicado bajo la [licencia MIT](LICENSE).
+[MIT](LICENSE).
