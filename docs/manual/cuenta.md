@@ -24,6 +24,8 @@ El camarero crea y edita su cuenta en Commander. Bar **consulta** Identity y asi
 
 Con sesión, el mismo chip (avatar + nick) abre **Mi perfil**: nick, foto, visibilidad de la ficha, QR, ver la ficha pública, cambiar contraseña, dirección y ciudad, renovar o revocar la clave, cerrar sesión.
 
+El QR y **Ver mi ficha** abren la credencial en la web pública del profesional (`web.camareros.siberia.solutions`). Identity genera el enlace; Commander no lo inventa. Si el teléfono aún tenía la dirección antigua (`ficha.siberia.solutions`), la app la actualiza al cargar la sesión.
+
 Revocar el QR invalida la credencial actual. Renovarlo genera una nueva. Cerrar sesión no borra la cuenta; borrar la cuenta es otra acción y pide confirmación.
 
 El nick que se ve en los locales se edita aquí, en registro o perfil.

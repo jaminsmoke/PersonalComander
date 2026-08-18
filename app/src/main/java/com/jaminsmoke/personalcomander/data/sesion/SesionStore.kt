@@ -27,7 +27,11 @@ class SesionStore(context: Context) {
         val perfilJson = prefs.getString(KEY_PERFIL, null) ?: return ModoSesion.Local
         val qrRaw = prefs.getString(KEY_QR, null) ?: return ModoSesion.Local
         val qr = qrRaw.ifBlank { null }
-        val fichaUrl = prefs.getString(KEY_FICHA_URL, null)?.trim()?.takeIf { it.isNotEmpty() }
+        val fichaUrlRaw = prefs.getString(KEY_FICHA_URL, null)?.trim()?.takeIf { it.isNotEmpty() }
+        val fichaUrl = normalizarFichaUrl(fichaUrlRaw)
+        if (fichaUrl != fichaUrlRaw) {
+            prefs.edit().putString(KEY_FICHA_URL, fichaUrl.orEmpty()).apply()
+        }
         val perfil = try {
             gson.fromJson(perfilJson, PerfilCamarero::class.java)
         } catch (_: Exception) {
@@ -55,7 +59,7 @@ class SesionStore(context: Context) {
             .putString(KEY_TOKEN, token)
             .putString(KEY_PERFIL, gson.toJson(perfil))
             .putString(KEY_QR, qr.orEmpty())
-            .putString(KEY_FICHA_URL, fichaUrl.orEmpty())
+            .putString(KEY_FICHA_URL, normalizarFichaUrl(fichaUrl).orEmpty())
             .remove(KEY_BAR_HOST)
             .remove(KEY_BAR_ADMITIDO)
             .remove(KEY_BAR_NOMBRE)
@@ -68,7 +72,7 @@ class SesionStore(context: Context) {
             .putString(KEY_TOKEN, modo.token)
             .putString(KEY_PERFIL, gson.toJson(modo.perfil))
             .putString(KEY_QR, modo.qr.orEmpty())
-            .putString(KEY_FICHA_URL, modo.fichaUrl.orEmpty())
+            .putString(KEY_FICHA_URL, normalizarFichaUrl(modo.fichaUrl).orEmpty())
             .putString(KEY_BAR_HOST, modo.barHost)
             .putInt(KEY_BAR_PUERTO, modo.barPuerto)
             .putBoolean(KEY_BAR_ADMITIDO, modo.admitido)

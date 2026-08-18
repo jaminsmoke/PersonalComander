@@ -248,7 +248,12 @@ class SesionRepository(
             scope.launch(Dispatchers.IO) { BarLanCliente.postCortar(host, puerto, qr) }
         }
         store.limpiarBar()
-        val identidad = ModoSesion.Identidad(actual.perfil, actual.qr, actual.token, actual.fichaUrl)
+        val identidad = ModoSesion.Identidad(
+            actual.perfil,
+            actual.qr,
+            actual.token,
+            normalizarFichaUrl(actual.fichaUrl),
+        )
         store.guardarIdentidad(identidad.perfil, identidad.qr, identidad.token, identidad.fichaUrl)
         _modo.value = identidad
     }
@@ -370,14 +375,15 @@ class SesionRepository(
         token: String,
         fichaUrl: String? = _modo.value.fichaUrl,
     ) {
+        val canonica = normalizarFichaUrl(fichaUrl)
         val actual = _modo.value
         if (actual is ModoSesion.Establecimiento) {
-            val establecimiento = actual.copy(perfil = perfil, qr = qr, token = token, fichaUrl = fichaUrl)
+            val establecimiento = actual.copy(perfil = perfil, qr = qr, token = token, fichaUrl = canonica)
             store.guardarEstablecimiento(establecimiento)
             _modo.value = establecimiento
         } else {
-            store.guardarIdentidad(perfil, qr, token, fichaUrl)
-            _modo.value = ModoSesion.Identidad(perfil, qr, token, fichaUrl)
+            store.guardarIdentidad(perfil, qr, token, canonica)
+            _modo.value = ModoSesion.Identidad(perfil, qr, token, canonica)
         }
     }
 

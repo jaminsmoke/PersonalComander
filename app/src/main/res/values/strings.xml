@@ -293,12 +293,12 @@
     <string name="sesion_turno_en_nodo">En nodo · %1$s</string>
     <string name="sesion_turno_nodo_pendiente">Pendiente · %1$s</string>
     <string name="sesion_qr_titulo">Mi ficha</string>
-    <string name="sesion_qr_desc">Escanea para abrir tu ficha pública en Identity. El enlace está verificado con tu sesión.</string>
-    <string name="sesion_qr_desc_sin_url">Credencial para el nodo Bar. Identity aún no ha publicado la ficha web.</string>
+    <string name="sesion_qr_desc">Escanea para abrir tu ficha pública de profesional. El enlace está verificado con tu sesión.</string>
+    <string name="sesion_qr_desc_sin_url">Credencial para el nodo Bar. Aún no hay ficha web publicada.</string>
     <string name="sesion_qr_abrir">Ver mi ficha</string>
     <string name="sesion_qr_desc_img">Código QR de la ficha pública</string>
     <string name="sesion_visibilidad_titulo">Qué se ve en tu ficha</string>
-    <string name="sesion_visibilidad_desc">Quien abra tu ficha pública en Identity verá estos campos. Se guarda allí, no en este teléfono.</string>
+    <string name="sesion_visibilidad_desc">Quien abra tu ficha pública de profesional verá estos campos. Se guarda en Identity, no en este teléfono.</string>
     <string name="sesion_visibilidad_nombre">Nombre</string>
     <string name="sesion_visibilidad_nombre_hint">Si lo apagas, la ficha queda casi vacía.</string>
     <string name="sesion_visibilidad_apellidos">Apellidos</string>
