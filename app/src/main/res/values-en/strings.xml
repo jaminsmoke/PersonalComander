@@ -78,6 +78,26 @@
     <string name="gestion_invitaciones_vacio_titulo">No invitations</string>
     <string name="gestion_invitaciones_vacio_desc">When a venue invites you, they will show up here.</string>
     <string name="gestion_invitaciones_ver_qr">Show my profile</string>
+    <string name="gestion_invitaciones_pendientes">Pending</string>
+    <string name="gestion_invitaciones_anteriores">History</string>
+    <string name="gestion_invitaciones_anteriores_desc">Already answered, expired or revoked. Memberships live in Venues.</string>
+    <string name="gestion_invitaciones_aceptar">Accept</string>
+    <string name="gestion_invitaciones_rechazar">Decline</string>
+    <string name="gestion_invitaciones_aceptar_titulo">Accept invitation?</string>
+    <string name="gestion_invitaciones_aceptar_cuerpo">You will become staff at %1$s.</string>
+    <string name="gestion_invitaciones_rechazar_titulo">Decline invitation?</string>
+    <string name="gestion_invitaciones_rechazar_cuerpo">%1$s will not assign you to this venue.</string>
+    <string name="gestion_invitaciones_aceptada">Invitation accepted. The venue appears in Venues.</string>
+    <string name="gestion_invitaciones_rechazada">Invitation declined.</string>
+    <string name="gestion_invitaciones_ya_usada">That invitation is no longer available.</string>
+    <string name="gestion_invitaciones_expirada">The invitation has expired.</string>
+    <string name="gestion_invitaciones_error">Could not load invitations.</string>
+    <string name="gestion_invitaciones_caduca">Expires %1$s</string>
+    <string name="gestion_invitaciones_estado_aceptada">Accepted</string>
+    <string name="gestion_invitaciones_estado_rechazada">Declined</string>
+    <string name="gestion_invitaciones_estado_expirada">Expired</string>
+    <string name="gestion_invitaciones_estado_revocada">Revoked</string>
+    <string name="gestion_invitaciones_refrescar">Refresh invitations</string>
 
     <!-- Menu Screen -->
     <string name="menu_title">Menu Management</string>

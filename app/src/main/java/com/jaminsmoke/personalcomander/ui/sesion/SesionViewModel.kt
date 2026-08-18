@@ -29,6 +29,7 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
     val modo: StateFlow<ModoSesion> = repo.modo
     val foto: StateFlow<ByteArray?> = repo.foto
     val membresias = repo.membresias
+    val invitaciones = repo.invitaciones
     val visibilidad = repo.visibilidad
 
     private val _busy = MutableStateFlow(false)
@@ -294,6 +295,50 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
             repo.cortarJornada()
             _busy.value = false
             _mensaje.value = ctx.getString(R.string.sesion_jornada_terminada)
+        }
+    }
+
+    fun cargarInvitaciones() {
+        if (modo.value is ModoSesion.Local) return
+        viewModelScope.launch {
+            _busy.value = true
+            val r = repo.cargarInvitaciones()
+            _busy.value = false
+            if (!r.ok) {
+                _mensaje.value = r.error ?: ctx.getString(R.string.gestion_invitaciones_error)
+            }
+        }
+    }
+
+    fun aceptarInvitacion(id: String) {
+        viewModelScope.launch {
+            _busy.value = true
+            val r = repo.aceptarInvitacion(id)
+            _busy.value = false
+            _mensaje.value = when {
+                r.ok -> ctx.getString(R.string.gestion_invitaciones_aceptada)
+                r.code == IdentityJson.CODE_INVITACION_USADA ->
+                    ctx.getString(R.string.gestion_invitaciones_ya_usada)
+                r.code == IdentityJson.CODE_INVITACION_EXPIRADA ->
+                    ctx.getString(R.string.gestion_invitaciones_expirada)
+                else -> r.error ?: ctx.getString(R.string.sesion_error_generico)
+            }
+        }
+    }
+
+    fun rechazarInvitacion(id: String) {
+        viewModelScope.launch {
+            _busy.value = true
+            val r = repo.rechazarInvitacion(id)
+            _busy.value = false
+            _mensaje.value = when {
+                r.ok -> ctx.getString(R.string.gestion_invitaciones_rechazada)
+                r.code == IdentityJson.CODE_INVITACION_USADA ->
+                    ctx.getString(R.string.gestion_invitaciones_ya_usada)
+                r.code == IdentityJson.CODE_INVITACION_EXPIRADA ->
+                    ctx.getString(R.string.gestion_invitaciones_expirada)
+                else -> r.error ?: ctx.getString(R.string.sesion_error_generico)
+            }
         }
     }
 

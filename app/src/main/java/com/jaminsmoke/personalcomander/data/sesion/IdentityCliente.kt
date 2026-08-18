@@ -42,6 +42,9 @@ class IdentityCliente(
         const val ME_JORNADAS_INICIAR = "/v1/camareros/me/jornadas/iniciar"
         const val ME_JORNADAS_CORTAR = "/v1/camareros/me/jornadas/cortar"
         const val ME_RESUMEN = "/v1/camareros/me/resumen"
+        const val ME_INVITACIONES = "/v1/camareros/me/invitaciones"
+        const val ME_INVITACIONES_ACEPTAR = "/v1/camareros/me/invitaciones/{invitacion_id}/aceptar"
+        const val ME_INVITACIONES_RECHAZAR = "/v1/camareros/me/invitaciones/{invitacion_id}/rechazar"
 
         fun todas(): List<String> = listOf(
             REGISTRO,
@@ -59,7 +62,16 @@ class IdentityCliente(
             ME_JORNADAS_INICIAR,
             ME_JORNADAS_CORTAR,
             ME_RESUMEN,
+            ME_INVITACIONES,
+            ME_INVITACIONES_ACEPTAR,
+            ME_INVITACIONES_RECHAZAR,
         )
+
+        fun invitacionAceptar(id: String): String =
+            ME_INVITACIONES_ACEPTAR.replace("{invitacion_id}", id)
+
+        fun invitacionRechazar(id: String): String =
+            ME_INVITACIONES_RECHAZAR.replace("{invitacion_id}", id)
     }
 
     fun registrar(
@@ -234,6 +246,26 @@ class IdentityCliente(
         val lista = IdentityJson.parseEstablecimientos(http.cuerpo)
             ?: return IdentityRespuesta(false, error = "Respuesta inválida", codigo = http.codigo)
         return IdentityRespuesta(true, lista, codigo = http.codigo)
+    }
+
+    fun meInvitaciones(token: String): IdentityRespuesta<List<InvitacionCamarero>> {
+        val http = get(Rutas.ME_INVITACIONES, token)
+        if (http.codigo !in 200..299) return errorDe(http)
+        val lista = IdentityJson.parseInvitaciones(http.cuerpo)
+            ?: return IdentityRespuesta(false, error = "Respuesta inválida", codigo = http.codigo)
+        return IdentityRespuesta(true, lista, codigo = http.codigo)
+    }
+
+    fun aceptarInvitacion(token: String, invitacionId: String): IdentityRespuesta<Unit> {
+        val http = post(Rutas.invitacionAceptar(invitacionId), "{}", token)
+        if (http.codigo !in 200..299) return errorDe(http)
+        return IdentityRespuesta(true, Unit, codigo = http.codigo)
+    }
+
+    fun rechazarInvitacion(token: String, invitacionId: String): IdentityRespuesta<Unit> {
+        val http = post(Rutas.invitacionRechazar(invitacionId), "{}", token)
+        if (http.codigo !in 200..299) return errorDe(http)
+        return IdentityRespuesta(true, Unit, codigo = http.codigo)
     }
 
     fun renovar(token: String): IdentityRespuesta<IdentityJson.QrIdentity> {

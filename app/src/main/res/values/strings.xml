@@ -78,6 +78,26 @@
     <string name="gestion_invitaciones_vacio_titulo">Sin invitaciones</string>
     <string name="gestion_invitaciones_vacio_desc">Cuando un local te invite, aparecerán aquí.</string>
     <string name="gestion_invitaciones_ver_qr">Ver mi ficha</string>
+    <string name="gestion_invitaciones_pendientes">Pendientes</string>
+    <string name="gestion_invitaciones_anteriores">Anteriores</string>
+    <string name="gestion_invitaciones_anteriores_desc">Ya respondidas, caducadas o revocadas. Las membresías están en Locales.</string>
+    <string name="gestion_invitaciones_aceptar">Aceptar</string>
+    <string name="gestion_invitaciones_rechazar">Rechazar</string>
+    <string name="gestion_invitaciones_aceptar_titulo">¿Aceptar invitación?</string>
+    <string name="gestion_invitaciones_aceptar_cuerpo">Pasarás a ser trabajador de %1$s.</string>
+    <string name="gestion_invitaciones_rechazar_titulo">¿Rechazar invitación?</string>
+    <string name="gestion_invitaciones_rechazar_cuerpo">%1$s no te asignará a este local.</string>
+    <string name="gestion_invitaciones_aceptada">Invitación aceptada. El local aparece en Locales.</string>
+    <string name="gestion_invitaciones_rechazada">Invitación rechazada.</string>
+    <string name="gestion_invitaciones_ya_usada">Esa invitación ya no está disponible.</string>
+    <string name="gestion_invitaciones_expirada">La invitación ha caducado.</string>
+    <string name="gestion_invitaciones_error">No se pudieron cargar las invitaciones.</string>
+    <string name="gestion_invitaciones_caduca">Caduca el %1$s</string>
+    <string name="gestion_invitaciones_estado_aceptada">Aceptada</string>
+    <string name="gestion_invitaciones_estado_rechazada">Rechazada</string>
+    <string name="gestion_invitaciones_estado_expirada">Caducada</string>
+    <string name="gestion_invitaciones_estado_revocada">Revocada</string>
+    <string name="gestion_invitaciones_refrescar">Actualizar invitaciones</string>
 
     <!-- Menu Screen -->
     <string name="menu_title">Gestión del menú</string>
