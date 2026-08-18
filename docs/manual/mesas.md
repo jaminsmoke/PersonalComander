@@ -4,6 +4,15 @@ El board es el plano visual de la sala. Cada mesa se dibuja según su forma (red
 
 La pestaña **Mesas** de la barra inferior no lleva el chip de sesión: la cuenta se gestiona desde Resumen, Gestión o Ajustes.
 
+<div class="pc-doc-shot" markdown>
+
+<figure>
+![Board de mesas](../screenshots/mesas_board.png)
+<figcaption>Plano de la sala y semáforo de estados.</figcaption>
+</figure>
+
+</div>
+
 ## Semáforo de estados
 
 | Estado | Color | Significado |

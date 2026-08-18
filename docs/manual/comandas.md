@@ -2,6 +2,15 @@
 
 Abre una mesa desde el [board](mesas.md) para tomar el pedido. La comanda es a pantalla completa: categorías, buscador, cantidades y envío.
 
+<div class="pc-doc-shot" markdown>
+
+<figure>
+![Comanda](../screenshots/comanda.png)
+<figcaption>Pedido táctil y por voz.</figcaption>
+</figure>
+
+</div>
+
 ## Por voz
 
 1. Abre la mesa.

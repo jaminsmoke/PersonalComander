@@ -4,6 +4,15 @@ Ajustes es configuración: TPV, copias de seguridad, la URL de Identity (por si 
 
 El login diario **no está aquí**. Para entrar o ver el perfil usa el chip **Entrar** / avatar del header (Resumen, Gestión o Ajustes). El flujo de cuenta está en [Cuenta y turno](cuenta.md).
 
+<div class="pc-doc-shot" markdown>
+
+<figure>
+![Ajustes](../screenshots/ajustes.png)
+<figcaption>TPV, turno Bar y copias de seguridad.</figcaption>
+</figure>
+
+</div>
+
 ## Sincronización con TPV
 
 Commander puede importar el catálogo de un TPV por la red local:

@@ -10,6 +10,15 @@ La pestaña **Resumen** (barra inferior) es la pantalla de inicio. Muestra el d�
 
 Los números salen de lo que hay en el teléfono (Room). No hace falta Identity ni Bar para verlos.
 
+<div class="pc-doc-shot" markdown>
+
+<figure>
+![Resumen del día](../screenshots/home.png)
+<figcaption>Facturado, mesas ocupadas y pedidos activos.</figcaption>
+</figure>
+
+</div>
+
 ## Atajos
 
 Desde Resumen puedes abrir **Mesas**, **Carta** (hub Gestión) y **Ajustes**.
