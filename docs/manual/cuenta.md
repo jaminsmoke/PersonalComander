@@ -22,7 +22,9 @@ El camarero crea y edita su cuenta en Commander. Bar **consulta** Identity y asi
 
 </div>
 
-Con sesión, el mismo chip (avatar + nick) abre **Mi perfil**: nick, foto, visibilidad de la ficha, QR, ver la ficha pública, cambiar contraseña, dirección y ciudad, renovar o revocar la clave, cerrar sesión.
+Con sesión, el mismo chip (avatar + nick) abre **Mi perfil**: nick, foto, visibilidad de la ficha, directorio de locales, QR, ver la ficha pública, cambiar contraseña, dirección y ciudad, renovar o revocar la clave, cerrar sesión.
+
+En **Directorio de locales** eliges si los establecimientos pueden verte para invitarte (`Nunca` por defecto, `Solo libre` o `Siempre`). No es lo mismo que los campos de la ficha pública. El cambio se guarda en Identity al instante. Si eliges *Solo libre* y ya perteneces a un local, Bar no te listará hasta que quedes libre.
 
 El QR y **Ver mi ficha** abren la credencial en la web pública del profesional (`web.camareros.siberia.solutions`). Identity genera el enlace; Commander no lo inventa. Si el teléfono aún tenía la dirección antigua (`ficha.siberia.solutions`), la app la actualiza al cargar la sesión.
 

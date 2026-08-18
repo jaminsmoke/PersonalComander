@@ -15,4 +15,4 @@ Hoy la pantalla muestra un estado vacío: cuando un establecimiento te invite, s
 - Sin sesión: **Entrar** para iniciar sesión en Identity.
 - Con sesión: **Ver mi ficha** abre el perfil (QR de la ficha pública).
 
-Bar **asigna** cuentas que ya existen; no crea camareros. El QR y la visibilidad se gestionan en [Cuenta y turno](cuenta.md).
+Bar **asigna** cuentas que ya existen; no crea camareros. El QR, la visibilidad de ficha y el opt-in al directorio de locales se gestionan en [Cuenta y turno](cuenta.md).

@@ -108,7 +108,7 @@ El camino diario está en el **header**, no en Ajustes. `PcSesionChip` vive en `
 
 **Iniciar sesión (`auth`):** pestañas Entrar / Registro. Campos **Correo** y **Contraseña** (no «Email»). Botón amarillo **Entrar**. **No hay URL de Identity.** Default: `SesionStore.DEFAULT_IDENTITY_URL` = `https://camareros.siberia.solutions` (VPS; Docker en el servidor). Prefs con Docker local (`10.0.2.2:8080`) se reescriben al VPS.
 
-**Mi perfil (`perfil`):** nick, foto, «Qué se ve en tu ficha» (6 switches contra Identity), QR, **Ver mi ficha**, renovar/revocar clave, cerrar sesión. Visibilidad y ficha **no** están en Ajustes.
+**Mi perfil (`perfil`):** nick, foto, «Qué se ve en tu ficha» (8 switches contra Identity), card **Directorio de locales** (`nunca` / `solo_libre` / `siempre`), QR, **Ver mi ficha**, renovar/revocar clave, cerrar sesión. Visibilidad, directorio y ficha **no** están en Ajustes.
 
 **Ajustes — Cuenta de camarero:** campo «URL del servicio camareros» (escape; no es el login diario) y un botón que abre `auth` o `perfil`. **Ajustes — Turno en el establecimiento:** Bar LAN `:8787` (`10.0.2.2` en emulador con `adb forward`). Commander no llama a `:8082`.
 

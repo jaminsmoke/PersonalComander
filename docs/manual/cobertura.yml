@@ -39,6 +39,7 @@ routes:
     needles:
       - perfil
       - visibilidad
+      - directorio
 
 tabs:
   HOME:

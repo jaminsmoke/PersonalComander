@@ -56,6 +56,32 @@ enum class DataOrigin {
     }
 }
 
+/**
+ * Opt-in al directorio de establecimientos (Bar). Contrato Identity
+ * `visible_otros_establecimientos`. Default seguro: [Nunca].
+ */
+enum class VisibleOtrosEstablecimientos {
+    @SerializedName("nunca") Nunca,
+    @SerializedName("solo_libre") SoloLibre,
+    @SerializedName("siempre") Siempre,
+    ;
+
+    val wire: String
+        get() = when (this) {
+            Nunca -> "nunca"
+            SoloLibre -> "solo_libre"
+            Siempre -> "siempre"
+        }
+
+    companion object {
+        fun fromWire(value: String?): VisibleOtrosEstablecimientos = when (value?.trim()?.lowercase()) {
+            "siempre" -> Siempre
+            "solo_libre" -> SoloLibre
+            else -> Nunca
+        }
+    }
+}
+
 data class PerfilCamarero(
     val id: String,
     val nombre: String,
@@ -71,6 +97,11 @@ data class PerfilCamarero(
     val ciudad: String? = null,
     /** Linaje Identity. Null en prefs viejos: [origen] cae a Real. */
     val dataOrigin: DataOrigin? = DataOrigin.Real,
+    /**
+     * Directorio de locales. Null en prefs viejos: [visibleDirectorio] cae a Nunca.
+     * Mirror de Identity; no se inventa el valor.
+     */
+    val visibleOtrosEstablecimientos: VisibleOtrosEstablecimientos? = VisibleOtrosEstablecimientos.Nunca,
 ) {
     val nombreCompleto: String
         get() = "$nombre $apellidos".trim()
@@ -81,6 +112,9 @@ data class PerfilCamarero(
 
     val origen: DataOrigin
         get() = dataOrigin ?: DataOrigin.Real
+
+    val visibleDirectorio: VisibleOtrosEstablecimientos
+        get() = visibleOtrosEstablecimientos ?: VisibleOtrosEstablecimientos.Nunca
 
     val iniciales: String
         get() = buildString {

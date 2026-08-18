@@ -310,6 +310,13 @@
     <string name="sesion_visibilidad_foto">Foto</string>
     <string name="sesion_visibilidad_foto_hint">Hace falta una foto subida. Si no hay, la ficha no muestra avatar.</string>
     <string name="sesion_visibilidad_ok">Visibilidad actualizada en Identity.</string>
+    <string name="sesion_directorio_titulo">Directorio de locales</string>
+    <string name="sesion_directorio_desc">Los establecimientos pueden verte en su directorio para invitarte. No es lo que se ve en tu ficha pública. Por defecto no apareces.</string>
+    <string name="sesion_directorio_nunca">Nunca</string>
+    <string name="sesion_directorio_solo_libre">Solo libre</string>
+    <string name="sesion_directorio_siempre">Siempre</string>
+    <string name="sesion_directorio_hint_ocupado">Ahora no te listarán: ya estás en un local.</string>
+    <string name="sesion_directorio_ok">Preferencia del directorio actualizada en Identity.</string>
     <string name="sesion_desconectar_bar">Desactivar turno</string>
     <string name="sesion_empezar_jornada">Empezar jornada</string>
     <string name="sesion_terminar_jornada">Terminar jornada</string>

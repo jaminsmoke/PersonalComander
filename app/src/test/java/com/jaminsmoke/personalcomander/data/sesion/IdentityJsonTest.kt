@@ -136,6 +136,7 @@ class IdentityJsonTest {
         assertEquals(null, perfil.direccion)
         assertEquals(null, perfil.ciudad)
         assertEquals(DataOrigin.Real, perfil.origen)
+        assertEquals(VisibleOtrosEstablecimientos.Nunca, perfil.visibleDirectorio)
     }
 
     @Test
@@ -294,6 +295,8 @@ class IdentityJsonTest {
         )
         assertEquals(DataOrigin.Real, perfil.origen)
         assertEquals(null, perfil.dataOrigin)
+        assertEquals(VisibleOtrosEstablecimientos.Nunca, perfil.visibleDirectorio)
+        assertEquals(null, perfil.visibleOtrosEstablecimientos)
     }
 
     @Test
@@ -306,6 +309,56 @@ class IdentityJsonTest {
         assertEquals("real", DataOrigin.Real.wire)
         assertEquals("test", DataOrigin.Test.wire)
         assertEquals("demo", DataOrigin.Demo.wire)
+    }
+
+    @Test
+    fun parsePerfil_visible_otros_establecimientos() {
+        fun perfilDe(raw: String) = IdentityJson.parsePerfil(
+            com.google.gson.JsonParser.parseString(
+                """{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com","visible_otros_establecimientos":"$raw"}""",
+            ),
+        )
+        assertEquals(VisibleOtrosEstablecimientos.Siempre, perfilDe("siempre").visibleDirectorio)
+        assertEquals(VisibleOtrosEstablecimientos.SoloLibre, perfilDe("solo_libre").visibleDirectorio)
+        assertEquals(VisibleOtrosEstablecimientos.Nunca, perfilDe("nunca").visibleDirectorio)
+        assertEquals(VisibleOtrosEstablecimientos.Nunca, perfilDe("basura").visibleDirectorio)
+    }
+
+    @Test
+    fun parseLogin_con_visible_otros_establecimientos() {
+        val body = """
+            {"token":"abc","camarero":{"id":"u1","nombre":"Ana","apellidos":"García","email":"ana@example.com","visible_otros_establecimientos":"siempre"},"qr":"phid1:u1:c1:sig"}
+        """.trimIndent()
+        val sesion = IdentityJson.parseLogin(body)
+        assertEquals(VisibleOtrosEstablecimientos.Siempre, sesion.perfil.visibleDirectorio)
+    }
+
+    @Test
+    fun cuerpoVisibilidadEstablecimientos() {
+        assertEquals(
+            """{"visible":"nunca"}""",
+            IdentityJson.cuerpoVisibilidadEstablecimientos(VisibleOtrosEstablecimientos.Nunca),
+        )
+        assertEquals(
+            """{"visible":"solo_libre"}""",
+            IdentityJson.cuerpoVisibilidadEstablecimientos(VisibleOtrosEstablecimientos.SoloLibre),
+        )
+        assertEquals(
+            """{"visible":"siempre"}""",
+            IdentityJson.cuerpoVisibilidadEstablecimientos(VisibleOtrosEstablecimientos.Siempre),
+        )
+    }
+
+    @Test
+    fun visibleOtrosEstablecimientos_fromWire() {
+        assertEquals(VisibleOtrosEstablecimientos.Nunca, VisibleOtrosEstablecimientos.fromWire(null))
+        assertEquals(VisibleOtrosEstablecimientos.Nunca, VisibleOtrosEstablecimientos.fromWire(""))
+        assertEquals(VisibleOtrosEstablecimientos.Nunca, VisibleOtrosEstablecimientos.fromWire("nunca"))
+        assertEquals(VisibleOtrosEstablecimientos.Siempre, VisibleOtrosEstablecimientos.fromWire("SIEMPRE"))
+        assertEquals(VisibleOtrosEstablecimientos.SoloLibre, VisibleOtrosEstablecimientos.fromWire(" Solo_Libre "))
+        assertEquals("nunca", VisibleOtrosEstablecimientos.Nunca.wire)
+        assertEquals("solo_libre", VisibleOtrosEstablecimientos.SoloLibre.wire)
+        assertEquals("siempre", VisibleOtrosEstablecimientos.Siempre.wire)
     }
 
     @Test

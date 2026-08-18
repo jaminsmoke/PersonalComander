@@ -34,6 +34,7 @@ class IdentityCliente(
         const val ME_FOTO = "/v1/camareros/me/foto"
         const val ME_ESTABLECIMIENTOS = "/v1/camareros/me/establecimientos"
         const val ME_VISIBILIDAD = "/v1/camareros/me/visibilidad"
+        const val ME_VISIBILIDAD_ESTABLECIMIENTOS = "/v1/camareros/me/visibilidad-establecimientos"
         const val ME_PASSWORD = "/v1/camareros/me/password"
 
         fun todas(): List<String> = listOf(
@@ -46,6 +47,7 @@ class IdentityCliente(
             ME_FOTO,
             ME_ESTABLECIMIENTOS,
             ME_VISIBILIDAD,
+            ME_VISIBILIDAD_ESTABLECIMIENTOS,
             ME_PASSWORD,
         )
     }
@@ -163,6 +165,23 @@ class IdentityCliente(
         val http = put(Rutas.ME_VISIBILIDAD, IdentityJson.cuerpoVisibilidad(campo, valor), token)
         if (http.codigo !in 200..299) return errorDe(http)
         return IdentityRespuesta(true, IdentityJson.parseVisibilidad(http.cuerpo), codigo = http.codigo)
+    }
+
+    fun actualizarVisibilidadEstablecimientos(
+        token: String,
+        visible: VisibleOtrosEstablecimientos,
+    ): IdentityRespuesta<PerfilCamarero> {
+        val http = put(
+            Rutas.ME_VISIBILIDAD_ESTABLECIMIENTOS,
+            IdentityJson.cuerpoVisibilidadEstablecimientos(visible),
+            token,
+        )
+        if (http.codigo !in 200..299) return errorDe(http)
+        return IdentityRespuesta(
+            true,
+            IdentityJson.parsePerfil(com.google.gson.JsonParser.parseString(http.cuerpo)),
+            codigo = http.codigo,
+        )
     }
 
     fun meEstablecimientos(token: String): IdentityRespuesta<List<MembresiaEstablecimiento>> {
