@@ -53,6 +53,32 @@ class OficioTest {
     }
 
     @Test
+    fun formato_eje_nunca_blanco_fuera_de_rango() {
+        val semana = listOf("17", "18")
+        for (x in -1..20) {
+            assertTrue(formatoEtiquetaEje(semana, x.toDouble()).isNotBlank())
+            assertTrue(formatoEtiquetaEje(semana, x + 0.5).isNotBlank())
+        }
+        assertEquals("17", formatoEtiquetaEje(semana, 0.0))
+        assertEquals("18", formatoEtiquetaEje(semana, 1.0))
+        assertEquals("—", formatoEtiquetaEje(semana, 15.0))
+        assertEquals("—", formatoEtiquetaEje(emptyList(), 0.0))
+    }
+
+    @Test
+    fun serie_semana_etiquetas_no_vacias() {
+        val ahora = ZonedDateTime.of(2026, 8, 18, 10, 0, 0, 0, ZoneOffset.UTC)
+        val b = OficioVentana.SEMANA.limites(ahora)
+        val serie = OficioVentana.SEMANA.serie(emptyList(), b.desde, b.hasta, ZoneOffset.UTC)
+        assertEquals(2, serie.size)
+        serie.forEach { assertTrue(it.etiqueta.isNotBlank()) }
+        val etiquetas = serie.map { it.etiqueta }
+        for (x in 0..15) {
+            assertTrue(formatoEtiquetaEje(etiquetas, x.toDouble()).isNotBlank())
+        }
+    }
+
+    @Test
     fun serie_mes_un_bucket_por_dia_incluso_en_cero() {
         val ahora = ZonedDateTime.of(2026, 8, 18, 10, 0, 0, 0, ZoneOffset.UTC)
         val b = OficioVentana.MES.limites(ahora)
