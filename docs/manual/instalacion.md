@@ -25,7 +25,7 @@ En el primer arranque la app crea un menú de demostración y un plano de mesas,
 
 ![Resumen del día](../screenshots/home.png)
 
-*Primer arranque en modo Local: facturado del día y atajos.*
+*Primer arranque en modo Local: facturado del día.*
 
 </div>
 

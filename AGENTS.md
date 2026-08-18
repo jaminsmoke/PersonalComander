@@ -91,7 +91,7 @@ Barra inferior (solo rutas top-level; se oculta en `auth`, `perfil` y `comanda/{
 
 | Tab (string) | Ruta | Pantalla | Qué es |
 |---|---|---|---|
-| Resumen | `home` | `HomeScreen.kt` | Facturado hoy + accesos rápidos |
+| Resumen | `home` | `HomeScreen.kt` | Facturado hoy |
 | Mesas | `mesas` | `MesasScreen.kt` | Tablero. **Sin** chip de sesión |
 | Gestión | `menu` | `GestionScreen.kt` | Hub: Carta, Locales, Invitaciones |
 | Ajustes | `ajustes` | `AjustesScreen.kt` | TPV, backup, URL Identity (escape), Bar LAN |

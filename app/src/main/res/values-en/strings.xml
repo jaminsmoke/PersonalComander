@@ -17,16 +17,9 @@
     <string name="home_tables_label">Tables occupied</string>
     <string name="home_orders_label">Active orders</string>
     <string name="home_revenue_label">Revenue today</string>
-    <string name="home_tables_card">Tables</string>
-    <string name="home_tables_desc">Manage orders by table</string>
-    <string name="home_menu_card">Menu Management</string>
-    <string name="home_menu_desc">Products, prices and categories</string>
-    <string name="home_settings_card">Settings</string>
-    <string name="home_settings_desc">Import, export and sync POS</string>
 
     <!-- Mesas Screen -->
     <string name="mesas_title">Personal Comander</string>
-    <string name="mesas_manage_menu">Manage menu</string>
     <string name="mesas_free">Free</string>
     <string name="mesas_occupied">Occupied</string>
     <string name="mesas_in_kitchen">In kitchen</string>
@@ -230,7 +223,6 @@
     <string name="lbl_route">Path</string>
     <string name="lbl_ip_server">POS server IP</string>
     <string name="lbl_access">Shortcuts</string>
-    <string name="home_quick_access">Quick access</string>
 
     <!-- Identity / Room session -->
     <string name="sesion_entrar">Sign in</string>

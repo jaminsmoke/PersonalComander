@@ -39,7 +39,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitScreen
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.ZoomOut
@@ -125,7 +124,6 @@ import kotlin.math.roundToInt
 @Composable
 fun MesasScreen(
     onOpenMesa: (Long) -> Unit,
-    onOpenMenu: () -> Unit,
     onBack: (() -> Unit)? = null,
     viewModel: MesasViewModel = viewModel()
 ) {
@@ -226,9 +224,6 @@ fun MesasScreen(
                                 if (vistaLista) stringResource(R.string.mesas_view_board) else stringResource(R.string.mesas_view_list)
                             )
                         }
-                    }
-                    IconButton(onClick = onOpenMenu) {
-                        Icon(Icons.Default.RestaurantMenu, stringResource(R.string.mesas_manage_menu))
                     }
                 },
             )
