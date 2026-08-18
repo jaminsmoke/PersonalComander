@@ -274,6 +274,7 @@
     <string name="sesion_revocar_confirm">The QR stops working. The account stays active: you can renew from this phone. Do not sign out or you will not be able to sign in again.</string>
     <string name="sesion_revocar_ok">Key revoked. Renew when you want a new QR.</string>
     <string name="sesion_error_clave_revocada">Key revoked. If you still have a session on this phone, open Profile and renew. It cannot be recovered from another device.</string>
+    <string name="sesion_error_credenciales">Incorrect email or password.</string>
     <string name="sesion_borrar_cuenta">Delete account</string>
     <string name="sesion_borrar_cuenta_titulo">Permanently delete account</string>
     <string name="sesion_borrar_cuenta_confirm">This deletes your identity, QR and photo in Identity. It cannot be undone. Orders and tables on this phone are not touched. Confirm with your password.</string>

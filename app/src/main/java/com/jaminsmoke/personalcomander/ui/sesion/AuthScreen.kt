@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -20,8 +22,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,7 +32,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -54,7 +56,7 @@ fun AuthScreen(
     val modo by viewModel.modo.collectAsState()
     val busy by viewModel.busy.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
-    val snackbar = remember { SnackbarHostState() }
+    val teclado = LocalSoftwareKeyboardController.current
     var registro by remember { mutableStateOf(false) }
     var nombre by remember { mutableStateOf("") }
     var apellidos by remember { mutableStateOf("") }
@@ -62,20 +64,26 @@ fun AuthScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
+    var errorAuth by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(modo) {
         if (modo !is ModoSesion.Local) onAutenticado()
     }
     LaunchedEffect(mensaje) {
         mensaje?.let {
-            snackbar.showSnackbar(it)
+            errorAuth = it
             viewModel.limpiarMensaje()
         }
     }
 
+    fun enviarLogin() {
+        teclado?.hide()
+        errorAuth = null
+        viewModel.login(email, password)
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             PcBrandHeader(
                 title = stringResource(if (registro) R.string.sesion_registro_title else R.string.sesion_login_title),
@@ -92,6 +100,7 @@ fun AuthScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(PaddingValues(16.dp)),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -139,10 +148,17 @@ fun AuthScreen(
             }
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = {
+                    email = it
+                    errorAuth = null
+                },
                 label = { Text(stringResource(R.string.sesion_email)) },
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                isError = errorAuth != null,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next,
+                ),
                 modifier = Modifier.fillMaxWidth(),
             )
             if (registro) {
@@ -157,19 +173,55 @@ fun AuthScreen(
             }
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    errorAuth = null
+                },
                 label = { Text(stringResource(R.string.sesion_password)) },
                 singleLine = true,
+                isError = errorAuth != null,
                 visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = if (registro) ImeAction.Done else ImeAction.Go,
+                ),
+                keyboardActions = KeyboardActions(
+                    onGo = { if (!busy) enviarLogin() },
+                    onDone = {
+                        if (!busy && registro) {
+                            teclado?.hide()
+                            errorAuth = null
+                            viewModel.registrar(
+                                nombre,
+                                apellidos,
+                                email,
+                                password,
+                                telefono.ifBlank { null },
+                                nick.trim(),
+                            )
+                        }
+                    },
+                ),
                 modifier = Modifier.fillMaxWidth(),
             )
+            errorAuth?.let { err ->
+                Text(
+                    text = err,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             if (busy) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else if (registro) {
                 PcPrimaryButton(
                     text = stringResource(R.string.sesion_crear_cuenta),
-                    onClick = { viewModel.registrar(nombre, apellidos, email, password, telefono.ifBlank { null }, nick.trim()) },
+                    onClick = {
+                        teclado?.hide()
+                        errorAuth = null
+                        viewModel.registrar(nombre, apellidos, email, password, telefono.ifBlank { null }, nick.trim())
+                    },
                     enabled = nick.trim().isNotEmpty() &&
                         nombre.isNotBlank() &&
                         apellidos.isNotBlank() &&
@@ -180,7 +232,8 @@ fun AuthScreen(
             } else {
                 PcPrimaryButton(
                     text = stringResource(R.string.sesion_entrar),
-                    onClick = { viewModel.login(email, password) },
+                    onClick = { enviarLogin() },
+                    enabled = email.trim().isNotEmpty() && password.trim().isNotEmpty(),
                     modifier = Modifier.fillMaxWidth(),
                 )
                 PcSecondaryButton(
