@@ -12,7 +12,7 @@
 
 ## Qué hace esta pantalla
 
-- Muestra los locales que Identity conoce para tu cuenta.
+- Muestra los locales que Identity conoce para tu cuenta, con el estado **Libre** (ninguna membresía) o **Trabajador de** esos locales.
 - Si no hay sesión, el botón **Entrar** abre el login.
 - Si ya hay cuenta, **Turno en Ajustes** lleva a ligar el teléfono a un Bar de la LAN.
 

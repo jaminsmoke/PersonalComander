@@ -22,7 +22,7 @@ El camarero crea y edita su cuenta en Commander. Bar **consulta** Identity y asi
 
 </div>
 
-Con sesión, el mismo chip (avatar + nick) abre **Mi perfil**: nick, foto, visibilidad de la ficha, directorio de locales, QR, ver la ficha pública, cambiar contraseña, dirección y ciudad, renovar o revocar la clave, cerrar sesión.
+Con sesión, el mismo chip (avatar + nick) abre **Mi perfil**: nick, foto, visibilidad de la ficha, directorio de locales, estado laboral (**Libre** o **Trabajador de** los locales de Identity), QR, ver la ficha pública, cambiar contraseña, dirección y ciudad, renovar o revocar la clave, cerrar sesión.
 
 En **Directorio de locales** eliges si los establecimientos pueden verte para invitarte (`Nunca` por defecto, `Solo libre` o `Siempre`). No es lo mismo que los campos de la ficha pública. El cambio se guarda en Identity al instante. Si eliges *Solo libre* y ya perteneces a un local, Bar no te listará hasta que quedes libre.
 
