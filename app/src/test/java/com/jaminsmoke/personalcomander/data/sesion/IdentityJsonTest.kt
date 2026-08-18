@@ -233,6 +233,30 @@ class IdentityJsonTest {
     }
 
     @Test
+    fun parseError_credenciales_invalidas() {
+        val err = IdentityJson.parseError(
+            """{"detail":"Email o contraseña incorrectos","code":"identity.credenciales_invalidas"}""",
+        )
+        assertEquals(IdentityJson.CODE_CREDENCIALES_INVALIDAS, err.code)
+    }
+
+    @Test
+    fun normalizarCredenciales_recorta_salto_y_espacios() {
+        val (email, password) = IdentityJson.normalizarCredenciales(
+            "  camarero.test@example.com \n",
+            " clave-larga-12 \r\n",
+        )
+        assertEquals("camarero.test@example.com", email)
+        assertEquals("clave-larga-12", password)
+    }
+
+    @Test
+    fun parseLoginOrNull_cuerpo_invalido() {
+        assertEquals(null, IdentityJson.parseLoginOrNull("{}"))
+        assertEquals(null, IdentityJson.parseLoginOrNull("no-json"))
+    }
+
+    @Test
     fun parseFotoUrl_null() {
         assertEquals(null, IdentityJson.parseFotoUrl("""{"foto_url":null}"""))
     }

@@ -96,7 +96,9 @@ class IdentityCliente(
         }
         val http = post(Rutas.LOGIN, payload.toString())
         if (http.codigo !in 200..299) return errorDe(http)
-        return IdentityRespuesta(true, IdentityJson.parseLogin(http.cuerpo), codigo = http.codigo)
+        val sesion = IdentityJson.parseLoginOrNull(http.cuerpo)
+            ?: return IdentityRespuesta(false, error = "Respuesta inválida de Identity", codigo = http.codigo)
+        return IdentityRespuesta(true, sesion, codigo = http.codigo)
     }
 
     fun actualizarPerfil(

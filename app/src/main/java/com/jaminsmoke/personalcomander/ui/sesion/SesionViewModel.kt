@@ -10,6 +10,7 @@ import com.jaminsmoke.personalcomander.data.ServidorDescubierto
 import com.jaminsmoke.personalcomander.data.sesion.CampoVisibilidad
 import com.jaminsmoke.personalcomander.data.sesion.ContrasteMembresia
 import com.jaminsmoke.personalcomander.data.sesion.IdentityJson
+import com.jaminsmoke.personalcomander.data.sesion.IdentityRespuesta
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.SesionStore
 import com.jaminsmoke.personalcomander.data.sesion.VisibleOtrosEstablecimientos
@@ -68,25 +69,39 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
     ) {
         viewModelScope.launch {
             _busy.value = true
-            val r = repo.registrar(nombre, apellidos, email, password, telefono, nick)
-            _busy.value = false
-            if (!r.ok) _mensaje.value = r.error ?: ctx.getString(R.string.sesion_error_generico)
+            try {
+                val (correo, clave) = IdentityJson.normalizarCredenciales(email, password)
+                val r = repo.registrar(nombre.trim(), apellidos.trim(), correo, clave, telefono, nick)
+                if (!r.ok) _mensaje.value = mensajeAuth(r)
+            } catch (_: Exception) {
+                _mensaje.value = ctx.getString(R.string.sesion_error_generico)
+            } finally {
+                _busy.value = false
+            }
         }
     }
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _busy.value = true
-            val r = repo.login(email, password)
-            _busy.value = false
-            if (!r.ok) {
-                _mensaje.value = when (r.code) {
-                    IdentityJson.CODE_CREDENTIAL_REVOKED -> ctx.getString(R.string.sesion_error_clave_revocada)
-                    else -> r.error ?: ctx.getString(R.string.sesion_error_generico)
-                }
+            try {
+                val (correo, clave) = IdentityJson.normalizarCredenciales(email, password)
+                val r = repo.login(correo, clave)
+                if (!r.ok) _mensaje.value = mensajeAuth(r)
+            } catch (_: Exception) {
+                _mensaje.value = ctx.getString(R.string.sesion_error_generico)
+            } finally {
+                _busy.value = false
             }
         }
     }
+
+    private fun mensajeAuth(r: IdentityRespuesta<*>): String =
+        when (r.code) {
+            IdentityJson.CODE_CREDENTIAL_REVOKED -> ctx.getString(R.string.sesion_error_clave_revocada)
+            IdentityJson.CODE_CREDENCIALES_INVALIDAS -> ctx.getString(R.string.sesion_error_credenciales)
+            else -> r.error ?: ctx.getString(R.string.sesion_error_generico)
+        }
 
     fun cerrarSesion() {
         repo.cerrarSesion()

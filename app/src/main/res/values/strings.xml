@@ -274,6 +274,7 @@
     <string name="sesion_revocar_confirm">El QR deja de valer. La cuenta sigue activa: podrás renovar desde este móvil. No cierres sesión o no podrás entrar de nuevo.</string>
     <string name="sesion_revocar_ok">Clave revocada. Renueva cuando quieras un QR nuevo.</string>
     <string name="sesion_error_clave_revocada">Clave revocada. Si aún tienes sesión en este móvil, abre Perfil y renueva. Desde otro dispositivo no se puede recuperar.</string>
+    <string name="sesion_error_credenciales">Correo o contraseña incorrectos.</string>
     <string name="sesion_borrar_cuenta">Borrar cuenta</string>
     <string name="sesion_borrar_cuenta_titulo">Borrar cuenta de forma permanente</string>
     <string name="sesion_borrar_cuenta_confirm">Esto borra tu identidad, el QR y la foto en Identity. No se puede deshacer. Las comandas y mesas de este móvil no se tocan. Confirma con tu contraseña.</string>

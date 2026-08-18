@@ -8,6 +8,7 @@ import com.google.gson.JsonParser
 object IdentityJson {
 
     const val CODE_CREDENTIAL_REVOKED = "identity.credential_revoked"
+    const val CODE_CREDENCIALES_INVALIDAS = "identity.credenciales_invalidas"
     const val CODE_PASSWORD_INCORRECTA = "identity.password_incorrecta"
     const val CODE_FOTO_INVALIDA = "identity.foto_invalida"
     const val CODE_FOTO_INEXISTENTE = "identity.foto_inexistente"
@@ -127,6 +128,16 @@ object IdentityJson {
             fichaUrl = textoOpcional(o, "ficha_url"),
         )
     }
+
+    fun parseLoginOrNull(body: String): SesionIdentity? = try {
+        parseLogin(body)
+    } catch (_: Exception) {
+        null
+    }
+
+    /** Recorta correo y contraseña (pegado desde .env suele traer salto de línea). */
+    fun normalizarCredenciales(email: String, password: String): Pair<String, String> =
+        email.trim() to password.trim()
 
     fun parseQr(body: String): QrIdentity {
         val o = JsonParser.parseString(body).asJsonObject
