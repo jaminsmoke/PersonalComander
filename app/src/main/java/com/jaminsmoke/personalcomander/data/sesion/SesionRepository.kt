@@ -416,6 +416,29 @@ class SesionRepository(
         }
     }
 
+    suspend fun actualizarVisibilidadEstablecimientos(
+        visible: VisibleOtrosEstablecimientos,
+    ): IdentityRespuesta<PerfilCamarero> {
+        val modo = _modo.value
+        val token = modo.token ?: return IdentityRespuesta(false, error = "Sin sesión")
+        val perfilActual = modo.perfil ?: return IdentityRespuesta(false, error = "Sin sesión")
+        if (perfilActual.visibleDirectorio == visible) {
+            return IdentityRespuesta(true, perfilActual)
+        }
+        val qr = modo.qr
+        val ficha = modo.fichaUrl
+        return withContext(Dispatchers.IO) {
+            persistir(perfilActual.copy(visibleOtrosEstablecimientos = visible), qr, token, ficha)
+            val r = cliente().actualizarVisibilidadEstablecimientos(token, visible)
+            if (r.ok && r.valor != null) {
+                persistir(r.valor, qr, token, ficha)
+            } else {
+                persistir(perfilActual, qr, token, ficha)
+            }
+            r
+        }
+    }
+
     /** Identity gana si responde; red caída o cuerpo inválido conservan la cache. */
     private fun refrescarMembresias(token: String) {
         val r = cliente().meEstablecimientos(token)

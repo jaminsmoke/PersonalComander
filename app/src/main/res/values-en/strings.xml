@@ -310,6 +310,13 @@
     <string name="sesion_visibilidad_foto">Photo</string>
     <string name="sesion_visibilidad_foto_hint">You need an uploaded photo. Otherwise the profile shows no avatar.</string>
     <string name="sesion_visibilidad_ok">Visibility updated in Identity.</string>
+    <string name="sesion_directorio_titulo">Venue directory</string>
+    <string name="sesion_directorio_desc">Venues can see you in their directory to invite you. This is not what your public profile shows. You are hidden by default.</string>
+    <string name="sesion_directorio_nunca">Never</string>
+    <string name="sesion_directorio_solo_libre">Only if free</string>
+    <string name="sesion_directorio_siempre">Always</string>
+    <string name="sesion_directorio_hint_ocupado">They will not list you right now: you already belong to a venue.</string>
+    <string name="sesion_directorio_ok">Directory preference updated in Identity.</string>
     <string name="sesion_desconectar_bar">End shift</string>
     <string name="sesion_empezar_jornada">Start work session</string>
     <string name="sesion_terminar_jornada">End work session</string>

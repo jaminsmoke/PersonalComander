@@ -6,6 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.sesion.CampoVisibilidad
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
+import com.jaminsmoke.personalcomander.data.sesion.VisibleOtrosEstablecimientos
 import com.jaminsmoke.personalcomander.data.sesion.credencialRevocada
 import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
 import com.jaminsmoke.personalcomander.data.sesion.fichaUrl
@@ -62,7 +66,7 @@ import com.jaminsmoke.personalcomander.ui.components.PcBrandHeader
 import com.jaminsmoke.personalcomander.ui.components.PcPrimaryButton
 import com.jaminsmoke.personalcomander.ui.components.PcSecondaryButton
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun PerfilScreen(
     onBack: () -> Unit,
@@ -282,6 +286,56 @@ fun PerfilScreen(
                             enabled = !busy,
                             onCheckedChange = { viewModel.setVisibilidad(CampoVisibilidad.FOTO, it) },
                         )
+                    }
+                }
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(stringResource(R.string.sesion_directorio_titulo), style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            stringResource(R.string.sesion_directorio_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        val directorio = perfil.visibleDirectorio
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            FilterChip(
+                                selected = directorio == VisibleOtrosEstablecimientos.Nunca,
+                                onClick = {
+                                    viewModel.setVisibleOtrosEstablecimientos(VisibleOtrosEstablecimientos.Nunca)
+                                },
+                                enabled = !busy,
+                                label = { Text(stringResource(R.string.sesion_directorio_nunca)) },
+                            )
+                            FilterChip(
+                                selected = directorio == VisibleOtrosEstablecimientos.SoloLibre,
+                                onClick = {
+                                    viewModel.setVisibleOtrosEstablecimientos(VisibleOtrosEstablecimientos.SoloLibre)
+                                },
+                                enabled = !busy,
+                                label = { Text(stringResource(R.string.sesion_directorio_solo_libre)) },
+                            )
+                            FilterChip(
+                                selected = directorio == VisibleOtrosEstablecimientos.Siempre,
+                                onClick = {
+                                    viewModel.setVisibleOtrosEstablecimientos(VisibleOtrosEstablecimientos.Siempre)
+                                },
+                                enabled = !busy,
+                                label = { Text(stringResource(R.string.sesion_directorio_siempre)) },
+                            )
+                        }
+                        if (directorio == VisibleOtrosEstablecimientos.SoloLibre && membresias.isNotEmpty()) {
+                            Text(
+                                stringResource(R.string.sesion_directorio_hint_ocupado),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
                 GlassCard(modifier = Modifier.fillMaxWidth()) {

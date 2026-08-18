@@ -34,6 +34,7 @@ class ModoSesionTest {
         assertEquals("Ana", modo.etiquetaHeader())
         assertEquals("Ana", perfil.mote)
         assertEquals("AG", perfil.iniciales)
+        assertEquals(VisibleOtrosEstablecimientos.Nunca, perfil.visibleDirectorio)
         assertEquals("tok", modo.token)
         assertEquals("phid1:a:b:sig", modo.qr)
         assertNull(modo.fichaUrl)

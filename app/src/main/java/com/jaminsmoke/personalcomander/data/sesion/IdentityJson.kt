@@ -81,7 +81,14 @@ object IdentityJson {
             direccion = textoOpcional(o, "direccion"),
             ciudad = textoOpcional(o, "ciudad"),
             dataOrigin = parseDataOrigin(o),
+            visibleOtrosEstablecimientos = parseVisibleOtrosEstablecimientos(o),
         )
+    }
+
+    fun parseVisibleOtrosEstablecimientos(o: JsonObject): VisibleOtrosEstablecimientos {
+        val el = o.get("visible_otros_establecimientos")
+        val raw = el?.takeUnless { it.isJsonNull }?.takeIf { it.isJsonPrimitive }?.asString
+        return VisibleOtrosEstablecimientos.fromWire(raw)
     }
 
     fun parseDataOrigin(o: JsonObject): DataOrigin {
@@ -157,6 +164,9 @@ object IdentityJson {
 
     fun cuerpoVisibilidad(campo: CampoVisibilidad, valor: Boolean): String =
         JsonObject().apply { addProperty(campo.wire, valor) }.toString()
+
+    fun cuerpoVisibilidadEstablecimientos(visible: VisibleOtrosEstablecimientos): String =
+        JsonObject().apply { addProperty("visible", visible.wire) }.toString()
 
     fun cuerpoVisibilidadCompleto(v: VisibilidadCamarero): String = JsonObject().apply {
         addProperty("nombre", v.nombre)

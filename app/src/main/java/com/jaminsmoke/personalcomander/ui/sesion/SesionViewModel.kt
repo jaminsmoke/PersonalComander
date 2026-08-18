@@ -12,6 +12,7 @@ import com.jaminsmoke.personalcomander.data.sesion.ContrasteMembresia
 import com.jaminsmoke.personalcomander.data.sesion.IdentityJson
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.SesionStore
+import com.jaminsmoke.personalcomander.data.sesion.VisibleOtrosEstablecimientos
 import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -124,6 +125,16 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
             val r = repo.actualizarVisibilidad(campo, valor)
             _busy.value = false
             _mensaje.value = if (r.ok) ctx.getString(R.string.sesion_visibilidad_ok)
+            else r.error ?: ctx.getString(R.string.sesion_error_generico)
+        }
+    }
+
+    fun setVisibleOtrosEstablecimientos(visible: VisibleOtrosEstablecimientos) {
+        viewModelScope.launch {
+            _busy.value = true
+            val r = repo.actualizarVisibilidadEstablecimientos(visible)
+            _busy.value = false
+            _mensaje.value = if (r.ok) ctx.getString(R.string.sesion_directorio_ok)
             else r.error ?: ctx.getString(R.string.sesion_error_generico)
         }
     }
