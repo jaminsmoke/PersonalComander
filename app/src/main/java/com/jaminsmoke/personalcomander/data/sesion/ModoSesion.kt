@@ -151,8 +151,8 @@ val ModoSesion.qr: String?
 
 val ModoSesion.fichaUrl: String?
     get() = when (val m = this) {
-        is ModoSesion.Identidad -> m.fichaUrl
-        is ModoSesion.Establecimiento -> m.fichaUrl
+        is ModoSesion.Identidad -> normalizarFichaUrl(m.fichaUrl)
+        is ModoSesion.Establecimiento -> normalizarFichaUrl(m.fichaUrl)
         ModoSesion.Local -> null
     }
 
@@ -160,11 +160,34 @@ val ModoSesion.fichaUrl: String?
 val ModoSesion.qrVisible: String?
     get() = qrVisibleDe(qr, fichaUrl)
 
+/**
+ * Reescribe la ficha legacy de Identity a la web canónica del profesional.
+ * Identity manda `ficha_url`; Commander no la inventa. Solo mapea
+ * `ficha.siberia.solutions/{ficha|camareros}` → `web.camareros…/camareros`.
+ */
+fun normalizarFichaUrl(raw: String?): String? {
+    val trimmed = raw?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    val uri = try {
+        java.net.URI(trimmed)
+    } catch (_: Exception) {
+        return trimmed
+    }
+    val host = uri.host?.lowercase().orEmpty()
+    if (host != FICHA_LEGACY_HOST) return trimmed
+    val path = uri.rawPath.trimEnd('/').ifEmpty { "/" }
+    if (path != "/ficha" && path != "/camareros") return trimmed
+    val query = uri.rawQuery?.let { "?$it" }.orEmpty()
+    return "$FICHA_CANONICA_BASE$query"
+}
+
 fun qrVisibleDe(qr: String?, fichaUrl: String?): String? {
-    val url = fichaUrl?.trim().orEmpty()
+    val url = normalizarFichaUrl(fichaUrl).orEmpty()
     if (url.startsWith("https://") || url.startsWith("http://")) return url
     return qr
 }
+
+private const val FICHA_LEGACY_HOST = "ficha.siberia.solutions"
+private const val FICHA_CANONICA_BASE = "https://web.camareros.siberia.solutions/camareros"
 
 fun ModoSesion.etiquetaHeader(): String? = when (this) {
     ModoSesion.Local -> null

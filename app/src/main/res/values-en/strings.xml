@@ -293,12 +293,12 @@
     <string name="sesion_turno_en_nodo">On node · %1$s</string>
     <string name="sesion_turno_nodo_pendiente">Pending · %1$s</string>
     <string name="sesion_qr_titulo">My profile</string>
-    <string name="sesion_qr_desc">Scan to open your public Identity profile. The link is verified with your session.</string>
-    <string name="sesion_qr_desc_sin_url">Credential for the Bar node. Identity has not published the web profile yet.</string>
+    <string name="sesion_qr_desc">Scan to open your public professional profile. The link is verified with your session.</string>
+    <string name="sesion_qr_desc_sin_url">Credential for the Bar node. No public web profile has been published yet.</string>
     <string name="sesion_qr_abrir">Open my profile</string>
     <string name="sesion_qr_desc_img">Public profile QR code</string>
     <string name="sesion_visibilidad_titulo">What your profile shows</string>
-    <string name="sesion_visibilidad_desc">Anyone who opens your public Identity profile will see these fields. They are stored there, not on this phone.</string>
+    <string name="sesion_visibilidad_desc">Anyone who opens your public professional profile will see these fields. They are stored in Identity, not on this phone.</string>
     <string name="sesion_visibilidad_nombre">First name</string>
     <string name="sesion_visibilidad_nombre_hint">Turning this off leaves the profile almost empty.</string>
     <string name="sesion_visibilidad_apellidos">Last name</string>

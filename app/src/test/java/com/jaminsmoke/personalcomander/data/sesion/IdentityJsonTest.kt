@@ -54,6 +54,13 @@ class IdentityJsonTest {
     }
 
     @Test
+    fun parseQr_con_ficha_url_canonica() {
+        val url = "https://web.camareros.siberia.solutions/camareros?qr=phid1:u1:c1:sig"
+        val q = IdentityJson.parseQr("""{"qr":"phid1:u1:c1:sig","ficha_url":"$url"}""")
+        assertEquals(url, q.fichaUrl)
+    }
+
+    @Test
     fun parseVisibilidad_defaults_si_faltan_campos() {
         val v = IdentityJson.parseVisibilidad("{}")
         assertEquals(true, v.nombre)
