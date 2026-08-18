@@ -39,6 +39,15 @@ REQUIRED_ASSETS = (
     "docs/screenshots/comanda.png",
     "docs/screenshots/ajustes.png",
 )
+# Captura junto al texto que la explica (el Inicio solo lleva el hero).
+CONTEXT_SHOTS = (
+    ("docs/index.md", "screenshots/home.png"),
+    ("docs/manual/resumen.md", "screenshots/home.png"),
+    ("docs/manual/mesas.md", "screenshots/mesas_board.png"),
+    ("docs/manual/comandas.md", "screenshots/comanda.png"),
+    ("docs/manual/carta.md", "screenshots/menu.png"),
+    ("docs/manual/ajustes.md", "screenshots/ajustes.png"),
+)
 VERSION_FILES = (
     "docs/index.md",
     "docs/manual/instalacion.md",
@@ -119,18 +128,13 @@ def comprobar(root: Path) -> list[str]:
         if not (root / rel).is_file():
             fallos.append(f"falta asset {rel}")
 
-    index = root / "docs" / "index.md"
-    if index.is_file():
-        index_text = index.read_text(encoding="utf-8")
-        for shot in (
-            "screenshots/home.png",
-            "screenshots/mesas_board.png",
-            "screenshots/menu.png",
-            "screenshots/comanda.png",
-            "screenshots/ajustes.png",
-        ):
-            if shot not in index_text:
-                fallos.append(f"docs/index.md no referencia {shot}")
+    for rel, needle in CONTEXT_SHOTS:
+        path = root / rel
+        if not path.is_file():
+            fallos.append(f"falta {rel} (debe mostrar {needle})")
+            continue
+        if needle not in path.read_text(encoding="utf-8"):
+            fallos.append(f"{rel} no referencia {needle}")
 
     for md in docs.rglob("*.md"):
         text = md.read_text(encoding="utf-8")
@@ -168,6 +172,11 @@ def _fixture_ok(root: Path) -> None:
         "  - Inicio: index.md\n"
         "  - Instalación: manual/instalacion.md\n"
         "  - FAQ: manual/faq.md\n"
+        "  - Resumen: manual/resumen.md\n"
+        "  - Mesas: manual/mesas.md\n"
+        "  - Comandas: manual/comandas.md\n"
+        "  - Carta: manual/carta.md\n"
+        "  - Ajustes: manual/ajustes.md\n"
         "  - Arquitectura: arquitectura.md\n",
     )
     _write(root / "app" / "build.gradle.kts", 'versionName = "1.6"\n')
@@ -175,9 +184,13 @@ def _fixture_ok(root: Path) -> None:
         _write(root / rel, "La release es v1.6.\n")
     _write(
         root / "docs" / "index.md",
-        "v1.6\nscreenshots/home.png\nscreenshots/mesas_board.png\n"
-        "screenshots/menu.png\nscreenshots/comanda.png\nscreenshots/ajustes.png\n",
+        "v1.6\nscreenshots/home.png\n",
     )
+    _write(root / "docs" / "manual" / "resumen.md", "Resumen screenshots/home.png\n")
+    _write(root / "docs" / "manual" / "mesas.md", "Mesas screenshots/mesas_board.png\n")
+    _write(root / "docs" / "manual" / "comandas.md", "Comanda screenshots/comanda.png\n")
+    _write(root / "docs" / "manual" / "carta.md", "Carta screenshots/menu.png\n")
+    _write(root / "docs" / "manual" / "ajustes.md", "Ajustes screenshots/ajustes.png\n")
     _write(root / "docs" / "arquitectura.md", "Ver [Voz](voz.md).\n")
     for rel in REQUIRED_ASSETS:
         _write(root / rel, "x")
@@ -229,6 +242,13 @@ def selftest() -> int:
         fallos = comprobar(root)
         if not any("obsoleto" in f for f in fallos):
             print("SELFTEST FAIL: debía detectar copy v1.5", file=sys.stderr)
+            return 1
+
+        _fixture_ok(root)
+        (root / "docs" / "manual" / "mesas.md").write_text("sin captura\n", encoding="utf-8")
+        fallos = comprobar(root)
+        if not any("mesas_board.png" in f for f in fallos):
+            print("SELFTEST FAIL: debía exigir captura en mesas.md", file=sys.stderr)
             return 1
 
     print("Docs structure selftest OK")

@@ -2,6 +2,15 @@
 
 La carta se gestiona desde la pestaña **Gestión** → **Carta**, no desde Ajustes. Productos, precios, categorías e iconos emoji; todo funciona **sin internet**.
 
+<div class="pc-doc-shot" markdown>
+
+<figure>
+![Carta](../screenshots/menu.png)
+<figcaption>Productos, precios y categorías.</figcaption>
+</figure>
+
+</div>
+
 ## Operaciones
 
 - Añadir producto: nombre, precio, categoría e icono.

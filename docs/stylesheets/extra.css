@@ -27,11 +27,11 @@
 /* Hero: copy + captura de móvil */
 .pc-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(160px, 240px);
-  gap: 2rem;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 300px);
+  gap: 2.25rem;
   align-items: center;
   text-align: left;
-  padding: 2rem 0 1rem;
+  padding: 2.5rem 0 1.25rem;
 }
 
 .pc-hero h1 {
@@ -49,6 +49,25 @@
   height: auto;
   border-radius: 28px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Captura contextual en una página del Manual */
+.pc-doc-shot {
+  max-width: 260px;
+  margin: 1.25rem 0 1.75rem;
+}
+
+.pc-doc-shot img {
+  width: 100%;
+  height: auto;
+  border-radius: 20px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
+}
+
+.pc-doc-shot figcaption {
+  font-size: 0.85rem;
+  color: var(--md-default-fg-color--light);
+  margin-top: 0.4rem;
 }
 
 .pc-cta {
@@ -114,7 +133,7 @@
   }
 
   .pc-hero-shot {
-    max-width: 200px;
+    max-width: 240px;
     margin: 0 auto;
   }
 
