@@ -12,7 +12,6 @@ import com.jaminsmoke.personalcomander.data.sesion.ContrasteMembresia
 import com.jaminsmoke.personalcomander.data.sesion.IdentityJson
 import com.jaminsmoke.personalcomander.data.sesion.IdentityRespuesta
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
-import com.jaminsmoke.personalcomander.data.sesion.SesionStore
 import com.jaminsmoke.personalcomander.data.sesion.VisibleOtrosEstablecimientos
 import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
 import kotlinx.coroutines.Dispatchers
@@ -38,9 +37,6 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
     private val _mensaje = MutableStateFlow<String?>(null)
     val mensaje: StateFlow<String?> = _mensaje.asStateFlow()
 
-    private val _identityUrl = MutableStateFlow(repo.identityBaseUrl)
-    val identityUrl: StateFlow<String> = _identityUrl.asStateFlow()
-
     private val _bares = MutableStateFlow<List<ServidorDescubierto>>(emptyList())
     val bares: StateFlow<List<ServidorDescubierto>> = _bares.asStateFlow()
 
@@ -49,11 +45,6 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
 
     fun limpiarMensaje() {
         _mensaje.value = null
-    }
-
-    fun setIdentityUrl(url: String) {
-        _identityUrl.value = url
-        repo.identityBaseUrl = url.ifBlank { SesionStore.DEFAULT_IDENTITY_URL }
     }
 
     fun refrescarPerfil() {

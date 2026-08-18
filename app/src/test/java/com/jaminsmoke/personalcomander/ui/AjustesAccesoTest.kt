@@ -15,11 +15,11 @@ class AjustesAccesoTest {
     }
 
     @Test
-    fun fromNav_abre_turno_tpv_copias_y_avanzado() {
+    fun fromNav_abre_turno_tpv_y_copias() {
         assertEquals(AjustesAcceso.TURNO, AjustesAcceso.fromNav("turno"))
         assertEquals(AjustesAcceso.TURNO, AjustesAcceso.fromNav("Turno"))
         assertEquals(AjustesAcceso.TPV, AjustesAcceso.fromNav("tpv"))
         assertEquals(AjustesAcceso.COPIAS, AjustesAcceso.fromNav("copias"))
-        assertEquals(AjustesAcceso.AVANZADO, AjustesAcceso.fromNav("avanzado"))
+        assertNull(AjustesAcceso.fromNav("avanzado"))
     }
 }

@@ -3,7 +3,6 @@ package com.jaminsmoke.personalcomander.ui
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.jaminsmoke.personalcomander.R
@@ -16,7 +15,6 @@ enum class AjustesAcceso(
     TURNO(R.string.ajustes_acceso_turno, Icons.Default.Work, "turno"),
     TPV(R.string.ajustes_acceso_tpv, Icons.Default.Sync, "tpv"),
     COPIAS(R.string.ajustes_acceso_copias, Icons.Default.Backup, "copias"),
-    AVANZADO(R.string.ajustes_acceso_avanzado, Icons.Default.Tune, "avanzado"),
     ;
 
     companion object {
@@ -26,7 +24,6 @@ enum class AjustesAcceso(
             TURNO.navKey -> TURNO
             TPV.navKey -> TPV
             COPIAS.navKey -> COPIAS
-            AVANZADO.navKey -> AVANZADO
             else -> null
         }
     }

@@ -170,7 +170,6 @@
     <string name="ajustes_acceso_turno">Turno</string>
     <string name="ajustes_acceso_tpv">TPV</string>
     <string name="ajustes_acceso_copias">Copias</string>
-    <string name="ajustes_acceso_avanzado">Avanzado</string>
     <string name="ajustes_import_preview_title">Vista previa de importación</string>
     <string name="ajustes_import_preview_desc">Se van a importar los siguientes cambios:</string>
     <string name="ajustes_import_confirm">Importar</string>
@@ -366,9 +365,6 @@
     <string name="sesion_mapa_solo_lectura">El mapa lo marca el Bar. No se puede editar en este dispositivo.</string>
     <string name="sesion_banner_solo_lectura">Carta del establecimiento (solo lectura). Los cambios se hacen en el Bar.</string>
     <string name="sesion_banner_mapa_solo_lectura">Mapa del establecimiento (solo lectura). Los cambios se hacen en el Bar.</string>
-    <string name="sesion_cuenta_title">Cuenta de camarero</string>
-    <string name="sesion_cuenta_desc">Servicio camareros de Identity en el VPS (https://camareros.siberia.solutions). El servicio negocio (:8082) es de Bar. La cuenta se guarda en Identity; este móvil cachea una copia.</string>
-    <string name="sesion_identity_url">URL del servicio camareros</string>
     <string name="sesion_sala_title">Turno en el establecimiento</string>
     <string name="sesion_sala_desc">Activa el turno en un Bar de la red local (puerto 8787). Puedes estar registrado en varios locales; activo solo en uno. Hace falta cuenta y QR.</string>
     <string name="sesion_sala_login_primero">Entra con tu cuenta para activar un turno.</string>

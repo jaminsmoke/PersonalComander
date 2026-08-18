@@ -88,10 +88,6 @@ ajustes:
     page: manual/ajustes.md
     needles:
       - Copias
-  AVANZADO:
-    page: manual/ajustes.md
-    needles:
-      - Avanzado
 
 extras:
   turno_indicador:

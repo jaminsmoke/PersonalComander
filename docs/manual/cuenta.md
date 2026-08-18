@@ -12,7 +12,7 @@ El camarero crea y edita su cuenta en Commander. Bar **consulta** Identity y asi
 
 1. En el header, pulsa **Entrar** (chip de sesión). No hace falta ir a Ajustes.
 2. Correo y contraseña. Pestañas **Entrar** / **Registro**.
-3. Identity por defecto: `https://camareros.siberia.solutions`.
+3. No hay que poner ninguna URL: Commander habla con Identity en el VPS.
 
 <div class="pc-doc-shot" markdown>
 
