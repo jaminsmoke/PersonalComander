@@ -6,6 +6,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 
 /** Ventana del panel de oficio en Resumen. */
@@ -44,6 +45,12 @@ data class JornadaOficio(
 
 data class HorasDiaPunto(
     val fecha: LocalDate,
+    val segundos: Int,
+)
+
+/** Punto de la gráfica de oficio (hora del día o día de la ventana). */
+data class OficioPunto(
+    val etiqueta: String,
     val segundos: Int,
 )
 
@@ -108,6 +115,62 @@ fun horasPorDia(
         }
     }
     return segundos.map { HorasDiaPunto(it.key, it.value) }
+}
+
+/**
+ * Eje de la gráfica: horas del día (ventana Día) o días (semana/mes).
+ * Los ceros son buckets vacíos de la ventana, no horas inventadas.
+ */
+fun OficioVentana.serie(
+    jornadas: List<JornadaOficio>,
+    desde: Instant,
+    hasta: Instant,
+    zona: ZoneId,
+): List<OficioPunto> = when (this) {
+    OficioVentana.DIA -> horasPorHora(jornadas, desde, hasta, zona)
+    OficioVentana.SEMANA, OficioVentana.MES -> horasPorDia(jornadas, desde, hasta, zona).map {
+        OficioPunto(etiqueta = it.fecha.dayOfMonth.toString(), segundos = it.segundos)
+    }
+}
+
+/**
+ * Segundos de jornada recortados a [desde]..[hasta], agrupados por hora local.
+ */
+fun horasPorHora(
+    jornadas: List<JornadaOficio>,
+    desde: Instant,
+    hasta: Instant,
+    zona: ZoneId,
+): List<OficioPunto> {
+    if (!hasta.isAfter(desde)) return emptyList()
+    val segundos = linkedMapOf<Instant, Int>()
+    var hora = desde.atZone(zona).truncatedTo(ChronoUnit.HOURS)
+    val finLocal = hasta.atZone(zona)
+    while (!hora.isAfter(finLocal)) {
+        segundos[hora.toInstant()] = 0
+        hora = hora.plusHours(1)
+    }
+    for (jornada in jornadas) {
+        val ini = maxInstant(jornada.inicio, desde)
+        val fin = minInstant(jornada.fin ?: hasta, hasta)
+        if (!fin.isAfter(ini)) continue
+        var cursor = ini
+        while (cursor.isBefore(fin)) {
+            val inicioHora = cursor.atZone(zona).truncatedTo(ChronoUnit.HOURS)
+            val finHora = inicioHora.plusHours(1).toInstant()
+            val corte = minInstant(fin, finHora)
+            val clave = inicioHora.toInstant()
+            val extra = Duration.between(cursor, corte).seconds.toInt().coerceAtLeast(0)
+            segundos[clave] = (segundos[clave] ?: 0) + extra
+            cursor = corte
+        }
+    }
+    return segundos.map { (instante, valor) ->
+        OficioPunto(
+            etiqueta = instante.atZone(zona).hour.toString(),
+            segundos = valor,
+        )
+    }
 }
 
 private fun maxInstant(a: Instant, b: Instant): Instant = if (a.isAfter(b)) a else b

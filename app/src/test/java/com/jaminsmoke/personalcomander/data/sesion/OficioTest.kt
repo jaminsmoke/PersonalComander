@@ -42,6 +42,27 @@ class OficioTest {
     }
 
     @Test
+    fun serie_dia_un_bucket_por_hora_incluso_en_cero() {
+        val ahora = ZonedDateTime.of(2026, 8, 18, 15, 30, 0, 0, ZoneOffset.UTC)
+        val b = OficioVentana.DIA.limites(ahora)
+        val serie = OficioVentana.DIA.serie(emptyList(), b.desde, b.hasta, ZoneOffset.UTC)
+        assertEquals(16, serie.size)
+        assertTrue(serie.all { it.segundos == 0 })
+        assertEquals("0", serie.first().etiqueta)
+        assertEquals("15", serie.last().etiqueta)
+    }
+
+    @Test
+    fun serie_mes_un_bucket_por_dia_incluso_en_cero() {
+        val ahora = ZonedDateTime.of(2026, 8, 18, 10, 0, 0, 0, ZoneOffset.UTC)
+        val b = OficioVentana.MES.limites(ahora)
+        val serie = OficioVentana.MES.serie(emptyList(), b.desde, b.hasta, ZoneOffset.UTC)
+        assertEquals(18, serie.size)
+        assertEquals("1", serie.first().etiqueta)
+        assertEquals("18", serie.last().etiqueta)
+    }
+
+    @Test
     fun horas_por_dia_recorta_intervalo_a_la_ventana() {
         val zona = ZoneOffset.UTC
         val jornada = JornadaOficio(

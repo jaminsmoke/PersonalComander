@@ -4,10 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaminsmoke.personalcomander.PersonalComanderApp
-import com.jaminsmoke.personalcomander.data.sesion.HorasDiaPunto
+import com.jaminsmoke.personalcomander.data.sesion.OficioPunto
 import com.jaminsmoke.personalcomander.data.sesion.OficioVentana
-import com.jaminsmoke.personalcomander.data.sesion.horasPorDia
 import com.jaminsmoke.personalcomander.data.sesion.limites
+import com.jaminsmoke.personalcomander.data.sesion.serie
 import com.jaminsmoke.personalcomander.data.sesion.token
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,12 +38,9 @@ data class OficioUiState(
     val ventana: OficioVentana = OficioVentana.DIA,
     val horasSegundos: Int = 0,
     val rondasServidas: Int = 0,
-    val horasPorDia: List<HorasDiaPunto> = emptyList(),
+    val serie: List<OficioPunto> = emptyList(),
     val error: String? = null,
-) {
-    val sinActividad: Boolean
-        get() = horasSegundos == 0 && rondasServidas == 0 && horasPorDia.all { it.segundos == 0 }
-}
+)
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -79,6 +76,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setVentana(ventana: OficioVentana) {
+        if (_ventana.value == ventana) return
+        pintarEje(ventana, _oficio.value.conSesion)
         _ventana.value = ventana
     }
 
@@ -104,34 +103,49 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
 
     private suspend fun cargarOficio(token: String?, ventana: OficioVentana) {
-        if (token == null) {
-            _oficio.value = OficioUiState(ventana = ventana)
-            return
-        }
-        _oficio.value = _oficio.value.copy(conSesion = true, cargando = true, ventana = ventana, error = null)
         val zona = ZoneId.systemDefault()
         val bounds = ventana.limites(ZonedDateTime.now(zona))
+        val eje = ventana.serie(emptyList(), bounds.desde, bounds.hasta, zona)
+        if (token == null) {
+            _oficio.value = OficioUiState(ventana = ventana, serie = eje)
+            return
+        }
+        _oficio.value = _oficio.value.copy(
+            conSesion = true,
+            cargando = true,
+            ventana = ventana,
+            error = null,
+            serie = eje,
+        )
         val resumen = sesion.resumenOficio(bounds.desde, bounds.hasta)
         if (!resumen.ok || resumen.valor == null) {
-            _oficio.value = OficioUiState(
-                conSesion = true,
-                ventana = ventana,
+            _oficio.value = _oficio.value.copy(
+                cargando = false,
                 error = resumen.error,
+                serie = eje,
             )
             return
         }
-        val jornadas = sesion.jornadasOficio(bounds.desde, bounds.hasta)
-        val serie = if (jornadas.ok && jornadas.valor != null) {
-            horasPorDia(jornadas.valor, bounds.desde, bounds.hasta, zona)
-        } else {
-            emptyList()
-        }
+        val jornadas = sesion.jornadasOficio(bounds.desde, bounds.hasta).valor.orEmpty()
         _oficio.value = OficioUiState(
             conSesion = true,
             ventana = ventana,
             horasSegundos = resumen.valor.horasSegundos,
             rondasServidas = resumen.valor.rondasServidas,
-            horasPorDia = serie,
+            serie = ventana.serie(jornadas, bounds.desde, bounds.hasta, zona),
+        )
+    }
+
+    private fun pintarEje(ventana: OficioVentana, conSesion: Boolean) {
+        val zona = ZoneId.systemDefault()
+        val bounds = ventana.limites(ZonedDateTime.now(zona))
+        _oficio.value = _oficio.value.copy(
+            ventana = ventana,
+            cargando = conSesion,
+            error = null,
+            horasSegundos = 0,
+            rondasServidas = 0,
+            serie = ventana.serie(emptyList(), bounds.desde, bounds.hasta, zona),
         )
     }
 

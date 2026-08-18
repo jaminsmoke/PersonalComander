@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,14 +17,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.RoomService
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.TableRestaurant
-import androidx.compose.material.icons.filled.RoomService
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -214,99 +218,110 @@ private fun OficioCard(
     onVentana: (OficioVentana) -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    Column(
+    val ventanas = listOf(
+        OficioVentana.DIA to R.string.home_oficio_dia,
+        OficioVentana.SEMANA to R.string.home_oficio_semana,
+        OficioVentana.MES to R.string.home_oficio_mes,
+    )
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(scheme.surfaceContainerLow)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .background(
+                Brush.linearGradient(
+                    listOf(scheme.surfaceContainer, scheme.surfaceContainerLowest)
+                )
+            )
+            .border(
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    listOf(
+                        scheme.secondary.copy(alpha = 0.28f),
+                        scheme.secondary.copy(alpha = 0.06f),
+                    )
+                ),
+                shape = RoundedCornerShape(12.dp),
+            ),
     ) {
-        Text(
-            text = stringResource(R.string.home_oficio_title),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = scheme.onSurface,
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OficioChip(
-                etiqueta = stringResource(R.string.home_oficio_dia),
-                seleccionado = state.ventana == OficioVentana.DIA,
-                onClick = { onVentana(OficioVentana.DIA) },
-            )
-            OficioChip(
-                etiqueta = stringResource(R.string.home_oficio_semana),
-                seleccionado = state.ventana == OficioVentana.SEMANA,
-                onClick = { onVentana(OficioVentana.SEMANA) },
-            )
-            OficioChip(
-                etiqueta = stringResource(R.string.home_oficio_mes),
-                seleccionado = state.ventana == OficioVentana.MES,
-                onClick = { onVentana(OficioVentana.MES) },
-            )
-        }
-        when {
-            !state.conSesion -> Text(
-                text = stringResource(R.string.home_oficio_sin_sesion),
-                style = MaterialTheme.typography.bodyMedium,
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.home_oficio_title).uppercase(),
+                style = MaterialTheme.typography.labelMedium,
                 color = scheme.onSurfaceVariant,
             )
-            state.error != null -> Text(
-                text = stringResource(R.string.home_oficio_error),
-                style = MaterialTheme.typography.bodyMedium,
-                color = scheme.error,
-            )
-            state.cargando && state.sinActividad -> ShimmerBox(height = 120, radius = 8)
-            else -> {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    ResumenStat(
-                        icono = Icons.Default.Schedule,
-                        iconTint = scheme.secondary,
-                        valor = formatoHorasOficio(state.horasSegundos),
-                        etiqueta = stringResource(R.string.home_oficio_horas),
-                        modifier = Modifier.weight(1f),
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                ventanas.forEachIndexed { index, (ventana, label) ->
+                    SegmentedButton(
+                        selected = state.ventana == ventana,
+                        onClick = { onVentana(ventana) },
+                        shape = SegmentedButtonDefaults.itemShape(index, ventanas.size),
+                        label = { Text(stringResource(label)) },
                     )
-                    ResumenStat(
-                        icono = Icons.Default.RoomService,
-                        iconTint = scheme.tertiary,
-                        valor = state.rondasServidas.toString(),
-                        etiqueta = stringResource(R.string.home_oficio_rondas),
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                if (state.sinActividad) {
-                    Text(
-                        text = stringResource(R.string.home_oficio_vacio),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = scheme.onSurfaceVariant,
-                    )
-                } else if (state.horasPorDia.any { it.segundos > 0 }) {
-                    Text(
-                        text = stringResource(R.string.home_oficio_grafica),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = scheme.onSurfaceVariant,
-                    )
-                    OficioHorasChart(puntos = state.horasPorDia)
                 }
             }
+            if (!state.conSesion) {
+                Text(
+                    text = stringResource(R.string.home_oficio_sin_sesion),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = scheme.onSurfaceVariant,
+                )
+            } else if (state.error != null) {
+                Text(
+                    text = stringResource(R.string.home_oficio_error),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = scheme.error,
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                ResumenStat(
+                    icono = Icons.Default.Schedule,
+                    iconTint = scheme.secondary,
+                    valor = formatoHorasOficio(state.horasSegundos),
+                    etiqueta = stringResource(R.string.home_oficio_horas),
+                    modifier = Modifier.weight(1f),
+                )
+                ResumenStat(
+                    icono = Icons.Default.RoomService,
+                    iconTint = scheme.tertiary,
+                    valor = state.rondasServidas.toString(),
+                    etiqueta = stringResource(R.string.home_oficio_rondas),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Text(
+                text = stringResource(R.string.home_oficio_grafica),
+                style = MaterialTheme.typography.labelMedium,
+                color = scheme.onSurfaceVariant,
+            )
+            if (state.serie.isNotEmpty()) {
+                OficioHorasChart(puntos = state.serie)
+            }
+            if (state.conSesion && state.error == null &&
+                state.horasSegundos == 0 && state.rondasServidas == 0
+            ) {
+                Text(
+                    text = stringResource(R.string.home_oficio_vacio),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = scheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (state.cargando) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2.dp)
+                    .align(Alignment.TopCenter),
+                color = scheme.secondary,
+            )
         }
     }
-}
-
-@Composable
-private fun OficioChip(
-    etiqueta: String,
-    seleccionado: Boolean,
-    onClick: () -> Unit,
-) {
-    FilterChip(
-        selected = seleccionado,
-        onClick = onClick,
-        label = { Text(etiqueta) },
-    )
 }
 
 @Composable
