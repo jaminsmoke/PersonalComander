@@ -147,6 +147,10 @@
 
     <!-- Settings Screen -->
     <string name="ajustes_title">Settings</string>
+    <string name="ajustes_acceso_turno">Shift</string>
+    <string name="ajustes_acceso_tpv">POS</string>
+    <string name="ajustes_acceso_copias">Backup</string>
+    <string name="ajustes_acceso_avanzado">Advanced</string>
     <string name="ajustes_import_preview_title">Import Preview</string>
     <string name="ajustes_import_preview_desc">The following changes will be imported:</string>
     <string name="ajustes_import_confirm">Import</string>

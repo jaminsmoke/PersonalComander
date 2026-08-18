@@ -36,7 +36,7 @@ app/src/main/java/com/jaminsmoke/personalcomander/
     ├── HomeScreen.kt / HomeViewModel.kt
     ├── MesasScreen.kt / MesasViewModel.kt / MesasBoard.kt  # Board + list views
     ├── ComandaScreen.kt / ComandaViewModel.kt              # Order taking
-    ├── AjustesScreen.kt / AjustesViewModel.kt              # TPV, backup, URL Identity, turno Bar
+    ├── AjustesScreen.kt / AjustesAcceso.kt / AjustesViewModel.kt  # Hub Ajustes (Turno, TPV, Copias, Avanzado)
     ├── gestion/                                            # Hub Gestión (Carta, Locales, Invitaciones)
     ├── sesion/                                             # Auth, perfil, QR y visibilidad
     ├── Voz.kt / VozParser.kt     # Voice recognition + NL parser

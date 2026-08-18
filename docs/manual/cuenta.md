@@ -34,13 +34,13 @@ El nick que se ve en los locales se edita aquí, en registro o perfil.
 
 ## Indicador de turno
 
-Bajo el título, en **Resumen** y **Gestión**, aparece **Standalone** si no hay local, o el nombre del establecimiento (Activo / En nodo / Pendiente). Un toque abre **Entrar** en modo Local, o **Ajustes** (turno) si ya hay sesión.
+Bajo el título, en **Resumen** y **Gestión**, aparece **Standalone** si no hay local, o el nombre del establecimiento (Activo / En nodo / Pendiente). Un toque abre **Entrar** en modo Local, o **Ajustes → Turno** si ya hay sesión.
 
 ## Turno en un establecimiento
 
 El camarero se liga en **turno** al nodo Bar del local, no a una «sala» como si fuera un servidor. El registro canónico del negocio y de la membresía vive en Identity. Las **salas** (barra, interior, terraza…) son zonas del mapa.
 
-1. En **Ajustes → Turno en el establecimiento**, busca Bares en la LAN.
+1. En **Ajustes → Turno**, busca Bares en la LAN.
 2. Conecta con el QR / sesión de camarero.
 3. Comprueba admisión y, si el nodo lo pide, inicia jornada.
 

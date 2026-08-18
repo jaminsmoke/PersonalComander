@@ -1,7 +1,7 @@
 # Superficies de oficio que el manual debe nombrar.
 #
-# El script scripts/check_docs_cobertura.py extrae rutas, tabs y el hub
-# Gestión del código. Cada id tiene que estar aquí con page+needles
+# El script scripts/check_docs_cobertura.py extrae rutas, tabs y los hubs
+# Gestión y Ajustes del código. Cada id tiene que estar aquí con page+needles
 # o con omit (motivo). Si nace un composable y no hay fila, CI falla.
 
 routes:
@@ -74,6 +74,24 @@ gestion:
     page: manual/invitaciones.md
     needles:
       - Invitaciones
+
+ajustes:
+  TURNO:
+    page: manual/ajustes.md
+    needles:
+      - Turno
+  TPV:
+    page: manual/ajustes.md
+    needles:
+      - TPV
+  COPIAS:
+    page: manual/ajustes.md
+    needles:
+      - Copias
+  AVANZADO:
+    page: manual/ajustes.md
+    needles:
+      - Avanzado
 
 extras:
   turno_indicador:
