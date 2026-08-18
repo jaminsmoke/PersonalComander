@@ -55,6 +55,17 @@ data class OficioPunto(
 )
 
 /**
+ * Etiqueta del eje X de Vico. Nunca puede ser blank: la librería crashea con
+ * `IllegalStateException` si `CartesianValueFormatter.format` devuelve vacío
+ * (al medir Semana/Mes pide índices de la ventana anterior, p.ej. 0..15).
+ */
+fun formatoEtiquetaEje(etiquetas: List<String>, value: Double): String {
+    val i = kotlin.math.round(value).toInt()
+    val texto = etiquetas.getOrNull(i)?.trim().orEmpty()
+    return texto.ifEmpty { "—" }
+}
+
+/**
  * Límites de la ventana en zona local, recortados a [ahora].
  * Día = medianoche de hoy; semana = lunes ISO; mes = día 1.
  */

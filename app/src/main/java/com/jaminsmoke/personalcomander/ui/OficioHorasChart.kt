@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jaminsmoke.personalcomander.data.sesion.OficioPunto
+import com.jaminsmoke.personalcomander.data.sesion.formatoEtiquetaEje
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.CartesianMeasuringContext
 import com.patrykandpatrick.vico.compose.cartesian.axis.Axis
@@ -47,7 +48,7 @@ fun OficioHorasChart(
                 context: CartesianMeasuringContext,
                 value: Double,
                 verticalAxisPosition: Axis.Position.Vertical?,
-            ): CharSequence = etiquetas.getOrNull(value.toInt()) ?: ""
+            ): CharSequence = formatoEtiquetaEje(etiquetas, value)
         }
     }
     CartesianChartHost(

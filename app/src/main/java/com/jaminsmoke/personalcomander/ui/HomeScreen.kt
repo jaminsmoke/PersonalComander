@@ -36,6 +36,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -300,7 +301,9 @@ private fun OficioCard(
                 color = scheme.onSurfaceVariant,
             )
             if (state.serie.isNotEmpty()) {
-                OficioHorasChart(puntos = state.serie)
+                key(state.ventana) {
+                    OficioHorasChart(puntos = state.serie)
+                }
             }
             if (state.conSesion && state.error == null &&
                 state.horasSegundos == 0 && state.rondasServidas == 0
