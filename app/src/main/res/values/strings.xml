@@ -147,6 +147,10 @@
 
     <!-- Ajustes Screen -->
     <string name="ajustes_title">Ajustes</string>
+    <string name="ajustes_acceso_turno">Turno</string>
+    <string name="ajustes_acceso_tpv">TPV</string>
+    <string name="ajustes_acceso_copias">Copias</string>
+    <string name="ajustes_acceso_avanzado">Avanzado</string>
     <string name="ajustes_import_preview_title">Vista previa de importación</string>
     <string name="ajustes_import_preview_desc">Se van a importar los siguientes cambios:</string>
     <string name="ajustes_import_confirm">Importar</string>

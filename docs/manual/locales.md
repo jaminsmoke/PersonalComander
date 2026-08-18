@@ -14,7 +14,7 @@
 
 - Muestra los locales que Identity conoce para tu cuenta, con el estado **Libre** (ninguna membresía) o **Trabajador de** esos locales.
 - Si no hay sesión, el botón **Entrar** abre el login.
-- Si ya hay cuenta, **Turno en Ajustes** lleva a ligar el teléfono a un Bar de la LAN.
+- Si ya hay cuenta, **Turno en Ajustes** abre **Ajustes → Turno** para ligar el teléfono a un Bar de la LAN.
 
 El registro canónico del negocio vive en Identity. El **turno** (nodo `:8787`, admisión, jornada) se activa en [Ajustes](ajustes.md), no aquí.
 

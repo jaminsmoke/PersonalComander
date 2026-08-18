@@ -26,7 +26,7 @@ La app puede importar el catálogo de productos desde un **servidor TPV en la re
 
 ## Flujo desde Ajustes
 
-1. Abre **Ajustes** y selecciona el programa de gestión compatible.
+1. Abre **Ajustes → TPV** y selecciona el programa de gestión compatible.
 2. Usa **Buscar en red** para localizar servidores o introduce IP, puerto y ruta manualmente.
 3. Revisa el servidor encontrado y pulsa **Sincronizar**.
 4. La app muestra una vista previa de productos nuevos, actualizados e ignorados antes de aplicar el catálogo.

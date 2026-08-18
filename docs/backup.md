@@ -1,6 +1,6 @@
 # Backup y restauración
 
-Personal Comander permite **exportar e importar** la base de datos completa en formato JSON desde Ajustes.
+Personal Comander permite **exportar e importar** la base de datos completa en formato JSON desde **Ajustes → Copias**.
 
 ## Exportación
 

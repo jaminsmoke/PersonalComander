@@ -55,9 +55,28 @@ fun PersonalComanderApp() {
         }
     }
 
+    fun navigateAjustes(abrir: String = AjustesAcceso.NAV_HUB) {
+        val route = if (abrir == AjustesAcceso.NAV_HUB) {
+            TopLevelDestination.AJUSTES.route
+        } else {
+            "${TopLevelDestination.AJUSTES.route}?abrir=$abrir"
+        }
+        navController.navigate(route) {
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = abrir == AjustesAcceso.NAV_HUB
+        }
+    }
+
     fun navigateTopLevel(dest: TopLevelDestination) {
         if (dest == TopLevelDestination.MENU) {
             navigateMenu(GestionAcceso.NAV_HUB)
+            return
+        }
+        if (dest == TopLevelDestination.AJUSTES) {
+            navigateAjustes(AjustesAcceso.NAV_HUB)
             return
         }
         navController.navigate(dest.route) {
@@ -99,7 +118,7 @@ fun PersonalComanderApp() {
                 exitTransition = { fadeOut(animationSpec = tween(ANIM_DURATION)) },
             ) {
                 HomeScreen(
-                    onOpenAjustes = { navigateTopLevel(TopLevelDestination.AJUSTES) },
+                    onOpenAjustes = { navigateAjustes(AjustesAcceso.TURNO.navKey) },
                     onOpenAuth = { navController.navigate("auth") },
                     onOpenPerfil = { navController.navigate("perfil") },
                 )
@@ -115,12 +134,18 @@ fun PersonalComanderApp() {
                 )
             }
             composable(
-                route = TopLevelDestination.AJUSTES.route,
+                route = "${TopLevelDestination.AJUSTES.route}?abrir={abrir}",
+                arguments = listOf(
+                    navArgument("abrir") {
+                        type = NavType.StringType
+                        defaultValue = AjustesAcceso.NAV_HUB
+                    },
+                ),
                 enterTransition = { fadeIn(animationSpec = tween(ANIM_DURATION)) },
                 exitTransition = { fadeOut(animationSpec = tween(ANIM_DURATION)) },
-            ) {
+            ) { entry ->
                 AjustesScreen(
-                    onBack = null,
+                    abrir = entry.arguments?.getString("abrir"),
                     onOpenAuth = { navController.navigate("auth") },
                     onOpenPerfil = { navController.navigate("perfil") },
                 )
@@ -138,7 +163,7 @@ fun PersonalComanderApp() {
             ) { entry ->
                 GestionScreen(
                     abrir = entry.arguments?.getString("abrir"),
-                    onOpenAjustes = { navigateTopLevel(TopLevelDestination.AJUSTES) },
+                    onOpenAjustes = { navigateAjustes(AjustesAcceso.TURNO.navKey) },
                     onOpenAuth = { navController.navigate("auth") },
                     onOpenPerfil = { navController.navigate("perfil") },
                 )

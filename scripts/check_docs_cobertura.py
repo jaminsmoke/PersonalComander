@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cruza superficies de la app (NavHost, tabs, hub Gestión) con el manual.
+"""Cruza superficies de la app (NavHost, tabs, hubs Gestión y Ajustes) con el manual.
 
 Uso:
     python scripts/check_docs_cobertura.py
@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-SECTIONS = ("routes", "tabs", "gestion", "extras")
+SECTIONS = ("routes", "tabs", "gestion", "ajustes", "extras")
 DEST_ENTRY = re.compile(
     r"^\s*([A-Z][A-Z0-9_]*)\s*\(\s*\"([^\"]+)\"",
     re.MULTILINE,
@@ -105,6 +105,16 @@ def gestion_ids(text: str) -> set[str]:
     return {m.group(1) for m in GESTION_ENTRY.finditer(block)}
 
 
+def ajustes_ids(text: str) -> set[str]:
+    start = text.find("enum class AjustesAcceso")
+    if start < 0:
+        return set()
+    block = text[start:]
+    end = block.find(";")
+    block = block if end < 0 else block[:end]
+    return {m.group(1) for m in GESTION_ENTRY.finditer(block)}
+
+
 def _page_text(root: Path, page: str) -> str | None:
     path = root / "docs" / page
     if not path.is_file():
@@ -148,6 +158,7 @@ def comprobar(
     app_text: str,
     bar_text: str,
     gestion_text: str,
+    ajustes_text: str,
 ) -> list[str]:
     fallos: list[str] = []
     try:
@@ -167,8 +178,11 @@ def comprobar(
     gestion = gestion_ids(gestion_text)
     if not gestion:
         fallos.append("no se leyó GestionAcceso")
+    ajustes = ajustes_ids(ajustes_text)
+    if not ajustes:
+        fallos.append("no se leyó AjustesAcceso")
 
-    extracted = {"routes": routes, "tabs": tabs, "gestion": gestion}
+    extracted = {"routes": routes, "tabs": tabs, "gestion": gestion, "ajustes": ajustes}
     for kind, have in extracted.items():
         declared = set(mapa.get(kind, {}))
         for ident in sorted(have - declared):
@@ -218,6 +232,16 @@ def comprobar_repo_files(root: Path) -> list[str]:
         / "ui"
         / "gestion"
         / "GestionAcceso.kt",
+        "ajustes": root
+        / "app"
+        / "src"
+        / "main"
+        / "java"
+        / "com"
+        / "jaminsmoke"
+        / "personalcomander"
+        / "ui"
+        / "AjustesAcceso.kt",
     }
     for path in paths.values():
         if not path.is_file():
@@ -228,6 +252,7 @@ def comprobar_repo_files(root: Path) -> list[str]:
         paths["app"].read_text(encoding="utf-8"),
         paths["bar"].read_text(encoding="utf-8"),
         paths["gestion"].read_text(encoding="utf-8"),
+        paths["ajustes"].read_text(encoding="utf-8"),
     )
 
 
@@ -269,6 +294,18 @@ enum class GestionAcceso(
 """,
     )
     _write(
+        root / "app" / "src" / "main" / "java" / "com" / "jaminsmoke" / "personalcomander" / "ui" / "AjustesAcceso.kt",
+        """
+enum class AjustesAcceso(
+    val navKey: String,
+) {
+    TURNO(R.string.x, Icons.Default.A, "turno"),
+    TPV(R.string.y, Icons.Default.B, "tpv"),
+    ;
+}
+""",
+    )
+    _write(
         root / "docs" / "manual" / "cobertura.yml",
         """
 routes:
@@ -300,6 +337,13 @@ gestion:
       - Carta
   LOCALES:
     omit: aún no hay guía
+ajustes:
+  TURNO:
+    page: manual/ajustes.md
+    needles:
+      - Turno
+  TPV:
+    omit: aún no hay guía
 extras:
   recoger:
     page: manual/mesas.md
@@ -311,6 +355,7 @@ extras:
     _write(root / "docs" / "manual" / "mesas.md", "Mesas del board\n")
     _write(root / "docs" / "manual" / "cuenta.md", "Entrar con correo\n")
     _write(root / "docs" / "manual" / "carta.md", "Carta desde Gestión\n")
+    _write(root / "docs" / "manual" / "ajustes.md", "Turno en el establecimiento\n")
 
 
 def selftest() -> int:
@@ -365,6 +410,31 @@ def selftest() -> int:
         fallos = comprobar_repo_files(root)
         if fallos:
             print("SELFTEST FAIL: ruta interpolada debía resolverse", fallos, file=sys.stderr)
+            return 1
+
+        _fixture(root)
+        acceso = (
+            root
+            / "app"
+            / "src"
+            / "main"
+            / "java"
+            / "com"
+            / "jaminsmoke"
+            / "personalcomander"
+            / "ui"
+            / "AjustesAcceso.kt"
+        )
+        acceso.write_text(
+            acceso.read_text(encoding="utf-8").replace(
+                'TPV(R.string.y, Icons.Default.B, "tpv"),',
+                'TPV(R.string.y, Icons.Default.B, "tpv"),\n    COPIAS(R.string.z, Icons.Default.C, "copias"),',
+            ),
+            encoding="utf-8",
+        )
+        fallos = comprobar_repo_files(root)
+        if not any("COPIAS" in f for f in fallos):
+            print("SELFTEST FAIL: debía exigir cobertura de COPIAS", file=sys.stderr)
             return 1
 
     print("Docs cobertura selftest OK")
