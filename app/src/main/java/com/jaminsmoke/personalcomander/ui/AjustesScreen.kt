@@ -99,11 +99,6 @@ fun AjustesScreen(
         )
         AjustesAcceso.TPV -> TpvAjustesScreen(onBack = { seleccion = null })
         AjustesAcceso.COPIAS -> CopiasAjustesScreen(onBack = { seleccion = null })
-        AjustesAcceso.AVANZADO -> AvanzadoAjustesScreen(
-            onBack = { seleccion = null },
-            onOpenAuth = onOpenAuth,
-            onOpenPerfil = onOpenPerfil,
-        )
     }
 }
 
@@ -477,58 +472,6 @@ private fun CopiasAjustesScreen(
     }
 }
 
-@Composable
-private fun AvanzadoAjustesScreen(
-    onBack: () -> Unit,
-    onOpenAuth: () -> Unit,
-    onOpenPerfil: () -> Unit,
-    sesionViewModel: SesionViewModel = viewModel(),
-) {
-    val sesionMensaje by sesionViewModel.mensaje.collectAsState()
-    val modo by sesionViewModel.modo.collectAsState()
-    val identityUrl by sesionViewModel.identityUrl.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(sesionMensaje) {
-        sesionMensaje?.let {
-            snackbarHostState.showSnackbar(it)
-            sesionViewModel.limpiarMensaje()
-        }
-    }
-
-    AjustesSeccionScaffold(
-        title = stringResource(R.string.sesion_cuenta_title),
-        onBack = onBack,
-        snackbarHostState = snackbarHostState,
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item {
-                Text(
-                    text = stringResource(R.string.sesion_cuenta_desc),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            item {
-                CuentaCard(
-                    identityUrl = identityUrl,
-                    onIdentityUrl = sesionViewModel::setIdentityUrl,
-                    onAbrirCuenta = if (modo is ModoSesion.Local) onOpenAuth else onOpenPerfil,
-                    abrirLabel = stringResource(
-                        if (modo is ModoSesion.Local) R.string.sesion_entrar else R.string.sesion_perfil_title,
-                    ),
-                )
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SincronizarCard(
@@ -693,35 +636,6 @@ private fun BackupCard(
                 enabled = enabled,
                 icon = Icons.Default.CloudUpload,
                 modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@Composable
-private fun CuentaCard(
-    identityUrl: String,
-    onIdentityUrl: (String) -> Unit,
-    onAbrirCuenta: () -> Unit,
-    abrirLabel: String,
-) {
-    GlassCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            OutlinedTextField(
-                value = identityUrl,
-                onValueChange = onIdentityUrl,
-                label = { Text(stringResource(R.string.sesion_identity_url)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            PcPrimaryButton(
-                text = abrirLabel,
-                onClick = onAbrirCuenta,
-                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
