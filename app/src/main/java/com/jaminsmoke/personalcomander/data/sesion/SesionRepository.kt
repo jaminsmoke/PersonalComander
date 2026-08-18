@@ -30,6 +30,9 @@ class SesionRepository(
     private val _membresias = MutableStateFlow(store.cargarMembresias())
     val membresias: StateFlow<List<MembresiaEstablecimiento>> = _membresias.asStateFlow()
 
+    private val _invitaciones = MutableStateFlow<List<InvitacionCamarero>>(emptyList())
+    val invitaciones: StateFlow<List<InvitacionCamarero>> = _invitaciones.asStateFlow()
+
     private val _visibilidad = MutableStateFlow(store.cargarVisibilidad())
     val visibilidad: StateFlow<VisibilidadCamarero> = _visibilidad.asStateFlow()
 
@@ -202,6 +205,7 @@ class SesionRepository(
         store.limpiarTodo()
         _foto.value = null
         _membresias.value = emptyList()
+        _invitaciones.value = emptyList()
         _visibilidad.value = VisibilidadCamarero.DEFAULT
         _modo.value = ModoSesion.Local
     }
@@ -484,6 +488,50 @@ class SesionRepository(
         if (!r.ok || r.valor == null) return
         store.guardarMembresias(r.valor)
         _membresias.value = r.valor
+    }
+
+    /**
+     * Bandeja del Server (todas las invitaciones del email).
+     * Si falla la red se conserva lo último en memoria.
+     */
+    suspend fun cargarInvitaciones(): IdentityRespuesta<List<InvitacionCamarero>> {
+        val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
+        return withContext(Dispatchers.IO) {
+            val r = cliente().meInvitaciones(token)
+            if (r.ok && r.valor != null) {
+                _invitaciones.value = r.valor
+            }
+            r
+        }
+    }
+
+    suspend fun aceptarInvitacion(id: String): IdentityRespuesta<Unit> {
+        val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
+        return withContext(Dispatchers.IO) {
+            val r = cliente().aceptarInvitacion(token, id)
+            if (r.ok) {
+                refrescarMembresias(token)
+                val lista = cliente().meInvitaciones(token)
+                if (lista.ok && lista.valor != null) {
+                    _invitaciones.value = lista.valor
+                }
+            }
+            r
+        }
+    }
+
+    suspend fun rechazarInvitacion(id: String): IdentityRespuesta<Unit> {
+        val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
+        return withContext(Dispatchers.IO) {
+            val r = cliente().rechazarInvitacion(token, id)
+            if (r.ok) {
+                val lista = cliente().meInvitaciones(token)
+                if (lista.ok && lista.valor != null) {
+                    _invitaciones.value = lista.valor
+                }
+            }
+            r
+        }
     }
 
     /** Identity gana si responde; red caída o cuerpo inválido conservan la cache. */

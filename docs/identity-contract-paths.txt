@@ -16,3 +16,6 @@
 /v1/camareros/me/jornadas/iniciar
 /v1/camareros/me/jornadas/cortar
 /v1/camareros/me/resumen
+/v1/camareros/me/invitaciones
+/v1/camareros/me/invitaciones/{invitacion_id}/aceptar
+/v1/camareros/me/invitaciones/{invitacion_id}/rechazar

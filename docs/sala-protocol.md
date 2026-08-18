@@ -88,7 +88,7 @@ Bar es la fuente de verdad del layout. Si el camarero está **admitido**, al lig
 7. Bar marca preparado → SSE → líneas `LISTA` + snackbar/notificación.
 8. El camarero marca **servido en mesa** (`SERVIDA`). Recogido de bandeja sigue en Bar.
 
-Pendiente de lista blanca **no** es una invitación de cuenta. Las invitaciones (Bar invita, camarero acepta) van en ítems de Bar e Identity; la aceptación in-app aún no está.
+Pendiente de lista blanca **no** es una invitación de cuenta. Las invitaciones (Bar invita, camarero acepta o rechaza) se gestionan en Identity; en Commander la bandeja está en **Gestión → Invitaciones**.
 
 Si Bar falla el POST, la comanda local permanece enviada y el tablet muestra un aviso.
 

@@ -17,6 +17,8 @@ object IdentityJson {
     const val CODE_TOKEN_INVALIDO = "identity.token_invalido"
     const val CODE_JORNADA_YA_ABIERTA = "identity.jornada_ya_abierta"
     const val CODE_JORNADA_NO_ABIERTA = "identity.jornada_no_abierta"
+    const val CODE_INVITACION_USADA = "identity.invitacion_ya_usada"
+    const val CODE_INVITACION_EXPIRADA = "identity.invitacion_expirada"
 
     data class SesionIdentity(
         val token: String?,
@@ -350,6 +352,43 @@ object IdentityJson {
         }
     }
 
+    /**
+     * `GET /v1/camareros/me/invitaciones`. `null` si el cuerpo no es un array JSON
+     * (no pisar la lista en memoria). Lista vacía = sin invitaciones.
+     */
+    fun parseInvitaciones(body: String): List<InvitacionCamarero>? {
+        return try {
+            val el = JsonParser.parseString(body)
+            if (!el.isJsonArray) return null
+            el.asJsonArray.mapNotNull { item ->
+                val o = item.takeIf { it.isJsonObject }?.asJsonObject ?: return@mapNotNull null
+                val id = o.get("id")?.takeUnless { it.isJsonNull }?.asString ?: return@mapNotNull null
+                val establecimientoId = o.get("establecimiento_id")?.takeUnless { it.isJsonNull }?.asString
+                    ?: return@mapNotNull null
+                val nombre = o.get("establecimiento_nombre")?.takeUnless { it.isJsonNull }?.asString
+                    ?: return@mapNotNull null
+                val rol = o.get("rol")?.takeUnless { it.isJsonNull }?.asString ?: return@mapNotNull null
+                val estado = o.get("estado")?.takeUnless { it.isJsonNull }?.asString
+                    ?: return@mapNotNull null
+                val expiraEn = o.get("expira_en")?.takeUnless { it.isJsonNull }?.asString
+                    ?: return@mapNotNull null
+                val creadaEn = o.get("creada_en")?.takeUnless { it.isJsonNull }?.asString
+                    ?: return@mapNotNull null
+                InvitacionCamarero(
+                    id = id,
+                    establecimientoId = establecimientoId,
+                    establecimientoNombre = nombre,
+                    rol = rol,
+                    estado = estado,
+                    expiraEn = expiraEn,
+                    creadaEn = creadaEn,
+                )
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     fun contrastarHealth(
         nombreHealth: String?,
         membresias: List<MembresiaEstablecimiento>,
@@ -419,6 +458,18 @@ data class MembresiaEstablecimiento(
     val cuentaNegocioId: String,
     val rol: String,
 )
+
+data class InvitacionCamarero(
+    val id: String,
+    val establecimientoId: String,
+    val establecimientoNombre: String,
+    val rol: String,
+    val estado: String,
+    val expiraEn: String,
+    val creadaEn: String,
+) {
+    val esPendiente: Boolean get() = estado.equals("pendiente", ignoreCase = true)
+}
 
 /** Estado laboral según membresías Identity. Misma regla que Bar: libre = ninguna activa. */
 sealed class EstadoLaboral {

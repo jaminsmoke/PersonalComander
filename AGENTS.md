@@ -116,7 +116,7 @@ Hay **otros** «Entrar» en `CuentaCard` y `SalaCard` si Local. Son atajos, no e
 
 ### Gestión y sala
 
-- Hub Gestión: Carta (`MenuScreen`), Locales (membresías Identity), Invitaciones (QR / ficha).
+- Hub Gestión: Carta (`MenuScreen`), Locales (membresías Identity), Invitaciones (bandeja: aceptar/rechazar + historial).
 - Hub Ajustes: Turno (Bar LAN + membresías), TPV, Copias, Avanzado (URL Identity). Los hubs se parecen a propósito; más adelante pueden diferenciarse (fondo) o intercambiar baldosas.
 - Mesas → tap mesa → `comanda/{mesaId}` (`ComandaScreen.kt`). Voz y comanda viven ahí.
 
