@@ -69,6 +69,7 @@ gestion:
     needles:
       - Locales
       - membresías
+      - Libre
   INVITACIONES:
     page: manual/invitaciones.md
     needles:

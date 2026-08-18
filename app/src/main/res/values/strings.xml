@@ -348,6 +348,8 @@
     <string name="sesion_membresias_titulo">Registrado en</string>
     <string name="sesion_membresias_desc">Membresías en Identity. Registrado no es lo mismo que turno activo.</string>
     <string name="sesion_membresias_vacio">Ningún local en Identity todavía. La invitación la manda Bar.</string>
+    <string name="sesion_estado_libre">Libre</string>
+    <string name="sesion_estado_trabajador">Trabajador de %1$s</string>
     <string name="sesion_membresia_linea">%1$s · %2$s</string>
     <string name="sesion_rol_dueno">dueño</string>
     <string name="sesion_rol_staff">staff</string>

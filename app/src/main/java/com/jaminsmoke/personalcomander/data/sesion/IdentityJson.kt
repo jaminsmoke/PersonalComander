@@ -316,6 +316,17 @@ data class MembresiaEstablecimiento(
     val rol: String,
 )
 
+/** Estado laboral según membresías Identity. Misma regla que Bar: libre = ninguna activa. */
+sealed class EstadoLaboral {
+    data object Libre : EstadoLaboral()
+    data class Trabajador(val nombres: List<String>) : EstadoLaboral()
+}
+
+fun estadoLaboral(membresias: List<MembresiaEstablecimiento>): EstadoLaboral {
+    val nombres = membresias.map { it.nombre.trim() }.filter { it.isNotEmpty() }
+    return if (nombres.isEmpty()) EstadoLaboral.Libre else EstadoLaboral.Trabajador(nombres)
+}
+
 enum class ContrasteMembresia {
     SinDatos,
     Coincide,
