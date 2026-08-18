@@ -99,8 +99,6 @@ fun PersonalComanderApp() {
                 exitTransition = { fadeOut(animationSpec = tween(ANIM_DURATION)) },
             ) {
                 HomeScreen(
-                    onOpenMesas = { navigateTopLevel(TopLevelDestination.MESAS) },
-                    onOpenMenu = { navigateMenu(GestionAcceso.CARTA.navKey) },
                     onOpenAjustes = { navigateTopLevel(TopLevelDestination.AJUSTES) },
                     onOpenAuth = { navController.navigate("auth") },
                     onOpenPerfil = { navController.navigate("perfil") },
@@ -113,7 +111,6 @@ fun PersonalComanderApp() {
             ) {
                 MesasScreen(
                     onOpenMesa = { mesaId -> navController.navigate("comanda/$mesaId") },
-                    onOpenMenu = { navigateMenu(GestionAcceso.CARTA.navKey) },
                     onBack = null,
                 )
             }

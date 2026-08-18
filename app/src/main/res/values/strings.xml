@@ -17,16 +17,9 @@
     <string name="home_tables_label">Mesas ocupadas</string>
     <string name="home_orders_label">Pedidos activos</string>
     <string name="home_revenue_label">Facturado hoy</string>
-    <string name="home_tables_card">Mesas</string>
-    <string name="home_tables_desc">Gestionar comandas por mesa</string>
-    <string name="home_menu_card">Gestión del menú</string>
-    <string name="home_menu_desc">Productos, precios y categorías</string>
-    <string name="home_settings_card">Ajustes</string>
-    <string name="home_settings_desc">Importar, exportar y sincronizar TPV</string>
 
     <!-- Mesas Screen -->
     <string name="mesas_title">Personal Comander</string>
-    <string name="mesas_manage_menu">Gestionar menú</string>
     <string name="mesas_free">Libre</string>
     <string name="mesas_occupied">Ocupada</string>
     <string name="mesas_in_kitchen">En cocina</string>
@@ -230,7 +223,6 @@
     <string name="lbl_route">Ruta</string>
     <string name="lbl_ip_server">IP del servidor TPV</string>
     <string name="lbl_access">Accesos</string>
-    <string name="home_quick_access">Accesos rápidos</string>
 
     <!-- Sesión Identity / Establecimiento -->
     <string name="sesion_entrar">Entrar</string>

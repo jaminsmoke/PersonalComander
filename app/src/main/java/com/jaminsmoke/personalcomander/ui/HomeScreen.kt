@@ -2,27 +2,20 @@ package com.jaminsmoke.personalcomander.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -61,8 +54,6 @@ import com.jaminsmoke.personalcomander.ui.sesion.SesionViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onOpenMesas: () -> Unit,
-    onOpenMenu: () -> Unit,
     onOpenAjustes: () -> Unit,
     onOpenAuth: () -> Unit,
     onOpenPerfil: () -> Unit,
@@ -134,40 +125,6 @@ fun HomeScreen(
                 } else {
                     ResumenDiaCard(state)
                 }
-            }
-            item {
-                Text(
-                    text = stringResource(R.string.home_quick_access),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = scheme.onSurface,
-                )
-            }
-            item {
-                HomeAcceso(
-                    titulo = stringResource(R.string.home_tables_card),
-                    descripcion = stringResource(R.string.home_tables_desc),
-                    icono = Icons.Default.GridView,
-                    accent = scheme.secondary,
-                    onClick = onOpenMesas,
-                )
-            }
-            item {
-                HomeAcceso(
-                    titulo = stringResource(R.string.home_menu_card),
-                    descripcion = stringResource(R.string.home_menu_desc),
-                    icono = Icons.AutoMirrored.Filled.MenuBook,
-                    accent = scheme.tertiary,
-                    onClick = onOpenMenu,
-                )
-            }
-            item {
-                HomeAcceso(
-                    titulo = stringResource(R.string.home_settings_card),
-                    descripcion = stringResource(R.string.home_settings_desc),
-                    icono = Icons.Default.Settings,
-                    accent = scheme.primary,
-                    onClick = onOpenAjustes,
-                )
             }
         }
     }
@@ -272,57 +229,5 @@ private fun ResumenStat(
                 color = scheme.onSurface,
             )
         }
-    }
-}
-
-@Composable
-private fun HomeAcceso(
-    titulo: String,
-    descripcion: String,
-    icono: ImageVector,
-    accent: Color,
-    onClick: () -> Unit,
-) {
-    val scheme = MaterialTheme.colorScheme
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(scheme.primaryContainer.copy(alpha = 0.85f))
-            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(accent.copy(alpha = 0.15f))
-                .border(1.dp, accent.copy(alpha = 0.25f), RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icono, contentDescription = null, tint = accent, modifier = Modifier.size(26.dp))
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = titulo,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = scheme.onSurface,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = descripcion,
-                style = MaterialTheme.typography.labelMedium,
-                color = scheme.onSurfaceVariant,
-            )
-        }
-        Icon(
-            Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = scheme.onSurfaceVariant.copy(alpha = 0.6f),
-        )
     }
 }
