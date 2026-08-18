@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,11 +17,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.RoomService
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -45,6 +52,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
+import com.jaminsmoke.personalcomander.data.sesion.OficioVentana
+import com.jaminsmoke.personalcomander.data.sesion.formatoHorasOficio
 import com.jaminsmoke.personalcomander.ui.components.BrandHeaderDensity
 import com.jaminsmoke.personalcomander.ui.components.PcBrandHeader
 import com.jaminsmoke.personalcomander.ui.components.PcSesionChip
@@ -61,6 +70,7 @@ fun HomeScreen(
     sesionViewModel: SesionViewModel = viewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val oficio by viewModel.oficio.collectAsState()
     val modo by sesionViewModel.modo.collectAsState()
     val fotoSesion by sesionViewModel.foto.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -73,7 +83,10 @@ fun HomeScreen(
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_START) sesionViewModel.revalidarTurno()
+            if (event == Lifecycle.Event.ON_START) {
+                sesionViewModel.revalidarTurno()
+                viewModel.refrescarOficio()
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
@@ -125,6 +138,12 @@ fun HomeScreen(
                 } else {
                     ResumenDiaCard(state)
                 }
+            }
+            item {
+                OficioCard(
+                    state = oficio,
+                    onVentana = viewModel::setVentana,
+                )
             }
         }
     }
@@ -189,6 +208,118 @@ private fun ResumenDiaCard(state: HomeUiState) {
                     modifier = Modifier.weight(1f),
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun OficioCard(
+    state: OficioUiState,
+    onVentana: (OficioVentana) -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val ventanas = listOf(
+        OficioVentana.DIA to R.string.home_oficio_dia,
+        OficioVentana.SEMANA to R.string.home_oficio_semana,
+        OficioVentana.MES to R.string.home_oficio_mes,
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(scheme.surfaceContainer, scheme.surfaceContainerLowest)
+                )
+            )
+            .border(
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    listOf(
+                        scheme.secondary.copy(alpha = 0.28f),
+                        scheme.secondary.copy(alpha = 0.06f),
+                    )
+                ),
+                shape = RoundedCornerShape(12.dp),
+            ),
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.home_oficio_title).uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                color = scheme.onSurfaceVariant,
+            )
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                ventanas.forEachIndexed { index, (ventana, label) ->
+                    SegmentedButton(
+                        selected = state.ventana == ventana,
+                        onClick = { onVentana(ventana) },
+                        shape = SegmentedButtonDefaults.itemShape(index, ventanas.size),
+                        label = { Text(stringResource(label)) },
+                    )
+                }
+            }
+            if (!state.conSesion) {
+                Text(
+                    text = stringResource(R.string.home_oficio_sin_sesion),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = scheme.onSurfaceVariant,
+                )
+            } else if (state.error != null) {
+                Text(
+                    text = stringResource(R.string.home_oficio_error),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = scheme.error,
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                ResumenStat(
+                    icono = Icons.Default.Schedule,
+                    iconTint = scheme.secondary,
+                    valor = formatoHorasOficio(state.horasSegundos),
+                    etiqueta = stringResource(R.string.home_oficio_horas),
+                    modifier = Modifier.weight(1f),
+                )
+                ResumenStat(
+                    icono = Icons.Default.RoomService,
+                    iconTint = scheme.tertiary,
+                    valor = state.rondasServidas.toString(),
+                    etiqueta = stringResource(R.string.home_oficio_rondas),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Text(
+                text = stringResource(R.string.home_oficio_grafica),
+                style = MaterialTheme.typography.labelMedium,
+                color = scheme.onSurfaceVariant,
+            )
+            if (state.serie.isNotEmpty()) {
+                OficioHorasChart(puntos = state.serie)
+            }
+            if (state.conSesion && state.error == null &&
+                state.horasSegundos == 0 && state.rondasServidas == 0
+            ) {
+                Text(
+                    text = stringResource(R.string.home_oficio_vacio),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = scheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (state.cargando) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2.dp)
+                    .align(Alignment.TopCenter),
+                color = scheme.secondary,
+            )
         }
     }
 }

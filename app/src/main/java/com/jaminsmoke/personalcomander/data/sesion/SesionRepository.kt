@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Instant
 
 class SesionRepository(
     context: Context,
@@ -244,8 +245,11 @@ class SesionRepository(
         val qr = actual.qr
         val host = actual.barHost
         val puerto = actual.barPuerto
-        if (actual.sesionTrabajo && qr != null) {
-            scope.launch(Dispatchers.IO) { BarLanCliente.postCortar(host, puerto, qr) }
+        val token = actual.token
+        val cortarLan = actual.sesionTrabajo && qr != null
+        scope.launch(Dispatchers.IO) {
+            if (cortarLan) BarLanCliente.postCortar(host, puerto, qr)
+            cortarJornadaServer(token)
         }
         store.limpiarBar()
         val identidad = ModoSesion.Identidad(
@@ -264,7 +268,10 @@ class SesionRepository(
         val qr = actual.qr ?: return BarLanCliente.JornadaLanResult(ok = false, codigo = 0)
         return withContext(Dispatchers.IO) {
             val r = BarLanCliente.postIniciar(actual.barHost, actual.barPuerto, qr)
-            if (r.ok && r.sesionActiva) persistirJornada(true)
+            if (r.ok && r.sesionActiva) {
+                persistirJornada(true)
+                registrarJornadaServer(actual.token, actual.nombreEstablecimiento)
+            }
             r
         }
     }
@@ -273,6 +280,7 @@ class SesionRepository(
         val actual = _modo.value as? ModoSesion.Establecimiento
             ?: return BarLanCliente.JornadaLanResult(ok = false, codigo = 0)
         val qr = actual.qr
+        val token = actual.token
         return withContext(Dispatchers.IO) {
             val r = if (qr != null) {
                 BarLanCliente.postCortar(actual.barHost, actual.barPuerto, qr)
@@ -280,8 +288,39 @@ class SesionRepository(
                 BarLanCliente.JornadaLanResult(ok = true, codigo = 0)
             }
             persistirJornada(false)
+            cortarJornadaServer(token)
             r
         }
+    }
+
+    suspend fun resumenOficio(desde: Instant, hasta: Instant): IdentityRespuesta<ResumenOficio> =
+        withContext(Dispatchers.IO) {
+            val token = _modo.value.token
+                ?: return@withContext IdentityRespuesta(false, error = "Sin sesión")
+            cliente().meResumen(token, desde, hasta)
+        }
+
+    suspend fun jornadasOficio(desde: Instant, hasta: Instant): IdentityRespuesta<List<JornadaOficio>> =
+        withContext(Dispatchers.IO) {
+            val token = _modo.value.token
+                ?: return@withContext IdentityRespuesta(false, error = "Sin sesión")
+            cliente().meJornadas(token, desde, hasta)
+        }
+
+    /** Dual-write al libro canónico. 409 (ya abierta) cuenta como éxito. Sin UUID no se inventa. */
+    private fun registrarJornadaServer(token: String, nombreHealth: String?) {
+        val establecimientoId = IdentityJson.establecimientoIdPorHealth(nombreHealth, _membresias.value)
+            ?: return
+        val r = cliente().iniciarJornada(token, establecimientoId)
+        if (r.ok) return
+        if (r.codigo == 409 || r.code == IdentityJson.CODE_JORNADA_YA_ABIERTA) return
+    }
+
+    /** Cierra el intervalo canónico. 404 (no abierta) se ignora. */
+    private fun cortarJornadaServer(token: String) {
+        val r = cliente().cortarJornada(token)
+        if (r.ok) return
+        if (r.codigo == 404 || r.code == IdentityJson.CODE_JORNADA_NO_ABIERTA) return
     }
 
     fun marcarJornadaCortada() {

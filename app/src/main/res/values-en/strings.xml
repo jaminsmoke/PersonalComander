@@ -17,6 +17,16 @@
     <string name="home_tables_label">Tables occupied</string>
     <string name="home_orders_label">Active orders</string>
     <string name="home_revenue_label">Revenue today</string>
+    <string name="home_oficio_title">Work log</string>
+    <string name="home_oficio_dia">Day</string>
+    <string name="home_oficio_semana">Week</string>
+    <string name="home_oficio_mes">Month</string>
+    <string name="home_oficio_horas">Hours on shift</string>
+    <string name="home_oficio_rondas">Rounds served</string>
+    <string name="home_oficio_sin_sesion">Sign in to see hours and rounds from the work log.</string>
+    <string name="home_oficio_vacio">No activity in this window.</string>
+    <string name="home_oficio_grafica">Hours on shift per day</string>
+    <string name="home_oficio_error">Could not load the work log.</string>
 
     <!-- Mesas Screen -->
     <string name="mesas_title">Personal Comander</string>
@@ -319,6 +329,7 @@
     <string name="sesion_jornada_rechazada">The Bar did not accept the work session.</string>
     <string name="sesion_jornada_nodo_viejo">This Bar does not manage work sessions yet. Orders are sent as before.</string>
     <string name="sesion_jornada_pendiente_bar">Work session requested. Wait for the Bar to accept.</string>
+    <string name="sesion_jornada_sin_libro">Work session is active on the floor. The work log was not opened: the venue name does not match your memberships.</string>
     <string name="sesion_ronda_sin_jornada">No active work session. Start it in Settings.</string>
     <string name="sesion_cerrar">Sign out</string>
     <string name="sesion_error_generico">Could not complete. Check the Identity URL and the network.</string>

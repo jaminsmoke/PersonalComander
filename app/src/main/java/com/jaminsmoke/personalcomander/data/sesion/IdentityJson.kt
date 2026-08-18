@@ -3,6 +3,8 @@ package com.jaminsmoke.personalcomander.data.sesion
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import java.time.Instant
+import java.time.OffsetDateTime
 
 /** Parseo puro del contrato Identity `/v1`. Sin red. */
 object IdentityJson {
@@ -13,6 +15,8 @@ object IdentityJson {
     const val CODE_FOTO_INVALIDA = "identity.foto_invalida"
     const val CODE_FOTO_INEXISTENTE = "identity.foto_inexistente"
     const val CODE_TOKEN_INVALIDO = "identity.token_invalido"
+    const val CODE_JORNADA_YA_ABIERTA = "identity.jornada_ya_abierta"
+    const val CODE_JORNADA_NO_ABIERTA = "identity.jornada_no_abierta"
 
     data class SesionIdentity(
         val token: String?,
@@ -213,6 +217,106 @@ object IdentityJson {
             addProperty("password_actual", passwordActual)
             addProperty("password_nueva", passwordNueva)
         }.toString()
+
+    fun cuerpoIniciarJornada(establecimientoId: String): String =
+        JsonObject().apply { addProperty("establecimiento_id", establecimientoId) }.toString()
+
+    fun parseInstantIso(raw: String): Instant? {
+        val texto = raw.trim().takeIf { it.isNotEmpty() } ?: return null
+        return try {
+            Instant.parse(texto)
+        } catch (_: Exception) {
+            try {
+                OffsetDateTime.parse(texto).toInstant()
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+
+    fun parseJornada(body: String): JornadaOficio? = parseJornadaEl(
+        try {
+            JsonParser.parseString(body).takeIf { it.isJsonObject }?.asJsonObject
+        } catch (_: Exception) {
+            null
+        },
+    )
+
+    fun parseJornadas(body: String): List<JornadaOficio>? {
+        return try {
+            val el = JsonParser.parseString(body)
+            if (!el.isJsonArray) return null
+            el.asJsonArray.mapNotNull { item ->
+                parseJornadaEl(item.takeIf { it.isJsonObject }?.asJsonObject)
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun parseResumenOficio(body: String): ResumenOficio? {
+        return try {
+            val o = JsonParser.parseString(body).asJsonObject
+            val desde = parseInstantIso(o.get("desde")?.asString.orEmpty()) ?: return null
+            val hasta = parseInstantIso(o.get("hasta")?.asString.orEmpty()) ?: return null
+            val por = o.get("por_establecimiento")
+                ?.takeIf { it.isJsonArray }
+                ?.asJsonArray
+                ?.mapNotNull { item ->
+                    val est = item.takeIf { it.isJsonObject }?.asJsonObject ?: return@mapNotNull null
+                    val id = est.get("establecimiento_id")?.takeUnless { it.isJsonNull }?.asString
+                        ?: return@mapNotNull null
+                    ResumenOficioEstablecimiento(
+                        establecimientoId = id,
+                        horasSegundos = est.get("horas_segundos")?.asInt ?: 0,
+                        rondasServidas = est.get("mesas_servidas")?.asInt ?: 0,
+                    )
+                }
+                .orEmpty()
+            ResumenOficio(
+                desde = desde,
+                hasta = hasta,
+                horasSegundos = o.get("horas_segundos")?.asInt ?: 0,
+                rondasServidas = o.get("mesas_servidas")?.asInt ?: 0,
+                porEstablecimiento = por,
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /**
+     * UUID de membresía cuyo nombre coincide con `GET /health`.
+     * Mismo criterio que [contrastarHealth]; null si no hay match único por nombre.
+     */
+    fun establecimientoIdPorHealth(
+        nombreHealth: String?,
+        membresias: List<MembresiaEstablecimiento>,
+    ): String? {
+        if (nombreHealth.isNullOrBlank()) return null
+        val needle = nombreHealth.trim()
+        val coinciden = membresias.filter { it.nombre.trim().equals(needle, ignoreCase = true) }
+        return coinciden.singleOrNull()?.id
+    }
+
+    private fun parseJornadaEl(o: JsonObject?): JornadaOficio? {
+        if (o == null) return null
+        val id = o.get("id")?.takeUnless { it.isJsonNull }?.asString ?: return null
+        val camareroId = o.get("camarero_id")?.takeUnless { it.isJsonNull }?.asString ?: return null
+        val establecimientoId = o.get("establecimiento_id")?.takeUnless { it.isJsonNull }?.asString
+            ?: return null
+        val inicio = parseInstantIso(o.get("inicio")?.asString.orEmpty()) ?: return null
+        val finRaw = o.get("fin")?.takeUnless { it.isJsonNull }?.asString
+        val fin = finRaw?.let { parseInstantIso(it) }
+        if (finRaw != null && fin == null) return null
+        return JornadaOficio(
+            id = id,
+            camareroId = camareroId,
+            establecimientoId = establecimientoId,
+            inicio = inicio,
+            fin = fin,
+        )
+    }
 
     fun parseFotoUrl(body: String): String? {
         val el = JsonParser.parseString(body).asJsonObject.get("foto_url")

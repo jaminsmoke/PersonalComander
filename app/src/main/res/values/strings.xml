@@ -17,6 +17,16 @@
     <string name="home_tables_label">Mesas ocupadas</string>
     <string name="home_orders_label">Pedidos activos</string>
     <string name="home_revenue_label">Facturado hoy</string>
+    <string name="home_oficio_title">Oficio</string>
+    <string name="home_oficio_dia">Día</string>
+    <string name="home_oficio_semana">Semana</string>
+    <string name="home_oficio_mes">Mes</string>
+    <string name="home_oficio_horas">Horas de jornada</string>
+    <string name="home_oficio_rondas">Rondas servidas</string>
+    <string name="home_oficio_sin_sesion">Entra con tu cuenta para ver horas y rondas del libro de oficio.</string>
+    <string name="home_oficio_vacio">Sin actividad en esta ventana.</string>
+    <string name="home_oficio_grafica">Horas de jornada por día</string>
+    <string name="home_oficio_error">No se pudo leer el oficio.</string>
 
     <!-- Mesas Screen -->
     <string name="mesas_title">Personal Comander</string>
@@ -319,6 +329,7 @@
     <string name="sesion_jornada_rechazada">Bar no aceptó la jornada.</string>
     <string name="sesion_jornada_nodo_viejo">Este Bar aún no gestiona jornada. Se envía como hasta ahora.</string>
     <string name="sesion_jornada_pendiente_bar">Jornada pedida. Espera a que Bar acepte.</string>
+    <string name="sesion_jornada_sin_libro">Jornada activa en sala. El libro de oficio no se abrió: el local no coincide con tus membresías.</string>
     <string name="sesion_ronda_sin_jornada">No hay jornada activa. Empieza la jornada en Ajustes.</string>
     <string name="sesion_cerrar">Cerrar sesión</string>
     <string name="sesion_error_generico">No se pudo completar. Revisa la URL de Identity y la red.</string>
