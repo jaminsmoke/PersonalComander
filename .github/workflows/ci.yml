@@ -89,7 +89,7 @@ jobs:
       - name: Checkout Identity spec
         uses: actions/checkout@v4
         with:
-          repository: jaminsmoke/PersonalHostel-Identity
+          repository: jaminsmoke/PersonalHostel-Server
           ref: main
           path: .family/identity
           sparse-checkout: |

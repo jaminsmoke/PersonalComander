@@ -14,7 +14,7 @@ data class IdentityRespuesta<T>(
 )
 
 /**
- * Cliente HTTP del **servicio camareros** de PersonalHostel Identity
+ * Cliente HTTP del **servicio camareros** de PersonalHostel Server
  * (VPS HTTPS; Identity corre en Docker en el servidor, como en producción).
  * Misma pila que [com.jaminsmoke.personalcomander.data.TpvCliente].
  *

@@ -129,7 +129,7 @@ Familia de producto de hostelería. Owner GitHub: [`jaminsmoke`](https://github.
 |---|---|---|---|
 | **Personal Comander** (este) | [`jaminsmoke/PersonalComander`](https://github.com/jaminsmoke/PersonalComander) | App del camarero (móvil vertical): mesas, comanda, cuenta profesional | [Project 9](https://github.com/users/jaminsmoke/projects/9) |
 | **Personal Bar** | [`jaminsmoke/PersonalBar`](https://github.com/jaminsmoke/PersonalBar) | Puesto del negocio (tablet apaisada): nodo LAN `:8787`, colas, lista blanca, mapa | [Project 11](https://github.com/users/jaminsmoke/projects/11) |
-| **PersonalHostel Identity** | [`jaminsmoke/PersonalHostel-Identity`](https://github.com/jaminsmoke/PersonalHostel-Identity) | Registro canónico (VPS, Docker en el servidor): camareros `:8080`, negocio `:8082` | [Project 10](https://github.com/users/jaminsmoke/projects/10) |
+| **PersonalHostel Server** | [`jaminsmoke/PersonalHostel-Server`](https://github.com/jaminsmoke/PersonalHostel-Server) | Registro canónico (VPS, Docker en el servidor): camareros `:8080`, negocio `:8082` | [Project 10](https://github.com/users/jaminsmoke/projects/10) |
 
 Kanban: cada app tiene el suyo. Cambio que necesite al otro lado → Detectado en **su** Project. Commander no llama a `:8082`.
 
