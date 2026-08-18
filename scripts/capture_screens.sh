@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Captura las pantallas principales de la app desde un emulador y las guarda
-# en docs/screenshots/{home,mesas_board,menu,comanda,ajustes}.png normalizadas a 540px.
+# Captura las pantallas de oficio desde un emulador y las guarda
+# en docs/screenshots/ normalizadas a 540px:
+#   home, auth, mesas_board, gestion, menu, locales, invitaciones, comanda, ajustes
 #
 # Requisitos:
 #   - Un emulador con la app instalada (o se instala aquí con installDebug).
@@ -8,8 +9,8 @@
 #
 # Uso:
 #   bash scripts/capture_screens.sh
-#   ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
-#   SKIP_INSTALL=1 ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
+#   ADB_DEVICE=emulator-5554 bash scripts/capture_screens.sh
+#   SKIP_INSTALL=1 ADB_DEVICE=emulator-5554 bash scripts/capture_screens.sh
 #
 # Variables opcionales:
 #   ADB_DEVICE  serial concreto; recomendable si hay teléfono y tablet activos.
@@ -98,8 +99,7 @@ adb shell am start -n "$PKG/.MainActivity" >/dev/null
 sleep 6
 
 # --- helpers ------------------------------------------------------------------
-# Vuelca la jerarquía UI y devuelve el centro (x y) del primer nodo cuyo text
-# contiene needle. Devuelve éxito si lo encuentra.
+# Centro (x y) del primer nodo cuyo text o content-desc coincide con needle.
 find_tap() {
   local needle="$1"
   local xml="$TMP/ui.xml"
@@ -108,19 +108,28 @@ find_tap() {
   "$PYTHON_BIN" - "$(win "$xml")" "$needle" <<'PY'
 import re, sys
 xml_path, needle = sys.argv[1], sys.argv[2]
-xml = open(xml_path, encoding='utf-8').read()
+xml = open(xml_path, encoding="utf-8").read()
 nodes = []
-for m in re.finditer(r'<node[^>]*?text="([^"]*)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', xml):
-    nodes.append((m.group(1), m.group(2), m.group(3), m.group(4), m.group(5)))
-# 1) coincidencia exacta (evita ambigüedad "Gestión" vs "Gestión del menú")
-for text, x1, y1, x2, y2 in nodes:
-    if text.strip() == needle:
-        print((int(x1) + int(x2)) // 2, (int(y1) + int(y2)) // 2)
+for m in re.finditer(r"<node([^>]*)>", xml):
+    attrs = m.group(1)
+    bounds = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', attrs)
+    if not bounds:
+        continue
+    labels = []
+    text = re.search(r'text="([^"]*)"', attrs)
+    desc = re.search(r'content-desc="([^"]*)"', attrs)
+    if text:
+        labels.append(text.group(1))
+    if desc:
+        labels.append(desc.group(1))
+    nodes.append((labels, *map(int, bounds.groups())))
+for labels, x1, y1, x2, y2 in nodes:
+    if any(label.strip() == needle for label in labels):
+        print((x1 + x2) // 2, (y1 + y2) // 2)
         sys.exit(0)
-# 2) substring como fallback
-for text, x1, y1, x2, y2 in nodes:
-    if needle in text:
-        print((int(x1) + int(x2)) // 2, (int(y1) + int(y2)) // 2)
+for labels, x1, y1, x2, y2 in nodes:
+    if any(needle in label for label in labels):
+        print((x1 + x2) // 2, (y1 + y2) // 2)
         sys.exit(0)
 sys.exit(1)
 PY
@@ -148,6 +157,13 @@ tap_text_any() {
   return 1
 }
 
+tap_back() {
+  tap_text_any "Volver" "Back" || {
+    adb shell input keyevent 4 >/dev/null 2>&1 || true
+    sleep 2
+  }
+}
+
 capture() {
   local name="$1"
   local dev="/sdcard/raw_$name.png"
@@ -170,13 +186,27 @@ PY
 echo "==> Capturando pantallas..."
 capture home
 
+echo "  navegando a Entrar..."
+tap_text_any "Entrar" "Sign in" && {
+  capture auth
+  tap_back
+}
+
 echo "  navegando a Mesas..."
 tap_text_any "Mesas" "Tables" && capture mesas_board
 
-echo "  navegando a Gestión (hub → carta)..."
-tap_text_any "Gestión" "Management" "Menu" && {
-  tap_text_any "Carta" "Menu" || true
-  capture menu
+echo "  navegando a Gestión..."
+tap_text_any "Gestión" "Management" && {
+  capture gestion
+  echo "  abriendo Carta..."
+  tap_text_any "Carta" "Menu" && capture menu
+  tap_back
+  echo "  abriendo Locales..."
+  tap_text_any "Locales" "Venues" && capture locales
+  tap_back
+  echo "  abriendo Invitaciones..."
+  tap_text_any "Invitaciones" "Invitations" && capture invitaciones
+  tap_back
 }
 
 echo "  navegando a Mesas y abriendo una comanda..."
@@ -187,12 +217,12 @@ tap_text_any "Mesas" "Tables" && {
   MESA_BOUNDS="$("$PYTHON_BIN" - "$(win "$xml")" "$SCREEN_H" <<'PY'
 import re, sys
 xml_path, screen_h = sys.argv[1], int(sys.argv[2])
-xml = open(xml_path, encoding='utf-8').read()
+xml = open(xml_path, encoding="utf-8").read()
 for m in re.finditer(r'<node[^>]*?text="([^"]*)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', xml):
     text = m.group(1).strip()
     x1, y1, x2, y2 = map(int, m.group(2, 3, 4, 5))
     # mesas con texto tipo "B1" / "M1" / "12"; descartar la bottom bar (parte inferior)
-    if re.match(r'^[A-Za-z]?\d{1,3}$', text) and y2 < screen_h * 0.8:
+    if re.match(r"^[A-Za-z]?\d{1,3}$", text) and y2 < screen_h * 0.8:
         print((x1 + x2) // 2, (y1 + y2) // 2)
         sys.exit(0)
 sys.exit(1)
@@ -202,14 +232,13 @@ PY
     adb shell input tap $MESA_BOUNDS >/dev/null
     sleep 3
     capture comanda
+    tap_back
   else
     echo "  ! no se localizó una mesa; captura de comanda omitida" >&2
   fi
 }
 
 echo "  navegando a Ajustes..."
-adb shell input keyevent 4 >/dev/null 2>&1 || true
-sleep 2
 tap_text_any "Ajustes" "Settings" && capture ajustes
 
 echo "==> Listo. Capturas en $OUT/"

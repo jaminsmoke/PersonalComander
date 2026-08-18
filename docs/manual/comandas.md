@@ -4,10 +4,9 @@ Abre una mesa desde el [board](mesas.md) para tomar el pedido. La comanda es a p
 
 <div class="pc-doc-shot" markdown>
 
-<figure>
 ![Comanda](../screenshots/comanda.png)
-<figcaption>Pedido táctil y por voz.</figcaption>
-</figure>
+
+*Pedido táctil y por voz.*
 
 </div>
 

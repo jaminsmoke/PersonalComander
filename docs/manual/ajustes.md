@@ -6,10 +6,9 @@ El login diario **no está aquí**. Para entrar o ver el perfil usa el chip **En
 
 <div class="pc-doc-shot" markdown>
 
-<figure>
 ![Ajustes](../screenshots/ajustes.png)
-<figcaption>TPV, turno Bar y copias de seguridad.</figcaption>
-</figure>
+
+*TPV, turno Bar y copias de seguridad.*
 
 </div>
 

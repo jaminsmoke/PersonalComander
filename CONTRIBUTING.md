@@ -55,6 +55,7 @@ Antes de abrir un PR, verifica localmente:
 python scripts/check_docs_links.py
 python scripts/check_docs_structure.py
 python scripts/check_docs_cobertura.py
+python scripts/check_docs_shots.py --selftest
 ```
 
 - Todos los tests deben pasar y el lint no debe introducir errores nuevos.

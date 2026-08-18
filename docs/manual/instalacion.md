@@ -21,6 +21,14 @@ La app funciona en tablet, pero el oficio de Commander es el teléfono del camar
 
 En el primer arranque la app crea un menú de demostración y un plano de mesas, para explorar todas las pantallas sin configurar nada.
 
+<div class="pc-doc-shot" markdown>
+
+![Resumen del día](../screenshots/home.png)
+
+*Primer arranque en modo Local: facturado del día y atajos.*
+
+</div>
+
 El modo por defecto es **Local** (todo en el teléfono, sin cuenta). El login diario, cuando lo necesites, es el botón **Entrar** del header — no está en Ajustes.
 
 ## Compilar desde código (desarrolladores)

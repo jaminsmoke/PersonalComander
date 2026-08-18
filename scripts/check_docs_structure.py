@@ -34,19 +34,29 @@ REQUIRED_ASSETS = (
     "docs/assets/favicon.png",
     "docs/assets/og-image.png",
     "docs/screenshots/home.png",
+    "docs/screenshots/auth.png",
     "docs/screenshots/mesas_board.png",
+    "docs/screenshots/gestion.png",
     "docs/screenshots/menu.png",
+    "docs/screenshots/locales.png",
+    "docs/screenshots/invitaciones.png",
     "docs/screenshots/comanda.png",
     "docs/screenshots/ajustes.png",
 )
 # Captura junto al texto que la explica (el Inicio solo lleva el hero).
 CONTEXT_SHOTS = (
     ("docs/index.md", "screenshots/home.png"),
+    ("docs/manual/index.md", "screenshots/auth.png"),
+    ("docs/manual/instalacion.md", "screenshots/home.png"),
     ("docs/manual/resumen.md", "screenshots/home.png"),
     ("docs/manual/mesas.md", "screenshots/mesas_board.png"),
     ("docs/manual/comandas.md", "screenshots/comanda.png"),
+    ("docs/manual/carta.md", "screenshots/gestion.png"),
     ("docs/manual/carta.md", "screenshots/menu.png"),
+    ("docs/manual/locales.md", "screenshots/locales.png"),
+    ("docs/manual/invitaciones.md", "screenshots/invitaciones.png"),
     ("docs/manual/ajustes.md", "screenshots/ajustes.png"),
+    ("docs/manual/cuenta.md", "screenshots/auth.png"),
 )
 VERSION_FILES = (
     "docs/index.md",
@@ -170,13 +180,17 @@ def _fixture_ok(root: Path) -> None:
         "site_name: t\n"
         "nav:\n"
         "  - Inicio: index.md\n"
+        "  - Manual: manual/index.md\n"
         "  - Instalación: manual/instalacion.md\n"
         "  - FAQ: manual/faq.md\n"
         "  - Resumen: manual/resumen.md\n"
         "  - Mesas: manual/mesas.md\n"
         "  - Comandas: manual/comandas.md\n"
         "  - Carta: manual/carta.md\n"
+        "  - Locales: manual/locales.md\n"
+        "  - Invitaciones: manual/invitaciones.md\n"
         "  - Ajustes: manual/ajustes.md\n"
+        "  - Cuenta: manual/cuenta.md\n"
         "  - Arquitectura: arquitectura.md\n",
     )
     _write(root / "app" / "build.gradle.kts", 'versionName = "1.6"\n')
@@ -186,11 +200,25 @@ def _fixture_ok(root: Path) -> None:
         root / "docs" / "index.md",
         "v1.6\nscreenshots/home.png\n",
     )
+    _write(
+        root / "docs" / "manual" / "index.md",
+        "Manual screenshots/home.png screenshots/auth.png\n",
+    )
+    _write(root / "docs" / "manual" / "instalacion.md", "Instalación v1.6 screenshots/home.png\n")
     _write(root / "docs" / "manual" / "resumen.md", "Resumen screenshots/home.png\n")
     _write(root / "docs" / "manual" / "mesas.md", "Mesas screenshots/mesas_board.png\n")
     _write(root / "docs" / "manual" / "comandas.md", "Comanda screenshots/comanda.png\n")
-    _write(root / "docs" / "manual" / "carta.md", "Carta screenshots/menu.png\n")
+    _write(
+        root / "docs" / "manual" / "carta.md",
+        "Carta screenshots/gestion.png screenshots/menu.png\n",
+    )
+    _write(root / "docs" / "manual" / "locales.md", "Locales screenshots/locales.png\n")
+    _write(
+        root / "docs" / "manual" / "invitaciones.md",
+        "Invitaciones screenshots/invitaciones.png\n",
+    )
     _write(root / "docs" / "manual" / "ajustes.md", "Ajustes screenshots/ajustes.png\n")
+    _write(root / "docs" / "manual" / "cuenta.md", "Cuenta screenshots/auth.png\n")
     _write(root / "docs" / "arquitectura.md", "Ver [Voz](voz.md).\n")
     for rel in REQUIRED_ASSETS:
         _write(root / rel, "x")

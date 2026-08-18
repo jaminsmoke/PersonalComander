@@ -43,10 +43,11 @@ El login diario es **Entrar** en el header, no Ajustes. Cuenta, perfil y turno B
 ```bash
 python scripts/generate_assets.py
 bash scripts/capture_screens.sh
-# Teléfono y tablet a la vez: ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
+# Teléfono y tablet a la vez: ADB_DEVICE=emulator-5554 bash scripts/capture_screens.sh
 python scripts/check_docs_links.py
 python scripts/check_docs_structure.py
 python scripts/check_docs_cobertura.py
+python scripts/check_docs_shots.py --selftest
 ```
 
 Regenera los assets públicos tras un cambio de marca o de UI para no desincronizar el README y el sitio. Arquitectura para humanos: [docs/arquitectura.md](docs/arquitectura.md). Mapa para agentes: [`AGENTS.md`](AGENTS.md).

@@ -1,13 +1,20 @@
 # Carta
 
-La carta se gestiona desde la pestaña **Gestión** → **Carta**, no desde Ajustes. Productos, precios, categorías e iconos emoji; todo funciona **sin internet**.
+La carta se gestiona desde la pestaña **Gestión → Carta**, no desde Ajustes. Productos, precios, categorías e iconos emoji; todo funciona **sin internet**.
 
 <div class="pc-doc-shot" markdown>
 
-<figure>
+![Hub Gestión](../screenshots/gestion.png)
+
+*Carta, Locales e Invitaciones.*
+
+</div>
+
+<div class="pc-doc-shot" markdown>
+
 ![Carta](../screenshots/menu.png)
-<figcaption>Productos, precios y categorías.</figcaption>
-</figure>
+
+*Productos, precios y categorías.*
 
 </div>
 
