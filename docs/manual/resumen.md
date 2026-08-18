@@ -4,17 +4,20 @@ La pestaña **Resumen** (barra inferior) es la pantalla de inicio. Muestra el d�
 
 ## Qué ves
 
-- **Facturado hoy** — total de comandas cerradas en el día.
+- **Facturado hoy** — total de las líneas de comanda del teléfono en el día (Room). El Server no tiene facturado.
 - **Mesas ocupadas** respecto al total del plano.
 - **Pedidos activos** — comandas abiertas o enviadas.
+- **Oficio** — horas de jornada y **rondas servidas** del libro canónico del Server (`GET /v1/camareros/me/resumen`). Chips **Día / Semana / Mes**. La gráfica son horas por día a partir de `GET /v1/camareros/me/jornadas` (intervalos reales, no un reloj local).
 
-Los números salen de lo que hay en el teléfono (Room). No hace falta Identity ni Bar para verlos.
+Sin cuenta (modo Local) el oficio no se rellena: no se inventan horas ni rondas. El hero de facturado sigue.
+
+Las rondas las produce Bar al completar una ronda (todos los tickets **RECOGIDO**) y las proyecta a `POST /v1/negocio/estadisticas/servicio`. El campo del Server se llama `mesas_servidas`; en pantalla se etiqueta **rondas servidas**. Las horas se abren al **Empezar jornada** (dual-write LAN + `POST /v1/camareros/me/jornadas/iniciar` si el nombre de health coincide con una membresía).
 
 <div class="pc-doc-shot" markdown>
 
 ![Resumen del día](../screenshots/home.png)
 
-*Facturado, mesas ocupadas y pedidos activos.*
+*Facturado, mesas ocupadas, pedidos activos y panel de oficio.*
 
 </div>
 

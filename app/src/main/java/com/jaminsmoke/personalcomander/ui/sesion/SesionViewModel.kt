@@ -268,12 +268,21 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
             _mensaje.value = when {
                 !r.ok -> ctx.getString(R.string.sesion_jornada_rechazada)
                 r.nodoViejo -> ctx.getString(R.string.sesion_jornada_nodo_viejo)
-                r.sesionActiva -> ctx.getString(
-                    R.string.sesion_jornada_iniciada,
-                    repo.modo.value.let { m ->
-                        (m as? ModoSesion.Establecimiento)?.etiquetaLocal() ?: ""
-                    },
-                )
+                r.sesionActiva -> {
+                    val vigente = repo.modo.value as? ModoSesion.Establecimiento
+                    val libro = IdentityJson.establecimientoIdPorHealth(
+                        vigente?.nombreEstablecimiento,
+                        repo.membresias.value,
+                    )
+                    if (libro == null) {
+                        ctx.getString(R.string.sesion_jornada_sin_libro)
+                    } else {
+                        ctx.getString(
+                            R.string.sesion_jornada_iniciada,
+                            vigente?.etiquetaLocal().orEmpty(),
+                        )
+                    }
+                }
                 else -> ctx.getString(R.string.sesion_jornada_pendiente_bar)
             }
         }

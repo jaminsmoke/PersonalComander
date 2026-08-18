@@ -12,3 +12,7 @@
 /v1/camareros/me/visibilidad
 /v1/camareros/me/visibilidad-establecimientos
 /v1/camareros/me/password
+/v1/camareros/me/jornadas
+/v1/camareros/me/jornadas/iniciar
+/v1/camareros/me/jornadas/cortar
+/v1/camareros/me/resumen

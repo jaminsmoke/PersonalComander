@@ -90,6 +90,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.gson)
     implementation(libs.zxing.core)
+    implementation(libs.vico.compose)
+    implementation(libs.vico.compose.m3)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     testImplementation(libs.junit)
     testImplementation(libs.sqlite.jdbc)

@@ -4,6 +4,8 @@ import com.google.gson.JsonObject
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
+import java.time.Instant
 
 data class IdentityRespuesta<T>(
     val ok: Boolean,
@@ -36,6 +38,10 @@ class IdentityCliente(
         const val ME_VISIBILIDAD = "/v1/camareros/me/visibilidad"
         const val ME_VISIBILIDAD_ESTABLECIMIENTOS = "/v1/camareros/me/visibilidad-establecimientos"
         const val ME_PASSWORD = "/v1/camareros/me/password"
+        const val ME_JORNADAS = "/v1/camareros/me/jornadas"
+        const val ME_JORNADAS_INICIAR = "/v1/camareros/me/jornadas/iniciar"
+        const val ME_JORNADAS_CORTAR = "/v1/camareros/me/jornadas/cortar"
+        const val ME_RESUMEN = "/v1/camareros/me/resumen"
 
         fun todas(): List<String> = listOf(
             REGISTRO,
@@ -49,6 +55,10 @@ class IdentityCliente(
             ME_VISIBILIDAD,
             ME_VISIBILIDAD_ESTABLECIMIENTOS,
             ME_PASSWORD,
+            ME_JORNADAS,
+            ME_JORNADAS_INICIAR,
+            ME_JORNADAS_CORTAR,
+            ME_RESUMEN,
         )
     }
 
@@ -145,6 +155,38 @@ class IdentityCliente(
             IdentityJson.parsePerfil(com.google.gson.JsonParser.parseString(http.cuerpo)),
             codigo = http.codigo,
         )
+    }
+
+    fun iniciarJornada(token: String, establecimientoId: String): IdentityRespuesta<JornadaOficio> {
+        val http = post(Rutas.ME_JORNADAS_INICIAR, IdentityJson.cuerpoIniciarJornada(establecimientoId), token)
+        if (http.codigo !in 200..299) return errorDe(http)
+        val jornada = IdentityJson.parseJornada(http.cuerpo)
+            ?: return IdentityRespuesta(false, error = "Respuesta inválida de Identity", codigo = http.codigo)
+        return IdentityRespuesta(true, jornada, codigo = http.codigo)
+    }
+
+    fun cortarJornada(token: String): IdentityRespuesta<JornadaOficio> {
+        val http = post(Rutas.ME_JORNADAS_CORTAR, "{}", token)
+        if (http.codigo !in 200..299) return errorDe(http)
+        val jornada = IdentityJson.parseJornada(http.cuerpo)
+            ?: return IdentityRespuesta(false, error = "Respuesta inválida de Identity", codigo = http.codigo)
+        return IdentityRespuesta(true, jornada, codigo = http.codigo)
+    }
+
+    fun meJornadas(token: String, desde: Instant, hasta: Instant): IdentityRespuesta<List<JornadaOficio>> {
+        val http = get(conVentana(Rutas.ME_JORNADAS, desde, hasta), token)
+        if (http.codigo !in 200..299) return errorDe(http)
+        val lista = IdentityJson.parseJornadas(http.cuerpo)
+            ?: return IdentityRespuesta(false, error = "Respuesta inválida de Identity", codigo = http.codigo)
+        return IdentityRespuesta(true, lista, codigo = http.codigo)
+    }
+
+    fun meResumen(token: String, desde: Instant, hasta: Instant): IdentityRespuesta<ResumenOficio> {
+        val http = get(conVentana(Rutas.ME_RESUMEN, desde, hasta), token)
+        if (http.codigo !in 200..299) return errorDe(http)
+        val resumen = IdentityJson.parseResumenOficio(http.cuerpo)
+            ?: return IdentityRespuesta(false, error = "Respuesta inválida de Identity", codigo = http.codigo)
+        return IdentityRespuesta(true, resumen, codigo = http.codigo)
     }
 
     fun meQr(token: String): IdentityRespuesta<IdentityJson.QrIdentity> {
@@ -370,6 +412,12 @@ class IdentityCliente(
             campo.isAccessible = true
             campo.set(conexion, method)
         }
+    }
+
+    private fun conVentana(ruta: String, desde: Instant, hasta: Instant): String {
+        val qDesde = URLEncoder.encode(desde.toString(), Charsets.UTF_8.name())
+        val qHasta = URLEncoder.encode(hasta.toString(), Charsets.UTF_8.name())
+        return "$ruta?desde=$qDesde&hasta=$qHasta"
     }
 
     private fun open(path: String): HttpURLConnection {
