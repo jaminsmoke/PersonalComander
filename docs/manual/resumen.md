@@ -12,10 +12,9 @@ Los números salen de lo que hay en el teléfono (Room). No hace falta Identity 
 
 <div class="pc-doc-shot" markdown>
 
-<figure>
 ![Resumen del día](../screenshots/home.png)
-<figcaption>Facturado, mesas ocupadas y pedidos activos.</figcaption>
-</figure>
+
+*Facturado, mesas ocupadas y pedidos activos.*
 
 </div>
 

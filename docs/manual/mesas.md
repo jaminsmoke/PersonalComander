@@ -6,10 +6,9 @@ La pestaña **Mesas** de la barra inferior no lleva el chip de sesión: la cuent
 
 <div class="pc-doc-shot" markdown>
 
-<figure>
 ![Board de mesas](../screenshots/mesas_board.png)
-<figcaption>Plano de la sala y semáforo de estados.</figcaption>
-</figure>
+
+*Plano de la sala y semáforo de estados.*
 
 </div>
 

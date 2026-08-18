@@ -14,6 +14,14 @@ El camarero crea y edita su cuenta en Commander. Bar **consulta** Identity y asi
 2. Correo y contraseña. Pestañas **Entrar** / **Registro**.
 3. Identity por defecto: `https://camareros.siberia.solutions`.
 
+<div class="pc-doc-shot" markdown>
+
+![Iniciar sesión](../screenshots/auth.png)
+
+*Correo y contraseña. El perfil (QR, visibilidad, nick) se abre cuando ya hay sesión.*
+
+</div>
+
 Con sesión, el mismo chip (avatar + nick) abre **Mi perfil**: nick, foto, visibilidad de la ficha, QR, ver la ficha pública, cambiar contraseña, dirección y ciudad, renovar o revocar la clave, cerrar sesión.
 
 Revocar el QR invalida la credencial actual. Renovarlo genera una nueva. Cerrar sesión no borra la cuenta; borrar la cuenta es otra acción y pide confirmación.

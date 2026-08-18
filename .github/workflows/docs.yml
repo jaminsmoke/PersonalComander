@@ -11,6 +11,7 @@ on:
       - "scripts/check_docs_links.py"
       - "scripts/check_docs_structure.py"
       - "scripts/check_docs_cobertura.py"
+      - "scripts/check_docs_shots.py"
       - "README.md"
       - "README.es.md"
       - ".github/workflows/docs.yml"
@@ -62,6 +63,11 @@ jobs:
 
       - name: Validate documentation
         run: mkdocs build --strict --site-dir site
+
+      - name: Check rendered screenshots
+        run: |
+          python scripts/check_docs_shots.py --selftest
+          python scripts/check_docs_shots.py --site-dir site
 
       - name: Deploy to GitHub Pages
         run: mkdocs gh-deploy --force

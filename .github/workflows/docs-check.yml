@@ -39,6 +39,11 @@ jobs:
       - name: Build MkDocs strictly
         run: mkdocs build --strict --site-dir site
 
+      - name: Check rendered screenshots
+        run: |
+          python scripts/check_docs_shots.py --selftest
+          python scripts/check_docs_shots.py --site-dir site
+
       - name: Upload documentation preview
         uses: actions/upload-artifact@v4
         with:

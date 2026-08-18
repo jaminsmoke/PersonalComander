@@ -43,10 +43,11 @@ Daily login is **Entrar** in the header, not Settings. Account, profile and Bar 
 ```bash
 python scripts/generate_assets.py
 bash scripts/capture_screens.sh
-# Phone + tablet emulators: ADB_DEVICE=emulator-5556 bash scripts/capture_screens.sh
+# Phone + tablet emulators: ADB_DEVICE=emulator-5554 bash scripts/capture_screens.sh
 python scripts/check_docs_links.py
 python scripts/check_docs_structure.py
 python scripts/check_docs_cobertura.py
+python scripts/check_docs_shots.py --selftest
 ```
 
 Regenerate public assets after a rebrand or UI redesign so the README and the site stay in sync. Architecture for humans: [docs/arquitectura.md](docs/arquitectura.md). Agent map: [`AGENTS.md`](AGENTS.md).
