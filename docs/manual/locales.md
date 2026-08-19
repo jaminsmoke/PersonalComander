@@ -18,4 +18,4 @@
 
 El registro canónico del negocio vive en Identity. El **turno** (nodo LAN, admisión, jornada) se activa en [Resumen](resumen.md), no aquí. Aquí no se enseña host ni puerto.
 
-Bajo el título puedes tocar el indicador de turno (**Standalone** o el nombre del local). El flujo está en [Cuenta y turno](cuenta.md).
+Puedes tocar el indicador de turno (**Standalone** si no hay local, o el nombre del establecimiento). El flujo está en [Cuenta y turno](cuenta.md). En Resumen ese indicador solo se pinta cuando hay un Bar ligado.
