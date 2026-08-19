@@ -29,6 +29,8 @@ object BarLanCliente {
         val ok: Boolean,
         val role: String,
         val establecimiento: String? = null,
+        /** UUID Identity; null si el nodo no está vinculado. */
+        val establecimientoId: String? = null,
         val version: String? = null,
     )
 
@@ -56,6 +58,8 @@ object BarLanCliente {
             role = role,
             establecimiento = o.get("establecimiento")?.takeUnless { it.isJsonNull }?.asString
                 ?: o.get("sala")?.takeUnless { it.isJsonNull }?.asString,
+            establecimientoId = o.get("establecimiento_id")?.takeUnless { it.isJsonNull }?.asString
+                ?.trim()?.takeIf { it.isNotEmpty() },
             version = o.get("version")?.takeUnless { it.isJsonNull }?.asString,
         )
     } catch (_: Exception) {

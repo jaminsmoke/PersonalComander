@@ -222,7 +222,8 @@ class SesionRepository(
             if (!BarLanCliente.esBar(health)) return@withContext ConectarBarResult(ok = false)
             val sesion = BarLanCliente.postSesion(host, puerto, qr)
             val nombre = health?.establecimiento?.trim()?.takeIf { it.isNotEmpty() }
-            val contraste = IdentityJson.contrastarHealth(nombre, _membresias.value)
+            val establecimientoId = health?.establecimientoId
+            val contraste = IdentityJson.contrastarHealth(nombre, _membresias.value, establecimientoId)
             if (sesion?.admitido != true) {
                 return@withContext ConectarBarResult(
                     ok = true,
@@ -239,6 +240,7 @@ class SesionRepository(
                 barPuerto = puerto,
                 admitido = true,
                 nombreEstablecimiento = nombre,
+                establecimientoId = establecimientoId,
                 sesionTrabajo = false,
                 fichaUrl = actual.fichaUrl,
             )
@@ -302,7 +304,7 @@ class SesionRepository(
             val r = BarLanCliente.postIniciar(actual.barHost, actual.barPuerto, qr)
             if (r.ok && r.sesionActiva) {
                 persistirJornada(true)
-                registrarJornadaServer(actual.token, actual.nombreEstablecimiento)
+                registrarJornadaServer(actual.token, actual.nombreEstablecimiento, actual.establecimientoId)
             }
             r
         }
@@ -340,9 +342,16 @@ class SesionRepository(
         }
 
     /** Dual-write al libro canónico. 409 (ya abierta) cuenta como éxito. Sin UUID no se inventa. */
-    private fun registrarJornadaServer(token: String, nombreHealth: String?) {
-        val establecimientoId = IdentityJson.establecimientoIdPorHealth(nombreHealth, _membresias.value)
-            ?: return
+    private fun registrarJornadaServer(
+        token: String,
+        nombreHealth: String?,
+        healthId: String? = null,
+    ) {
+        val establecimientoId = IdentityJson.establecimientoIdPorHealth(
+            nombreHealth,
+            _membresias.value,
+            healthId,
+        ) ?: return
         val r = cliente().iniciarJornada(token, establecimientoId)
         if (r.ok) return
         if (r.codigo == 409 || r.code == IdentityJson.CODE_JORNADA_YA_ABIERTA) return
@@ -387,10 +396,12 @@ class SesionRepository(
             val admitido = sesion?.admitido ?: actual.admitido
             val nombre = health?.establecimiento?.trim()?.takeIf { it.isNotEmpty() }
                 ?: actual.nombreEstablecimiento
+            val establecimientoId = health?.establecimientoId ?: actual.establecimientoId
             val jornada = if (admitido) actual.sesionTrabajo else false
             if (
                 admitido == actual.admitido &&
                 nombre == actual.nombreEstablecimiento &&
+                establecimientoId == actual.establecimientoId &&
                 jornada == actual.sesionTrabajo
             ) {
                 return@withContext
@@ -401,6 +412,7 @@ class SesionRepository(
             val nuevo = actual.copy(
                 admitido = admitido,
                 nombreEstablecimiento = nombre,
+                establecimientoId = establecimientoId,
                 sesionTrabajo = jornada,
             )
             store.guardarEstablecimiento(nuevo)
