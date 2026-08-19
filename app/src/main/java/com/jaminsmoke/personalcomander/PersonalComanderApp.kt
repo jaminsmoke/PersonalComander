@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import androidx.room.withTransaction
 import com.jaminsmoke.personalcomander.data.AppDatabase
+import com.jaminsmoke.personalcomander.data.ProductoGrupo
 import com.jaminsmoke.personalcomander.data.Sala
 import com.jaminsmoke.personalcomander.data.Seed
 import com.jaminsmoke.personalcomander.data.sesion.RecogerServicio
@@ -31,6 +32,7 @@ class PersonalComanderApp : Application() {
                 AppDatabase.MIGRATION_11_12,
                 AppDatabase.MIGRATION_12_13,
                 AppDatabase.MIGRATION_13_14,
+                AppDatabase.MIGRATION_14_15,
             )
             .fallbackToDestructiveMigration(false)
             .build()
@@ -69,6 +71,15 @@ class PersonalComanderApp : Application() {
             }
             if (db.productoDao().count() == 0) {
                 db.productoDao().insertAll(Seed.productos())
+            }
+            if (db.grupoModificadorDao().count() == 0) {
+                val gid = db.grupoModificadorDao().insert(Seed.grupoPunto())
+                db.opcionModificadorDao().insertAll(
+                    Seed.opcionesPunto().map { it.copy(grupoId = gid) },
+                )
+                val carnes = db.productoDao().getAllIncluyendoOcultos()
+                    .filter { it.categoria == "Burgers" || it.categoria == "Carnes" }
+                db.productoGrupoDao().insertAll(carnes.map { ProductoGrupo(it.id, gid) })
             }
         }
     }

@@ -1,7 +1,9 @@
 package com.jaminsmoke.personalcomander.data.sesion
 
+import com.jaminsmoke.personalcomander.data.CartaModificadores
 import com.jaminsmoke.personalcomander.data.LineaEstado
 import com.jaminsmoke.personalcomander.data.LineaPedido
+import com.jaminsmoke.personalcomander.data.ModificadorElegido
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -48,6 +50,35 @@ class RecogerLogicaTest {
         val p = RecogerLogica.lineaPendienteDelProducto(lineas, 12)
         assertEquals(2L, p!!.id)
         assertNull(RecogerLogica.lineaPendienteDelProducto(lineas, 99))
+    }
+
+    @Test
+    fun lineaPendienteCompatible_distingue_modificadores() {
+        val alPunto = LineaPedido(
+            id = 1, pedidoId = 42, productoId = 10,
+            nombreProducto = "Hamburguesa", precioUnitario = 8.0, cantidad = 1,
+            modificadoresJson = CartaModificadores.canonicalJson(
+                listOf(ModificadorElegido(1, "Punto", 11, "Al punto")),
+            ),
+        )
+        val muyHecho = alPunto.copy(
+            id = 2,
+            modificadoresJson = CartaModificadores.canonicalJson(
+                listOf(ModificadorElegido(1, "Punto", 12, "Muy hecho")),
+            ),
+        )
+        val hit = RecogerLogica.lineaPendienteCompatible(
+            listOf(alPunto, muyHecho),
+            10,
+            nota = null,
+            modificadoresJson = muyHecho.modificadoresJson,
+        )
+        assertEquals(2L, hit!!.id)
+        assertNull(
+            RecogerLogica.lineaPendienteCompatible(
+                listOf(alPunto), 10, nota = "sin cebolla", modificadoresJson = alPunto.modificadoresJson,
+            ),
+        )
     }
 
     @Test

@@ -10,14 +10,20 @@ Sala (room)  1──* Mesa (table)  1──* Pedido (order)  1──* LineaPedid
                         └── linked via comandaActivaId on Mesa
 
 Producto (product) ─── referenced by LineaPedido.productoId
+ │
+ └── *──* GrupoModificador ──* OpcionModificador
 ```
+
+- **Producto.subfamilia**: agrupación visual dentro de la categoría (Coca-Cola → Zero/Light). No sustituye a `categoria`.
+- **GrupoModificador / OpcionModificador / ProductoGrupo**: modificadores reutilizables (punto, extras). Snapshot JSON + `nota` en la **línea**, para no romper historial si el catálogo cambia.
 
 - **Sala**: recinto del mapa del establecimiento (barra, interior, terraza…). No es el modo de sesión.
 - **Establecimiento / local**: registro canónico en Identity. En turno, el camarero se liga al nodo Bar (`ModoSesion.Establecimiento`). Room no es esa fuente de verdad.
 - **Mesa**: la mesa física con posición en el board, `salaId`, forma y alias. El ID visible y de red (B1, T2) sale del **nombre** de la sala (`idZona`). No es el id Room.
 - **Pedido**: la comanda de una mesa (abierta, enviada a cocina o cerrada).
-- **LineaPedido**: cada línea del pedido (producto + cantidad + importe).
-- **Producto**: ítem del menú con precio, categoría e icono.
+- **LineaPedido**: cada línea del pedido (SKU + cantidad + snapshot de modificadores + nota).
+- **Producto**: ítem del menú con precio, categoría, subfamilia opcional e icono.
+- **GrupoModificador**: grupo reutilizable (única o múltiple, opcional u obligatorio) con opciones y delta de precio.
 
 ## Enums
 

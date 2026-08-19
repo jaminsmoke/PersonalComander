@@ -10,12 +10,32 @@ data class ProductoLan(
     val categoria: String = "",
     val precio: Double = 0.0,
     val disponible: Boolean = true,
+    val subfamilia: String? = null,
+    val permiteNota: Boolean = false,
+    /** Ids de red de [CartaLan.gruposModificador] asignados a este SKU. */
+    val grupos: List<String> = emptyList(),
+)
+
+data class OpcionModificadorLan(
+    val id: String = "",
+    val nombre: String = "",
+    val deltaPrecio: Double = 0.0,
+    val alias: String = "",
+)
+
+data class GrupoModificadorLan(
+    val id: String = "",
+    val nombre: String = "",
+    val multiple: Boolean = false,
+    val obligatorio: Boolean = false,
+    val opciones: List<OpcionModificadorLan> = emptyList(),
 )
 
 data class CartaLan(
     /** Esquema del contrato de carta (`CartaResponse.schema`). 0 = Bar sin campo (legacy / slugs). */
     val schema: Int = 0,
     val productos: List<ProductoLan> = emptyList(),
+    val gruposModificador: List<GrupoModificadorLan> = emptyList(),
 )
 
 data class PlanCarta(
@@ -37,11 +57,44 @@ object CartaSync {
         val carta = gson.fromJson(json, CartaLan::class.java) ?: return null
         CartaLan(
             schema = carta.schema,
-            productos = carta.productos.filter { it.id.isNotBlank() && it.nombre.isNotBlank() },
+            productos = carta.productos.orEmpty().mapNotNull { p ->
+                if (p.id.isBlank() || p.nombre.isBlank()) null
+                else p.copy(
+                    grupos = p.grupos.orEmpty(),
+                    subfamilia = p.subfamilia?.trim()?.takeIf { it.isNotEmpty() },
+                )
+            },
+            gruposModificador = carta.gruposModificador.orEmpty()
+                .filter { it.id.isNotBlank() && it.nombre.isNotBlank() }
+                .map { g ->
+                    g.copy(opciones = g.opciones.orEmpty().filter {
+                        it.id.isNotBlank() && it.nombre.isNotBlank()
+                    })
+                },
         )
     } catch (_: Exception) {
         null
     }
+
+    private fun Producto.conRemoto(remoto: ProductoLan, codigoBar: String = remoto.id) = copy(
+        nombre = remoto.nombre,
+        categoria = remoto.categoria,
+        precio = remoto.precio,
+        disponible = remoto.disponible,
+        codigoBar = codigoBar,
+        subfamilia = remoto.subfamilia?.trim()?.takeIf { it.isNotEmpty() },
+        permiteNota = remoto.permiteNota,
+    )
+
+    private fun desdeRemoto(remoto: ProductoLan) = Producto(
+        nombre = remoto.nombre,
+        categoria = remoto.categoria,
+        precio = remoto.precio,
+        disponible = remoto.disponible,
+        codigoBar = remoto.id,
+        subfamilia = remoto.subfamilia?.trim()?.takeIf { it.isNotEmpty() },
+        permiteNota = remoto.permiteNota,
+    )
 
     fun plan(existentes: List<Producto>, remotos: List<ProductoLan>): PlanCarta {
         val porCodigo = existentes.mapNotNull { p -> p.codigoBar?.let { it to p } }.toMap()
@@ -50,24 +103,9 @@ object CartaSync {
         for (remoto in remotos) {
             val local = porCodigo[remoto.id]
             if (local == null) {
-                insertar.add(
-                    Producto(
-                        nombre = remoto.nombre,
-                        categoria = remoto.categoria,
-                        precio = remoto.precio,
-                        disponible = remoto.disponible,
-                        codigoBar = remoto.id,
-                    ),
-                )
+                insertar.add(desdeRemoto(remoto))
             } else {
-                actualizar.add(
-                    local.copy(
-                        nombre = remoto.nombre,
-                        categoria = remoto.categoria,
-                        precio = remoto.precio,
-                        disponible = remoto.disponible,
-                    ),
-                )
+                actualizar.add(local.conRemoto(remoto))
             }
         }
         return PlanCarta(insertar, actualizar)
@@ -109,25 +147,9 @@ object CartaSync {
             }
             if (idx >= 0) {
                 val local = espejados.removeAt(idx)
-                actualizar.add(
-                    local.copy(
-                        nombre = remoto.nombre,
-                        categoria = remoto.categoria,
-                        precio = remoto.precio,
-                        disponible = remoto.disponible,
-                        codigoBar = remoto.id,
-                    ),
-                )
+                actualizar.add(local.conRemoto(remoto))
             } else {
-                insertar.add(
-                    Producto(
-                        nombre = remoto.nombre,
-                        categoria = remoto.categoria,
-                        precio = remoto.precio,
-                        disponible = remoto.disponible,
-                        codigoBar = remoto.id,
-                    ),
-                )
+                insertar.add(desdeRemoto(remoto))
             }
         }
         return PlanCarta(insertar, actualizar)

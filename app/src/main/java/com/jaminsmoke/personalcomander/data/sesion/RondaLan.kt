@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.jaminsmoke.personalcomander.data.LineaPedido
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.idZona
+import com.jaminsmoke.personalcomander.data.modificadores
 
 /** Línea del contrato Bar `POST /v1/rondas`. `productoId` es el id Bar si hay `codigoBar`. */
 data class LineaRondaLan(
@@ -11,6 +12,14 @@ data class LineaRondaLan(
     val nombreProducto: String,
     val cantidad: Int,
     val estado: String = "PENDIENTE",
+    val nota: String? = null,
+    val modificadores: List<ModificadorRondaLan> = emptyList(),
+)
+
+data class ModificadorRondaLan(
+    val grupo: String,
+    val opcion: String,
+    val delta: Double = 0.0,
 )
 
 /**
@@ -47,12 +56,21 @@ object RondaLanMapper {
             camarero = camarero,
             creadoEn = creadoEn,
             lineas = lineas.map { linea ->
+                val mods = linea.modificadores()
                 LineaRondaLan(
                     productoId = codigoBarPorProductoId[linea.productoId]
                         ?.takeIf { it.isNotBlank() }
                         ?: linea.productoId.toString(),
                     nombreProducto = linea.nombreProducto,
                     cantidad = linea.cantidad,
+                    nota = linea.nota?.trim()?.takeIf { it.isNotEmpty() },
+                    modificadores = mods.map {
+                        ModificadorRondaLan(
+                            grupo = it.grupoNombre,
+                            opcion = it.opcionNombre,
+                            delta = it.deltaPrecio,
+                        )
+                    },
                 )
             },
         )

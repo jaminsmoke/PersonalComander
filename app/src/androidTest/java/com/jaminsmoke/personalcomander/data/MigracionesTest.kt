@@ -30,6 +30,7 @@ import org.junit.runner.RunWith
  *  v11 -> v12: ticketId en lineas_pedido (SSE recoger)
  *  v12 -> v13: productos.codigoBar (espejo GET /v1/carta)
  *  v13 -> v14: salas.codigoBar + mesas.codigoBar (espejo GET /v1/estado)
+ *  v14 -> v15: subfamilia, permiteNota, grupos de modificador, snapshot en línea
  */
 @RunWith(AndroidJUnit4::class)
 class MigracionesTest {
@@ -174,6 +175,42 @@ class MigracionesTest {
             found
         }
         assertTrue("debe existir columna mesas.codigoBar (v14)", tieneMesaCodigoBar)
+        val tieneSubfamilia = db.query("PRAGMA table_info(`productos`)").use { cursor ->
+            var found = false
+            while (cursor.moveToNext()) if (cursor.getString(1) == "subfamilia") found = true
+            found
+        }
+        assertTrue("debe existir columna subfamilia (v15)", tieneSubfamilia)
+        val tienePermiteNota = db.query("PRAGMA table_info(`productos`)").use { cursor ->
+            var found = false
+            while (cursor.moveToNext()) if (cursor.getString(1) == "permiteNota") found = true
+            found
+        }
+        assertTrue("debe existir columna permiteNota (v15)", tienePermiteNota)
+        val tieneNota = db.query("PRAGMA table_info(`lineas_pedido`)").use { cursor ->
+            var found = false
+            while (cursor.moveToNext()) if (cursor.getString(1) == "nota") found = true
+            found
+        }
+        assertTrue("debe existir columna nota (v15)", tieneNota)
+        val tieneModsJson = db.query("PRAGMA table_info(`lineas_pedido`)").use { cursor ->
+            var found = false
+            while (cursor.moveToNext()) if (cursor.getString(1) == "modificadoresJson") found = true
+            found
+        }
+        assertTrue("debe existir columna modificadoresJson (v15)", tieneModsJson)
+        assertEquals(
+            "tabla grupos_modificador debe existir (v15)",
+            0L,
+            db.query("SELECT COUNT(*) FROM `grupos_modificador`").use { it.moveToFirst(); it.getLong(0) },
+        )
+        assertEquals(
+            "línea migrada conserva modificadores vacíos",
+            "[]",
+            db.query("SELECT `modificadoresJson` FROM `lineas_pedido` WHERE `id` = 100").use {
+                it.moveToFirst(); it.getString(0)
+            },
+        )
     }
 
     private val migracionesHastaV12 = arrayOf(
@@ -181,6 +218,7 @@ class MigracionesTest {
         AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8,
         AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10,
         AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14,
+        AppDatabase.MIGRATION_14_15,
     )
 
     @Test
@@ -200,7 +238,8 @@ class MigracionesTest {
             "migracion-v6.db",
             AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8,
             AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10,
-            AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14
+            AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14,
+            AppDatabase.MIGRATION_14_15,
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -214,7 +253,8 @@ class MigracionesTest {
         abrirConRoom(
             "migracion-v7rota.db",
             AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10,
-            AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14
+            AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14,
+            AppDatabase.MIGRATION_14_15
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -233,7 +273,8 @@ class MigracionesTest {
         abrirConRoom(
             "migracion-v7limpia.db",
             AppDatabase.MIGRATION_7_8, AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10,
-            AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14
+            AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14,
+            AppDatabase.MIGRATION_14_15
         ).apply {
             verificarDatosYEsquema()
             close()
@@ -251,7 +292,8 @@ class MigracionesTest {
         }
         abrirConRoom(
             "migracion-v8.db",
-            AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10, AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14
+            AppDatabase.MIGRATION_8_9, AppDatabase.MIGRATION_9_10, AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14,
+            AppDatabase.MIGRATION_14_15
         ).apply {
             verificarDatosYEsquema()
             val db = openHelper.writableDatabase
@@ -279,7 +321,7 @@ class MigracionesTest {
             version = 9
             close()
         }
-        abrirConRoom("migracion-v9.db", AppDatabase.MIGRATION_9_10, AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14).apply {
+        abrirConRoom("migracion-v9.db", AppDatabase.MIGRATION_9_10, AppDatabase.MIGRATION_10_11, AppDatabase.MIGRATION_11_12, AppDatabase.MIGRATION_12_13, AppDatabase.MIGRATION_13_14, AppDatabase.MIGRATION_14_15).apply {
             verificarDatosYEsquema()
             val db = openHelper.writableDatabase
             assertEquals(

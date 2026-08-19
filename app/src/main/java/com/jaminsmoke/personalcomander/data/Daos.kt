@@ -132,13 +132,13 @@ interface ReservaDao {
 
 @Dao
 interface ProductoDao {
-    @Query("SELECT * FROM productos WHERE disponible = 1 ORDER BY categoria, nombre")
+    @Query("SELECT * FROM productos WHERE disponible = 1 ORDER BY categoria, subfamilia, nombre")
     fun observeAll(): Flow<List<Producto>>
 
-    @Query("SELECT * FROM productos ORDER BY categoria, nombre")
+    @Query("SELECT * FROM productos ORDER BY categoria, subfamilia, nombre")
     fun observeAllIncluyendoOcultos(): Flow<List<Producto>>
 
-    @Query("SELECT * FROM productos ORDER BY categoria, nombre")
+    @Query("SELECT * FROM productos ORDER BY categoria, subfamilia, nombre")
     suspend fun getAllIncluyendoOcultos(): List<Producto>
 
     @Query("SELECT * FROM productos WHERE disponible = 1")
@@ -220,4 +220,76 @@ interface LineaPedidoDao {
 
     @Delete
     suspend fun delete(linea: LineaPedido)
+}
+
+@Dao
+interface GrupoModificadorDao {
+    @Query("SELECT * FROM grupos_modificador ORDER BY nombre")
+    fun observeAll(): Flow<List<GrupoModificador>>
+
+    @Query("SELECT * FROM grupos_modificador ORDER BY nombre")
+    suspend fun getAll(): List<GrupoModificador>
+
+    @Query("SELECT COUNT(*) FROM grupos_modificador")
+    suspend fun count(): Int
+
+    @Insert
+    suspend fun insert(grupo: GrupoModificador): Long
+
+    @Insert
+    suspend fun insertAll(grupos: List<GrupoModificador>)
+
+    @Update
+    suspend fun update(grupo: GrupoModificador)
+
+    @Query("DELETE FROM grupos_modificador WHERE id = :id")
+    suspend fun delete(id: Long)
+}
+
+@Dao
+interface OpcionModificadorDao {
+    @Query("SELECT * FROM opciones_modificador ORDER BY grupoId, id")
+    fun observeAll(): Flow<List<OpcionModificador>>
+
+    @Query("SELECT * FROM opciones_modificador ORDER BY grupoId, id")
+    suspend fun getAll(): List<OpcionModificador>
+
+    @Query("SELECT * FROM opciones_modificador WHERE grupoId = :grupoId ORDER BY id")
+    suspend fun getByGrupo(grupoId: Long): List<OpcionModificador>
+
+    @Insert
+    suspend fun insert(opcion: OpcionModificador): Long
+
+    @Insert
+    suspend fun insertAll(opciones: List<OpcionModificador>)
+
+    @Update
+    suspend fun update(opcion: OpcionModificador)
+
+    @Query("DELETE FROM opciones_modificador WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("DELETE FROM opciones_modificador WHERE grupoId = :grupoId")
+    suspend fun deleteByGrupo(grupoId: Long)
+}
+
+@Dao
+interface ProductoGrupoDao {
+    @Query("SELECT * FROM producto_grupos")
+    fun observeAll(): Flow<List<ProductoGrupo>>
+
+    @Query("SELECT * FROM producto_grupos")
+    suspend fun getAll(): List<ProductoGrupo>
+
+    @Query("SELECT * FROM producto_grupos WHERE productoId = :productoId")
+    suspend fun getByProducto(productoId: Long): List<ProductoGrupo>
+
+    @Insert(onConflict = androidx.room.OnConflictStrategy.IGNORE)
+    suspend fun insert(link: ProductoGrupo)
+
+    @Insert(onConflict = androidx.room.OnConflictStrategy.IGNORE)
+    suspend fun insertAll(links: List<ProductoGrupo>)
+
+    @Query("DELETE FROM producto_grupos WHERE productoId = :productoId")
+    suspend fun deleteByProducto(productoId: Long)
 }

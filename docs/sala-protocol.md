@@ -33,7 +33,7 @@ Rutas Bar que Commander llama: [`bar-contract-paths.txt`](bar-contract-paths.txt
 | `POST /v1/tickets/{id}/preparado` | ticket preparado | No (UI de expo en Bar) |
 | `POST /v1/tickets/{id}/recogido` | ticket recogido en expo | No (UI de expo en Bar) |
 | `GET /v1/estado` | establecimiento, salas, colas, mesas | Sí (realinear tickets al conectar SSE; **réplica de layout** al ligar si `admitido`) |
-| `GET /v1/carta` | catálogo `{schema?, productos:[{id,nombre,categoria,precio,disponible}]}`. `id` es slug (`cana`) en schema 0/omitido, UUID cuando Bar migra el catálogo. `schema` distinto (o ids UUID contra `codigoBar` slug) reconstruye el espejo por nombre, sin borrar filas locales. | Sí (espejo al ligar) |
+| `GET /v1/carta` | catálogo `{schema?, productos:[{id,nombre,categoria,precio,disponible,subfamilia?,permiteNota?,grupos?}], gruposModificador?}`. `id` es slug (`cana`) en schema 0/omitido, UUID cuando Bar migra el catálogo. Campos extra (subfamilia, grupos) son forward-compat: un nodo viejo no los manda y Commander no borra grupos locales. `schema` distinto (o ids UUID contra `codigoBar` slug) reconstruye el espejo por nombre, sin borrar filas locales. | Sí (espejo al ligar) |
 | `SSE /v1/eventos` | `ticket.preparado` / `ticket.recogido` / `sesion.cortada` | Sí (aviso recoger y corte de jornada) |
 | UDP **8788** | Beacon de presencia `{ph, role, establecimiento, puerto, activo}` | Sí (radar en Resumen; no es HTTP) |
 
@@ -115,8 +115,9 @@ No es HTTP ni SSE. Bar, mientras **Local activo**, envía un datagrama de broadc
   "camarero": "Lucía García",
   "creadoEn": 1730000000000,
   "lineas": [
-    { "productoId": "12", "nombreProducto": "Caña", "cantidad": 2 },
-    { "productoId": "3", "nombreProducto": "Croquetas", "cantidad": 1 }
+    { "productoId": "12", "nombreProducto": "Caña", "cantidad": 2, "modificadores": [] },
+    { "productoId": "3", "nombreProducto": "Hamburguesa", "cantidad": 1, "nota": "sin cebolla",
+      "modificadores": [{ "grupo": "Punto", "opcion": "Al punto", "delta": 0 }] }
   ]
 }
 ```
@@ -124,6 +125,7 @@ No es HTTP ni SSE. Bar, mientras **Local activo**, envía un datagrama de broadc
 - `id`: único por envío. Si se repite, Bar responde 200 y no duplica.
 - `mesaId`: **idZona**, p. ej. `T3`. Nunca el id Room.
 - `productoId`: id de red de Bar (slug `cana` o UUID del catálogo) si Commander espejó `GET /v1/carta` (`codigoBar`); si no, el Long de Room en string. Sin match, Bar manda la línea a BARRA.
+- `nota` y `modificadores` (grupo/opción/delta en claro): snapshot de la línea. Un Bar que aún no los lee los ignora (Gson); la expo sigue ciega hasta el ítem de Bar.
 - Respuesta: array de tickets (`id` = `{rondaId}-barra` / `-cocina`).
 
 ## Comportamiento en Comander
