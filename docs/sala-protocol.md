@@ -18,13 +18,13 @@ Rutas Bar que Commander llama: [`bar-contract-paths.txt`](bar-contract-paths.txt
 | **Preparado** | Ticket listo en expo (Bar). Evento SSE `ticket.preparado`. En Comander: líneas `LISTA` («para recoger»). | Servido en mesa. |
 | **Recogido** | El camarero de barra sacó el ticket de la cola (`POST /recogido`). Evento `ticket.recogido`. | Servido en mesa (eso es Comander, `LineaEstado.SERVIDA`). |
 
-`GET /health` trae `establecimiento` (nombre del negocio) y `sala` como **alias deprecado del mismo valor**. `sala` en health **no** es una sala del mapa.
+`GET /health` trae `establecimiento` (nombre del negocio), `establecimiento_id` (UUID Identity; se omite si el nodo no está vinculado) y `sala` como **alias deprecado** del nombre. `sala` en health **no** es una sala del mapa. Commander empareja el libro de oficio por UUID; el nombre es fallback si el id no viene.
 
 ## Endpoints (Bar)
 
 | Método | Ruta | Uso en Comander |
 |---|---|---|
-| `GET /health` | liveness `{ok, role:"bar", establecimiento, sala, version}` | Sí (ligar) |
+| `GET /health` | liveness `{ok, role:"bar", establecimiento, establecimiento_id?, sala, version}` | Sí (ligar; UUID para el libro de oficio) |
 | `POST /v1/sesion` | `{ "qr": "phid1:…" }` → `{ admitido, camareroId, nombre }` | Sí (candado carta/mapa/TPV al ligar; **no** inicia jornada) |
 | `POST /v1/sesion/iniciar` | `{ "qr": "phid1:…" }` → estado de jornada | Sí (gesto Empiezo; 404 = nodo viejo) |
 | `POST /v1/sesion/cortar` | `{ "qr": "phid1:…" }` | Sí (terminar jornada o salir del nodo) |

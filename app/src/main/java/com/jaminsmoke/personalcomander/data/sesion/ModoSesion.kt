@@ -27,6 +27,8 @@ sealed class ModoSesion {
         val admitido: Boolean = false,
         /** Nombre de `GET /health`, no la IP. */
         val nombreEstablecimiento: String? = null,
+        /** UUID Identity de `GET /health.establecimiento_id`. Null en prefs viejos o nodo sin cuenta. */
+        val establecimientoId: String? = null,
         /** Jornada concedida por Bar (`POST /v1/sesion/iniciar`). Distinto de [admitido]. */
         val sesionTrabajo: Boolean = false,
         /** URL pública de ficha que manda Identity. No se inventa en Commander. */

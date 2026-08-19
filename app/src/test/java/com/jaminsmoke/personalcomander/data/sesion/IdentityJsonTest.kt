@@ -2,6 +2,7 @@ package com.jaminsmoke.personalcomander.data.sesion
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -440,6 +441,19 @@ class IdentityJsonTest {
         val lista = listOf(MembresiaEstablecimiento("e1", "Casa Pepe", "n1", "staff"))
         assertEquals(ContrasteMembresia.NoCoincide, IdentityJson.contrastarHealth("Otro Local", lista))
     }
+
+    @Test
+    fun contrastarHealth_uuid_no_cae_al_nombre() {
+        val lista = listOf(MembresiaEstablecimiento("e1", "Casa Pepe", "n1", "staff"))
+        assertEquals(
+            ContrasteMembresia.NoCoincide,
+            IdentityJson.contrastarHealth("Casa Pepe", lista, healthId = "e-otro"),
+        )
+        assertEquals(
+            ContrasteMembresia.Coincide,
+            IdentityJson.contrastarHealth("Otro nombre", lista, healthId = "e1"),
+        )
+    }
 }
 
 class BarLanClienteTest {
@@ -458,6 +472,23 @@ class BarLanClienteTest {
             """{"ok":true,"role":"bar","establecimiento":"Casa Pepe","sala":"vacia","version":"0.2"}"""
         )
         assertEquals("Casa Pepe", h!!.establecimiento)
+        assertNull(h.establecimientoId)
+    }
+
+    @Test
+    fun parseHealth_establecimiento_id() {
+        val h = BarLanCliente.parseHealth(
+            """{"ok":true,"role":"bar","establecimiento":"Casa Pepe","establecimiento_id":" uuid-1 ","version":"0.2"}""",
+        )
+        assertEquals("uuid-1", h!!.establecimientoId)
+    }
+
+    @Test
+    fun parseHealth_establecimiento_id_vacio_es_ausente() {
+        val h = BarLanCliente.parseHealth(
+            """{"ok":true,"role":"bar","establecimiento":"Casa Pepe","establecimiento_id":"  ","version":"0.2"}""",
+        )
+        assertNull(h!!.establecimientoId)
     }
 
     @Test

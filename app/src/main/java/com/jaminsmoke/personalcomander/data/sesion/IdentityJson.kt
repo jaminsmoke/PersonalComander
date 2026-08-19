@@ -288,13 +288,19 @@ object IdentityJson {
     }
 
     /**
-     * UUID de membresía cuyo nombre coincide con `GET /health`.
-     * Mismo criterio que [contrastarHealth]; null si no hay match único por nombre.
+     * UUID de membresía para el libro de oficio.
+     * Si [healthId] viene, solo cuenta un `membresias.id` igual (sin caer al nombre).
+     * Si falta, match único por nombre como [contrastarHealth].
      */
     fun establecimientoIdPorHealth(
         nombreHealth: String?,
         membresias: List<MembresiaEstablecimiento>,
+        healthId: String? = null,
     ): String? {
+        val id = healthId?.trim()?.takeIf { it.isNotEmpty() }
+        if (id != null) {
+            return membresias.firstOrNull { it.id.equals(id, ignoreCase = true) }?.id
+        }
         if (nombreHealth.isNullOrBlank()) return null
         val needle = nombreHealth.trim()
         val coinciden = membresias.filter { it.nombre.trim().equals(needle, ignoreCase = true) }
@@ -392,8 +398,18 @@ object IdentityJson {
     fun contrastarHealth(
         nombreHealth: String?,
         membresias: List<MembresiaEstablecimiento>,
+        healthId: String? = null,
     ): ContrasteMembresia {
-        if (membresias.isEmpty() || nombreHealth.isNullOrBlank()) return ContrasteMembresia.SinDatos
+        if (membresias.isEmpty()) return ContrasteMembresia.SinDatos
+        val id = healthId?.trim()?.takeIf { it.isNotEmpty() }
+        if (id != null) {
+            return if (membresias.any { it.id.equals(id, ignoreCase = true) }) {
+                ContrasteMembresia.Coincide
+            } else {
+                ContrasteMembresia.NoCoincide
+            }
+        }
+        if (nombreHealth.isNullOrBlank()) return ContrasteMembresia.SinDatos
         val needle = nombreHealth.trim()
         return if (membresias.any { it.nombre.trim().equals(needle, ignoreCase = true) }) {
             ContrasteMembresia.Coincide

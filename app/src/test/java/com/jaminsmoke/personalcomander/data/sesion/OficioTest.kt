@@ -146,6 +146,22 @@ class OficioTest {
     }
 
     @Test
+    fun establecimiento_id_por_health_uuid_gana_al_nombre() {
+        val membresias = listOf(
+            MembresiaEstablecimiento("uuid-1", "Casa Pepe", "n1", "staff"),
+            MembresiaEstablecimiento("uuid-2", "Casa Pepe", "n2", "staff"),
+        )
+        assertEquals(
+            "uuid-2",
+            IdentityJson.establecimientoIdPorHealth("Casa Pepe", membresias, healthId = "uuid-2"),
+        )
+        assertNull(
+            IdentityJson.establecimientoIdPorHealth("Casa Pepe", membresias, healthId = "uuid-otro"),
+        )
+        assertNull(IdentityJson.establecimientoIdPorHealth("Casa Pepe", membresias))
+    }
+
+    @Test
     fun parse_resumen_invalido_no_inventa() {
         assertNull(IdentityJson.parseResumenOficio("{}"))
         assertNull(IdentityJson.parseResumenOficio("no-json"))

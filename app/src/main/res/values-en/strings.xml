@@ -361,7 +361,7 @@
     <string name="sesion_jornada_rechazada">The Bar did not accept the work session.</string>
     <string name="sesion_jornada_nodo_viejo">This Bar does not manage work sessions yet. Orders are sent as before.</string>
     <string name="sesion_jornada_pendiente_bar">Work session requested. Wait for the Bar to accept.</string>
-    <string name="sesion_jornada_sin_libro">Work session is active on the floor. The work log was not opened: the venue name does not match your memberships.</string>
+    <string name="sesion_jornada_sin_libro">Work session is active on the floor. The work log was not opened: the venue does not match your memberships.</string>
     <string name="sesion_ronda_sin_jornada">No active work session. Request it in Summary, on the venue of this network.</string>
     <string name="sesion_cerrar">Sign out</string>
     <string name="sesion_error_generico">Could not complete. Check the Identity URL and the network.</string>

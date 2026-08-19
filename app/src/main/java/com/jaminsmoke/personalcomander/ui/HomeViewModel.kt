@@ -213,6 +213,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     val libro = IdentityJson.establecimientoIdPorHealth(
                         vigente?.nombreEstablecimiento,
                         sesion.membresias.value,
+                        vigente?.establecimientoId,
                     )
                     if (libro == null) {
                         ctx.getString(R.string.sesion_jornada_sin_libro)
