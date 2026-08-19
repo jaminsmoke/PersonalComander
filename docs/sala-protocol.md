@@ -35,6 +35,7 @@ Rutas Bar que Commander llama: [`bar-contract-paths.txt`](bar-contract-paths.txt
 | `GET /v1/estado` | establecimiento, salas, colas, mesas | Sí (realinear tickets al conectar SSE; **réplica de layout** al ligar si `admitido`) |
 | `GET /v1/carta` | catálogo `{productos:[{id,nombre,categoria,precio,disponible}]}` | Sí (espejo al ligar) |
 | `SSE /v1/eventos` | `ticket.preparado` / `ticket.recogido` / `sesion.cortada` | Sí (aviso recoger y corte de jornada) |
+| UDP **8788** | Beacon de presencia `{ph, role, establecimiento, puerto, activo}` | Sí (radar en Resumen; no es HTTP) |
 
 Handshake al ligar: `POST /v1/sesion` con el QR. Si el camarero está ACTIVA en la lista blanca, `admitido=true` y candan carta, mapa y TPV. 404 (nodo viejo) o no admitido: el ligue sigue; `admitido=false`.
 
@@ -81,7 +82,7 @@ Bar es la fuente de verdad del layout. Si el camarero está **admitido**, al lig
 
 1. El camarero inicia sesión contra Identity (servicio camareros) desde **Entrar**. La cuenta puede estar **registrada** en varios establecimientos; eso no activa un turno.
 2. **Standalone** (Local o Identidad): carta y mapa locales. El header lo indica. Ligarse a un nodo no es jornada.
-3. En **Resumen**, el radar sondea la Wi‑Fi (`GET /health` + `POST /v1/sesion`). Si Bar no admite, el local se pinta apagado y **no se persiste** Establecimiento. Si Identity lista locales y el `health` no coincide, se avisa al pedir jornada pero **no se bloquea**.
+3. En **Resumen**, el radar sondea la Wi‑Fi (`GET /health` + `POST /v1/sesion`) y escucha el **beacon UDP 8788** de Bar (activar / latido / adiós). Si Bar no admite, el local se pinta apagado y **no se persiste** Establecimiento. Si Identity lista locales y el `health` no coincide, se avisa al pedir jornada pero **no se bloquea**. En emulador el probe `10.0.2.2` cubre el `adb forward` (el UDP no cruza los AVD).
 4. Si está en la lista blanca, carta, mapa y TPV pasan a solo lectura y se replica el layout. El header dice **En nodo** hasta **Empezar jornada** (`POST /v1/sesion/iniciar`); entonces dice **Activo**. Al volver a Home se **revalida** `admitido`. Si se pierde la lista blanca, se suelta el nodo.
 5. Sin jornada no se llama a `POST /v1/rondas`. Si Bar corta (SSE `sesion.cortada`, 403 o latido), el nodo puede seguir ligado.
 6. Al enviar con jornada, Comander manda **solo líneas `PENDIENTE`**, las marca `ENVIADA` y guarda los `ticketId` del body.
@@ -93,6 +94,16 @@ Pendiente de lista blanca **no** es una invitación de cuenta. Las invitaciones 
 Si Bar falla el POST, la comanda local permanece enviada y el tablet muestra un aviso.
 
 Este flujo está en el APK **v1.7** (radar en Resumen). La v1.6 ligaba el turno desde Ajustes; la v1.5 pública funcionaba en modo Local y no incluía la integración completa de establecimiento.
+
+## Presencia LAN (UDP 8788)
+
+No es HTTP ni SSE. Bar, mientras **Local activo**, envía un datagrama de broadcast cada ~2 s y un adiós al parar:
+
+```json
+{"ph":"phbar1","role":"bar","establecimiento":"Casa Pepe","puerto":8787,"activo":true}
+```
+
+`activo:false` es el corte. Commander en Resumen oye el puerto **8788**, toma el host del origen (nunca lo pinta) y confirma con `GET /health`. Sin beacon durante 6 s el local desaparece. Un puerto 8787 abierto que no sea Bar no se lista. El scan TCP `/24` queda de respaldo al entrar (y se reutilizan solo los nodos ya confirmados mientras Resumen sigue visible). Dos emuladores no comparten UDP: Commander sigue probando `10.0.2.2` mientras Resumen está visible.
 
 ## Payload de ronda
 

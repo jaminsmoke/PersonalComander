@@ -58,7 +58,7 @@ UI (Compose) → ViewModel (StateFlow) → Repository → Room (SQLite)
 - Las operaciones que tocan 2+ tablas usan `@Transaction` o `db.withTransaction {}`.
 - El catálogo TPV se importa como JSON sobre TCP en la red local y se inserta con `replace`.
 - La identidad del camarero se registra en Identity (servicio camareros en el VPS, HTTPS). El modo Local conserva el funcionamiento offline; la sesión se cachea si Identity no responde.
-- Las membresías de establecimiento las sirve Identity (`GET /v1/camareros/me/establecimientos`); Bar consulta Identity. Ligar el **turno** sigue siendo Bar LAN.
+- Las membresías de establecimiento las sirve Identity (`GET /v1/camareros/me/establecimientos`); Bar consulta Identity. Ligar el **turno** sigue siendo Bar LAN. El radar de Resumen oye el beacon UDP 8788 de Bar y confirma con `GET /health` (el host no se pinta).
 - En modo Establecimiento, una comanda enviada conserva primero el estado local y después intenta publicar una ronda a Personal Bar.
 
 ## Voz

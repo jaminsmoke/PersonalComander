@@ -29,17 +29,17 @@ fun aspectoLan(errorConexion: Boolean, admitido: Boolean, jornada: Boolean): Lan
 }
 
 /**
- * Extra de emulador (`10.0.2.2`) que no estaba en el scan: si no es Bar, no se pinta.
- * Un host del scan con health fallido sí sale en rojo.
+ * Extra / beacon / scan: si el health falla, no se inventa un local.
+ * El rojo es solo para un Bar que ya habíamos confirmado y ahora no responde.
  */
 fun aspectoSondeo(
-    enScan: Boolean,
+    conocido: Boolean,
     errorConexion: Boolean,
     admitido: Boolean,
     jornada: Boolean,
 ): LanLocalAspecto? {
-    if (errorConexion && !enScan) return null
-    return aspectoLan(errorConexion, admitido, jornada)
+    if (errorConexion) return if (conocido) LanLocalAspecto.ROJO else null
+    return aspectoLan(false, admitido, jornada)
 }
 
 /** Nombre de sala para UI. Vacío si el health no trae establecimiento; nunca una IP. */
@@ -50,16 +50,16 @@ fun mismosNodo(host: String, puerto: Int, modo: ModoSesion.Establecimiento): Boo
     modo.barHost == host && modo.barPuerto == puerto
 
 /**
- * Candidatos a sondear: el scan de la subred más [extra] (emulador `10.0.2.2`)
- * si no está ya. El extra no se pinta; solo se usa como host interno.
+ * Candidatos a sondear: el scan más [extras] (emulador `10.0.2.2` y hosts de beacon).
+ * El extra no se pinta; solo se usa como host interno.
  */
 fun candidatosLan(
     descubiertos: List<ServidorDescubierto>,
-    extra: ServidorDescubierto? = ServidorDescubierto(EMULADOR_BAR_HOST, BarLanCliente.PUERTO),
+    extras: List<ServidorDescubierto> = listOf(ServidorDescubierto(EMULADOR_BAR_HOST, BarLanCliente.PUERTO)),
 ): List<ServidorDescubierto> {
     val visto = HashSet<String>()
     val out = ArrayList<ServidorDescubierto>()
-    for (s in descubiertos + listOfNotNull(extra)) {
+    for (s in descubiertos + extras) {
         val clave = "${s.ip}:${s.puerto}"
         if (visto.add(clave)) out.add(s)
     }

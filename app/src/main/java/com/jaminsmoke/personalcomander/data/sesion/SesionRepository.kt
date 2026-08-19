@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.withTransaction
 import com.jaminsmoke.personalcomander.data.AppDatabase
 import com.jaminsmoke.personalcomander.data.EscaneadorRed
+import com.jaminsmoke.personalcomander.data.ServidorDescubierto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -442,27 +443,48 @@ class SesionRepository(
         }
     }
 
+    /** Nodos que ya fueron Bar en esta visita a Resumen (para rojo si caen). */
+    private val nombresLan = java.util.concurrent.ConcurrentHashMap<String, String>()
+    @Volatile
+    private var nodosLan: List<ServidorDescubierto> = emptyList()
+
+    fun limpiarScanLan() {
+        nodosLan = emptyList()
+        nombresLan.clear()
+    }
+
     /**
      * Radar de la Wi‑Fi actual. No liga si Bar no admite.
-     * El host `10.0.2.2` (emulador) se prueba además del scan; nunca se enseña.
+     * [extras] son hosts de beacon UDP; `10.0.2.2` se añade siempre (emulador).
+     * Un puerto 8787 abierto que no responde health de Bar no se pinta (evita el «Local» fantasma).
      */
-    suspend fun sondearLan(): List<LanLocalUi> = withContext(Dispatchers.IO) {
+    suspend fun sondearLan(
+        extras: List<ServidorDescubierto> = emptyList(),
+        escanearSubred: Boolean = true,
+    ): List<LanLocalUi> = withContext(Dispatchers.IO) {
         val actual = _modo.value
         val qr = actual.qr
         if (actual is ModoSesion.Local || qr == null) return@withContext emptyList()
-        val scan = EscaneadorRed.escanear(listOf(BarLanCliente.PUERTO))
-        val clavesScan = scan.map { "${it.ip}:${it.puerto}" }.toHashSet()
-        val candidatos = candidatosLan(scan)
+        val scan = if (escanearSubred) {
+            EscaneadorRed.escanear(listOf(BarLanCliente.PUERTO))
+        } else {
+            emptyList()
+        }
+        val extrasTodos = extras + ServidorDescubierto(EMULADOR_BAR_HOST, BarLanCliente.PUERTO) + nodosLan
+        val candidatos = candidatosLan(scan, extrasTodos)
         val vigente = actual as? ModoSesion.Establecimiento
-        candidatos.mapNotNull { s ->
+        val locales = candidatos.mapNotNull { s ->
+            val clave = "${s.ip}:${s.puerto}"
             val health = BarLanCliente.health(s.ip, s.puerto)
             val nombre = nombreLanVisible(health?.establecimiento)
-            val enScan = "${s.ip}:${s.puerto}" in clavesScan
             if (!BarLanCliente.esBar(health)) {
-                val aspecto = aspectoSondeo(enScan, errorConexion = true, admitido = false, jornada = false)
+                val conocido = nombresLan.containsKey(clave)
+                val aspecto = aspectoSondeo(conocido, errorConexion = true, admitido = false, jornada = false)
                     ?: return@mapNotNull null
-                return@mapNotNull LanLocalUi(s.ip, s.puerto, nombre, aspecto)
+                return@mapNotNull LanLocalUi(s.ip, s.puerto, nombresLan[clave].orEmpty(), aspecto)
             }
+            val visible = nombre.ifEmpty { nombresLan[clave].orEmpty() }
+            nombresLan[clave] = visible
             val jornada = vigente != null &&
                 vigente.sesionTrabajo &&
                 mismosNodo(s.ip, s.puerto, vigente)
@@ -470,14 +492,16 @@ class SesionRepository(
                 return@mapNotNull LanLocalUi(
                     s.ip,
                     s.puerto,
-                    nombre.ifEmpty { vigente.etiquetaLocal() },
+                    visible.ifEmpty { vigente.etiquetaLocal() },
                     LanLocalAspecto.VERDE,
                 )
             }
             val sesion = BarLanCliente.postSesion(s.ip, s.puerto, qr)
             val admitido = sesion?.admitido == true
-            LanLocalUi(s.ip, s.puerto, nombre, aspectoLan(false, admitido, false))
+            LanLocalUi(s.ip, s.puerto, visible, aspectoLan(false, admitido, false))
         }
+        nodosLan = locales.map { ServidorDescubierto(it.host, it.puerto) }
+        locales
     }
 
     /** Prefs antiguas: ligado sin lista blanca no debe candar carta ni mapa. */

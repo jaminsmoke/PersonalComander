@@ -5,17 +5,23 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaminsmoke.personalcomander.PersonalComanderApp
 import com.jaminsmoke.personalcomander.R
+import com.jaminsmoke.personalcomander.data.ServidorDescubierto
 import com.jaminsmoke.personalcomander.data.sesion.IdentityJson
 import com.jaminsmoke.personalcomander.data.sesion.LanLocalAspecto
 import com.jaminsmoke.personalcomander.data.sesion.LanLocalUi
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.OficioPunto
 import com.jaminsmoke.personalcomander.data.sesion.OficioVentana
+import com.jaminsmoke.personalcomander.data.sesion.PresenciaLan
+import com.jaminsmoke.personalcomander.data.sesion.PresenciaLanOyente
 import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
 import com.jaminsmoke.personalcomander.data.sesion.limites
 import com.jaminsmoke.personalcomander.data.sesion.qr
 import com.jaminsmoke.personalcomander.data.sesion.serie
 import com.jaminsmoke.personalcomander.data.sesion.token
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,10 +31,13 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.concurrent.ConcurrentHashMap
 
 data class HomeUiState(
     val cargando: Boolean = true,
@@ -72,6 +81,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _lan = MutableStateFlow(LanRadarUiState())
     val lan: StateFlow<LanRadarUiState> = _lan.asStateFlow()
+    private var radarJob: Job? = null
+    private val extrasBeacon = ConcurrentHashMap<String, Pair<ServidorDescubierto, Long>>()
+    private val wakeRadar = Channel<Unit>(Channel.CONFLATED)
+    private var scanPendiente = true
 
     init {
         viewModelScope.launch {
@@ -103,18 +116,71 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         _refrescoOficio.value = _refrescoOficio.value + 1
     }
 
-    fun sondearLan() {
-        viewModelScope.launch {
-            val modo = sesion.modo.value
-            val conSesion = modo !is ModoSesion.Local && modo.qr != null
-            _lan.value = _lan.value.copy(conSesion = conSesion, escaneando = conSesion)
-            if (!conSesion) {
-                _lan.value = LanRadarUiState(conSesion = false)
-                return@launch
+    fun iniciarRadar() {
+        if (radarJob?.isActive == true) return
+        scanPendiente = true
+        extrasBeacon.clear()
+        sesion.limpiarScanLan()
+        radarJob = viewModelScope.launch {
+            launch(Dispatchers.IO) {
+                PresenciaLanOyente.escuchar(getApplication()) { host, anuncio ->
+                    val clave = "$host:${anuncio.puertoHttp}"
+                    if (anuncio.activo) {
+                        extrasBeacon[clave] =
+                            ServidorDescubierto(host, anuncio.puertoHttp) to System.currentTimeMillis()
+                    } else {
+                        extrasBeacon.remove(clave)
+                    }
+                    wakeRadar.trySend(Unit)
+                }
             }
-            val locales = sesion.sondearLan()
-            _lan.value = _lan.value.copy(escaneando = false, locales = locales)
+            while (isActive) {
+                refrescarRadar(escanearSubred = scanPendiente)
+                withTimeoutOrNull(PresenciaLan.HEARTBEAT_MS) {
+                    wakeRadar.receive()
+                }
+            }
         }
+    }
+
+    fun pararRadar() {
+        radarJob?.cancel()
+        radarJob = null
+        extrasBeacon.clear()
+        sesion.limpiarScanLan()
+    }
+
+    override fun onCleared() {
+        pararRadar()
+        super.onCleared()
+    }
+
+    fun sondearLan() {
+        viewModelScope.launch { refrescarRadar(escanearSubred = true) }
+    }
+
+    private fun extrasVivos(): List<ServidorDescubierto> {
+        val ahora = System.currentTimeMillis()
+        extrasBeacon.entries.removeIf { ahora - it.value.second > PresenciaLan.TTL_MS }
+        return extrasBeacon.values.map { it.first }
+    }
+
+    private suspend fun refrescarRadar(escanearSubred: Boolean) {
+        val modo = sesion.modo.value
+        val conSesion = modo !is ModoSesion.Local && modo.qr != null
+        if (!conSesion) {
+            _lan.value = LanRadarUiState(conSesion = false)
+            scanPendiente = true
+            return
+        }
+        if (escanearSubred) {
+            _lan.value = _lan.value.copy(conSesion = true, escaneando = true)
+        } else {
+            _lan.value = _lan.value.copy(conSesion = true)
+        }
+        val locales = sesion.sondearLan(extras = extrasVivos(), escanearSubred = escanearSubred)
+        if (escanearSubred) scanPendiente = false
+        _lan.value = _lan.value.copy(escaneando = false, conSesion = true, locales = locales)
     }
 
     fun limpiarMensajeLan() {
