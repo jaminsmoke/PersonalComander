@@ -26,9 +26,14 @@ class LanRadarTest {
 
     @Test
     fun extra_sin_bar_no_se_pinta() {
-        assertEquals(null, aspectoSondeo(enScan = false, errorConexion = true, admitido = false, jornada = false))
-        assertEquals(LanLocalAspecto.ROJO, aspectoSondeo(enScan = true, errorConexion = true, admitido = false, jornada = false))
-        assertEquals(LanLocalAspecto.AMARILLO, aspectoSondeo(enScan = false, errorConexion = false, admitido = true, jornada = false))
+        assertEquals(null, aspectoSondeo(conocido = false, errorConexion = true, admitido = false, jornada = false))
+        assertEquals(LanLocalAspecto.ROJO, aspectoSondeo(conocido = true, errorConexion = true, admitido = false, jornada = false))
+        assertEquals(LanLocalAspecto.AMARILLO, aspectoSondeo(conocido = false, errorConexion = false, admitido = true, jornada = false))
+    }
+
+    @Test
+    fun scan_con_puerto_abierto_sin_health_no_pinta_fantasma() {
+        assertEquals(null, aspectoSondeo(conocido = false, errorConexion = true, admitido = false, jornada = false))
     }
 
     @Test
@@ -39,5 +44,13 @@ class LanRadarTest {
         assertTrue(todos.any { it.ip == EMULADOR_BAR_HOST && it.puerto == 8787 })
         val yaEsta = candidatosLan(listOf(ServidorDescubierto(EMULADOR_BAR_HOST, 8787)))
         assertEquals(1, yaEsta.size)
+        val conBeacon = candidatosLan(
+            descubiertos = emptyList(),
+            extras = listOf(
+                ServidorDescubierto("192.168.1.20", 8787),
+                ServidorDescubierto(EMULADOR_BAR_HOST, 8787),
+            ),
+        )
+        assertEquals(2, conBeacon.size)
     }
 }

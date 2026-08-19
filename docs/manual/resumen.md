@@ -11,7 +11,7 @@ La pestaña **Resumen** (barra inferior) es la pantalla de inicio. Muestra el d�
 
 Sin cuenta (modo Local) el oficio no se rellena: no se inventan horas ni rondas. El hero de facturado sigue.
 
-**En esta red** lista solo los Bares **descubiertos ahora** en la Wi‑Fi del teléfono (nombres, nunca IP). Gris = el local no te tiene de camarero; amarillo = admitido sin jornada; verde = jornada en curso; rojo = fallo de red. Un local de Identity que no está en esta red **no sale**. El detalle está en [Cuenta y turno](cuenta.md).
+**En esta red** lista solo los Bares **descubiertos ahora** en la Wi‑Fi del teléfono (nombres, nunca IP). Bar anuncia al activar o cortar Local activo (UDP); si no llega el anuncio, el radar reintenta en esta pantalla. Gris = el local no te tiene de camarero; amarillo = admitido sin jornada; verde = jornada en curso; rojo = fallo de red. Un local de Identity que no está en esta red **no sale**. El detalle está en [Cuenta y turno](cuenta.md).
 
 Las rondas las produce Bar al completar una ronda (todos los tickets **RECOGIDO**) y las proyecta a `POST /v1/negocio/estadisticas/servicio`. El campo del Server se llama `mesas_servidas`; en pantalla se etiqueta **rondas servidas**. Las horas se abren al **Empezar jornada** (dual-write LAN + `POST /v1/camareros/me/jornadas/iniciar` si el nombre de health coincide con una membresía).
 

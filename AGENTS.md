@@ -110,13 +110,13 @@ El camino diario está en el **header**, no en Ajustes. `PcSesionChip` vive en `
 
 **Mi perfil (`perfil`):** nick, foto, «Qué se ve en tu ficha» (8 switches contra Identity), card **Directorio de locales** (`nunca` / `solo_libre` / `siempre`), bloque de membresías con estado **Libre** / **Trabajador de X**, QR, **Ver mi ficha**, renovar/revocar clave, cerrar sesión. Visibilidad, directorio y ficha **no** están en Ajustes.
 
-**Ajustes — TPV** y **Copias:** catálogo LAN y JSON. El turno de sala (Bares de esta Wi‑Fi) vive en **Resumen**, no en Ajustes. Identity va al VPS (`SesionStore.DEFAULT_IDENTITY_URL`); no hay campo de URL en la UI. Commander no llama a `:8082`. El emulador sigue necesitando `adb forward` al `:8787` del tablet; el radar prueba `10.0.2.2` sin pintar la IP.
+**Ajustes — TPV** y **Copias:** catálogo LAN y JSON. El turno de sala (Bares de esta Wi‑Fi) vive en **Resumen**, no en Ajustes. Identity va al VPS (`SesionStore.DEFAULT_IDENTITY_URL`); no hay campo de URL en la UI. Commander no llama a `:8082`. El emulador sigue necesitando `adb forward` al `:8787` del tablet; el radar prueba `10.0.2.2` sin pintar la IP (el beacon UDP no cruza los AVD).
 
 ### Gestión y sala
 
 - Hub Gestión: Carta (`MenuScreen`), Locales (membresías Identity), Invitaciones (bandeja: aceptar/rechazar + historial).
 - Hub Ajustes: TPV, Copias. Los hubs se parecen a propósito; más adelante pueden diferenciarse (fondo) o intercambiar baldosas.
-- Resumen: radar LAN de Bares en esta Wi‑Fi (nombres, nunca host). Locales Identity ≠ locales de esta red.
+- Resumen: radar LAN de Bares en esta Wi‑Fi (nombres, nunca host). Beacon UDP de Bar + probe `10.0.2.2` en emulador. Locales Identity ≠ locales de esta red.
 - Mesas → tap mesa → `comanda/{mesaId}` (`ComandaScreen.kt`). Voz y comanda viven ahí.
 
 ## Familia PersonalHostel

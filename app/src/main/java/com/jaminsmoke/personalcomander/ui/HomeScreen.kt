@@ -96,7 +96,9 @@ fun HomeScreen(
             if (event == Lifecycle.Event.ON_START) {
                 sesionViewModel.revalidarTurno()
                 viewModel.refrescarOficio()
-                viewModel.sondearLan()
+                viewModel.iniciarRadar()
+            } else if (event == Lifecycle.Event.ON_STOP) {
+                viewModel.pararRadar()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)

@@ -146,6 +146,7 @@ object EscaneadorRed {
             async(Dispatchers.IO) {
                 if (cancelado || !isActive) return@async null
                 val destino = "$red.$host"
+                if (destino == ip) return@async null
                 for (puerto in puertos) {
                     if (cancelado || !isActive) break
                     if (puertoDisponible(destino, puerto, timeoutMs)) {
