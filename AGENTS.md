@@ -104,7 +104,8 @@ El camino diario está en el **header**, no en Ajustes. `PcSesionChip` vive en `
 |---|---|---|---|
 | TextButton **Entrar** (modo Local) | tap | `auth` | `AuthScreen.kt` — título «Iniciar sesión» |
 | Chip avatar + nick (hay sesión) | tap | `perfil` | `PerfilScreen.kt` — título «Mi perfil» |
-| **Standalone** / nombre del local (`PcTurnoIndicador`, bajo el título) | tap | `auth` si Local; **Resumen** (radar) si hay sesión desde Gestión | Home y Gestión |
+| **Activo / En nodo / Pendiente** + nombre (`PcTurnoIndicador`) | no clicable | Solo Home si el modo es Establecimiento | `HomeScreen.kt` |
+| **Standalone** / nombre (`PcTurnoIndicador`) | tap | `auth` si Local; **Resumen** si hay sesión | `GestionScreen.kt` (Locales). Home Local/Identidad no lo pinta (radar + chip Entrar) |
 
 **Iniciar sesión (`auth`):** pestañas Entrar / Registro. Campos **Correo** y **Contraseña** (no «Email»). Botón amarillo **Entrar**. **No hay URL de Identity.** Default: `SesionStore.DEFAULT_IDENTITY_URL` = `https://camareros.siberia.solutions` (VPS; Docker en el servidor). Prefs con Docker local (`10.0.2.2:8080`) se reescriben al VPS.
 

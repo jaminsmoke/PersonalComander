@@ -120,11 +120,10 @@ fun HomeScreen(
                         onPerfil = onOpenPerfil,
                     )
                 },
-                supportingContent = {
-                    PcTurnoIndicador(
-                        modo = modo,
-                        onClick = if (modo is ModoSesion.Local) onOpenAuth else null,
-                    )
+                supportingContent = if (modo is ModoSesion.Establecimiento) {
+                    { PcTurnoIndicador(modo = modo) }
+                } else {
+                    null
                 },
             )
         }

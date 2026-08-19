@@ -23,4 +23,4 @@ Las rondas las produce Bar al completar una ronda (todos los tickets **RECOGIDO*
 
 </div>
 
-El chip **Entrar** / avatar del header abre la cuenta. Bajo el título, el indicador de turno (**Standalone** o el nombre del local) lleva a Entrar si estás en Local; con sesión, el radar de locales está en esta misma pantalla.
+El chip **Entrar** / avatar del header abre la cuenta. Bajo el título, el indicador de turno solo aparece si estás ligado a un Bar (**Activo**, **En nodo** o **Pendiente** y el nombre). En Local o Identidad no se pinta: el radar de esta misma pantalla cubre «esta Wi‑Fi».

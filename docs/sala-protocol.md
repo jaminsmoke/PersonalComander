@@ -81,7 +81,7 @@ Bar es la fuente de verdad del layout. Si el camarero está **admitido**, al lig
 ## Flujo de usuario
 
 1. El camarero inicia sesión contra Identity (servicio camareros) desde **Entrar**. La cuenta puede estar **registrada** en varios establecimientos; eso no activa un turno.
-2. **Standalone** (Local o Identidad): carta y mapa locales. El header lo indica. Ligarse a un nodo no es jornada.
+2. **Standalone** (Local o Identidad): carta y mapa locales. Home no pinta la etiqueta; el radar de Resumen y Gestión → Locales lo indican. Ligarse a un nodo no es jornada.
 3. En **Resumen**, el radar sondea la Wi‑Fi (`GET /health` + `POST /v1/sesion`) y escucha el **beacon UDP 8788** de Bar (activar / latido / adiós). Si Bar no admite, el local se pinta apagado y **no se persiste** Establecimiento. Si Identity lista locales y el `health` no coincide, se avisa al pedir jornada pero **no se bloquea**. En emulador el probe `10.0.2.2` cubre el `adb forward` (el UDP no cruza los AVD).
 4. Si está en la lista blanca, carta, mapa y TPV pasan a solo lectura y se replica el layout. El header dice **En nodo** hasta **Empezar jornada** (`POST /v1/sesion/iniciar`); entonces dice **Activo**. Al volver a Home se **revalida** `admitido`. Si se pierde la lista blanca, se suelta el nodo.
 5. Sin jornada no se llama a `POST /v1/rondas`. Si Bar corta (SSE `sesion.cortada`, 403 o latido), el nodo puede seguir ligado.

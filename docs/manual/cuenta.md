@@ -34,7 +34,7 @@ El nick que se ve en los locales se edita aquí, en registro o perfil.
 
 ## Indicador de turno
 
-Bajo el título, en **Resumen** y **Gestión**, aparece **Standalone** si no hay local, o el nombre del establecimiento (Activo / En nodo). En modo Local un toque abre **Entrar**. Con sesión, el radar de esta Wi‑Fi está en **Resumen**; desde Gestión → Locales el indicador y **Ver locales en esta red** llevan a Resumen.
+En **Resumen**, el indicador bajo el título solo aparece si estás ligado a un Bar (**Activo**, **En nodo** o **Pendiente** y el nombre). En Local o Identidad no se pinta: el radar de esta Wi‑Fi y el chip **Entrar** / avatar bastan. En **Gestión → Locales** sí aparece **Standalone** si no hay local, o el nombre del establecimiento; en modo Local un toque abre **Entrar**, y con sesión el indicador y **Ver locales en esta red** llevan a Resumen.
 
 ## Turno en un establecimiento
 
