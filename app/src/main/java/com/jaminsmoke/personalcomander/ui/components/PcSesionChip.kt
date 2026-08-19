@@ -116,21 +116,24 @@ fun PcSesionChip(
 @Composable
 fun PcTurnoIndicador(
     modo: ModoSesion,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
+    val localSinNombre = stringResource(R.string.home_lan_local_sin_nombre)
     val texto = when (val m = modo) {
         ModoSesion.Local, is ModoSesion.Identidad ->
             stringResource(R.string.sesion_turno_standalone)
-        is ModoSesion.Establecimiento ->
+        is ModoSesion.Establecimiento -> {
+            val local = m.etiquetaLocal().ifBlank { localSinNombre }
             when {
-                m.sesionTrabajo -> stringResource(R.string.sesion_turno_activo, m.etiquetaLocal())
-                m.admitido -> stringResource(R.string.sesion_turno_en_nodo, m.etiquetaLocal())
-                else -> stringResource(R.string.sesion_turno_nodo_pendiente, m.etiquetaLocal())
+                m.sesionTrabajo -> stringResource(R.string.sesion_turno_activo, local)
+                m.admitido -> stringResource(R.string.sesion_turno_en_nodo, local)
+                else -> stringResource(R.string.sesion_turno_nodo_pendiente, local)
             }
+        }
     }
     val color = if (modo is ModoSesion.Establecimiento && modo.sesionTrabajo) {
-        MaterialTheme.colorScheme.secondary
+        MaterialTheme.colorScheme.tertiary
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
     }
@@ -143,7 +146,7 @@ fun PcTurnoIndicador(
             overflow = TextOverflow.Ellipsis,
             modifier = modifier
                 .clip(RoundedCornerShape(999.dp))
-                .clickable(onClick = onClick)
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
                 .semantics { contentDescription = texto },
         )
     }

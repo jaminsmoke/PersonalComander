@@ -10,6 +10,7 @@ routes:
     needles:
       - Resumen
       - facturado
+      - En esta red
   mesas:
     page: manual/mesas.md
     needles:
@@ -76,10 +77,6 @@ gestion:
       - Invitaciones
 
 ajustes:
-  TURNO:
-    page: manual/ajustes.md
-    needles:
-      - Turno
   TPV:
     page: manual/ajustes.md
     needles:

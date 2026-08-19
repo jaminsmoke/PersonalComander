@@ -23,11 +23,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -60,18 +58,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.data.ServidorDescubierto
 import com.jaminsmoke.personalcomander.data.TpvPrograma
-import com.jaminsmoke.personalcomander.data.sesion.BarLanCliente
-import com.jaminsmoke.personalcomander.data.sesion.MembresiaEstablecimiento
-import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.cartaEditable
-import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
 import com.jaminsmoke.personalcomander.ui.components.BrandHeaderDensity
 import com.jaminsmoke.personalcomander.ui.components.GlassCard
 import com.jaminsmoke.personalcomander.ui.components.PcBrandHeader
 import com.jaminsmoke.personalcomander.ui.components.PcPrimaryButton
 import com.jaminsmoke.personalcomander.ui.components.PcSecondaryButton
 import com.jaminsmoke.personalcomander.ui.components.PcSesionChip
-import com.jaminsmoke.personalcomander.ui.sesion.MembresiasIdentityBlock
 import com.jaminsmoke.personalcomander.ui.sesion.SesionViewModel
 
 private const val HUB_COLUMNAS = 2
@@ -92,10 +85,6 @@ fun AjustesScreen(
             onSeleccionar = { seleccion = it.name },
             onOpenAuth = onOpenAuth,
             onOpenPerfil = onOpenPerfil,
-        )
-        AjustesAcceso.TURNO -> TurnoAjustesScreen(
-            onBack = { seleccion = null },
-            onOpenAuth = onOpenAuth,
         )
         AjustesAcceso.TPV -> TpvAjustesScreen(onBack = { seleccion = null })
         AjustesAcceso.COPIAS -> CopiasAjustesScreen(onBack = { seleccion = null })
@@ -220,65 +209,6 @@ private fun AjustesSeccionScaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         content = content,
     )
-}
-
-@Composable
-private fun TurnoAjustesScreen(
-    onBack: () -> Unit,
-    onOpenAuth: () -> Unit,
-    sesionViewModel: SesionViewModel = viewModel(),
-) {
-    val sesionMensaje by sesionViewModel.mensaje.collectAsState()
-    val modo by sesionViewModel.modo.collectAsState()
-    val bares by sesionViewModel.bares.collectAsState()
-    val escaneandoBares by sesionViewModel.escaneando.collectAsState()
-    val busySesion by sesionViewModel.busy.collectAsState()
-    val membresias by sesionViewModel.membresias.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(sesionMensaje) {
-        sesionMensaje?.let {
-            snackbarHostState.showSnackbar(it)
-            sesionViewModel.limpiarMensaje()
-        }
-    }
-
-    AjustesSeccionScaffold(
-        title = stringResource(R.string.sesion_sala_title),
-        onBack = onBack,
-        snackbarHostState = snackbarHostState,
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item {
-                Text(
-                    text = stringResource(R.string.sesion_sala_desc),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            item {
-                SalaCard(
-                    modo = modo,
-                    membresias = membresias,
-                    bares = bares,
-                    escaneando = escaneandoBares,
-                    busy = busySesion,
-                    onBuscar = sesionViewModel::buscarBares,
-                    onConectar = sesionViewModel::conectarBar,
-                    onDesconectar = sesionViewModel::desconectarBar,
-                    onIniciarJornada = sesionViewModel::iniciarJornada,
-                    onCortarJornada = sesionViewModel::cortarJornada,
-                    onIrLogin = onOpenAuth,
-                )
-            }
-        }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -637,158 +567,6 @@ private fun BackupCard(
                 icon = Icons.Default.CloudUpload,
                 modifier = Modifier.weight(1f),
             )
-        }
-    }
-}
-
-@Composable
-private fun SalaCard(
-    modo: ModoSesion,
-    membresias: List<MembresiaEstablecimiento>,
-    bares: List<ServidorDescubierto>,
-    escaneando: Boolean,
-    busy: Boolean,
-    onBuscar: () -> Unit,
-    onConectar: (String, Int) -> Unit,
-    onDesconectar: () -> Unit,
-    onIniciarJornada: () -> Unit,
-    onCortarJornada: () -> Unit,
-    onIrLogin: () -> Unit,
-) {
-    var barHost by remember {
-        mutableStateOf(
-            if (modo is ModoSesion.Establecimiento) modo.barHost else "10.0.2.2",
-        )
-    }
-    GlassCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            when (modo) {
-                ModoSesion.Local -> {
-                    Text(
-                        text = stringResource(R.string.sesion_sala_login_primero),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    PcSecondaryButton(
-                        text = stringResource(R.string.sesion_entrar),
-                        onClick = onIrLogin,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                is ModoSesion.Establecimiento -> {
-                    Text(
-                        text = stringResource(
-                            when {
-                                modo.sesionTrabajo -> R.string.sesion_modo_sala_admitido
-                                modo.admitido -> R.string.sesion_modo_sala_sin_jornada
-                                else -> R.string.sesion_modo_sala_pendiente
-                            },
-                            modo.etiquetaLocal(),
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    MembresiasIdentityBlock(membresias = membresias)
-                    if (modo.admitido && !modo.sesionTrabajo) {
-                        PcPrimaryButton(
-                            text = stringResource(R.string.sesion_empezar_jornada),
-                            onClick = onIniciarJornada,
-                            enabled = !busy,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                    if (modo.sesionTrabajo) {
-                        PcSecondaryButton(
-                            text = stringResource(R.string.sesion_terminar_jornada),
-                            onClick = onCortarJornada,
-                            enabled = !busy,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                    PcSecondaryButton(
-                        text = stringResource(R.string.sesion_desconectar_bar),
-                        onClick = onDesconectar,
-                        icon = Icons.Default.LinkOff,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                is ModoSesion.Identidad -> {
-                    MembresiasIdentityBlock(membresias = membresias)
-                    if (modo.qr == null) {
-                        Text(
-                            text = stringResource(R.string.sesion_qr_revocada),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                    OutlinedTextField(
-                        value = barHost,
-                        onValueChange = { barHost = it },
-                        label = { Text(stringResource(R.string.sesion_bar_host)) },
-                        placeholder = { Text("10.0.2.2") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        PcSecondaryButton(
-                            text = stringResource(R.string.sesion_buscar_bares),
-                            onClick = onBuscar,
-                            enabled = !escaneando && !busy,
-                            icon = if (escaneando) null else Icons.Default.Search,
-                            modifier = Modifier.weight(1f),
-                        )
-                        PcPrimaryButton(
-                            text = stringResource(R.string.sesion_conectar_bar),
-                            onClick = { onConectar(barHost.trim(), BarLanCliente.PUERTO) },
-                            enabled = barHost.isNotBlank() && !busy && modo.qr != null,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    if (escaneando) {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                    } else if (bares.isNotEmpty()) {
-                        Text(
-                            text = stringResource(R.string.ajustes_servers_found),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        bares.forEach { servidor ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        barHost = servidor.ip
-                                        onConectar(servidor.ip, servidor.puerto)
-                                    }
-                                    .padding(vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.NetworkCheck,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                )
-                                Text(
-                                    text = "${servidor.ip}:${servidor.puerto}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                TextButton(onClick = {
-                                    barHost = servidor.ip
-                                    onConectar(servidor.ip, servidor.puerto)
-                                }) {
-                                    Text(stringResource(R.string.btn_use))
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }

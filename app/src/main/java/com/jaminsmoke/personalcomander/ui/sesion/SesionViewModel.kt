@@ -6,14 +6,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaminsmoke.personalcomander.PersonalComanderApp
 import com.jaminsmoke.personalcomander.R
-import com.jaminsmoke.personalcomander.data.ServidorDescubierto
 import com.jaminsmoke.personalcomander.data.sesion.CampoVisibilidad
-import com.jaminsmoke.personalcomander.data.sesion.ContrasteMembresia
 import com.jaminsmoke.personalcomander.data.sesion.IdentityJson
 import com.jaminsmoke.personalcomander.data.sesion.IdentityRespuesta
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.VisibleOtrosEstablecimientos
-import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,12 +33,6 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _mensaje = MutableStateFlow<String?>(null)
     val mensaje: StateFlow<String?> = _mensaje.asStateFlow()
-
-    private val _bares = MutableStateFlow<List<ServidorDescubierto>>(emptyList())
-    val bares: StateFlow<List<ServidorDescubierto>> = _bares.asStateFlow()
-
-    private val _escaneando = MutableStateFlow(false)
-    val escaneando: StateFlow<Boolean> = _escaneando.asStateFlow()
 
     fun limpiarMensaje() {
         _mensaje.value = null
@@ -216,77 +207,8 @@ class SesionViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun buscarBares() {
-        viewModelScope.launch {
-            _escaneando.value = true
-            _bares.value = repo.buscarBares()
-            _escaneando.value = false
-            if (_bares.value.isEmpty()) {
-                _mensaje.value = ctx.getString(R.string.sesion_bar_ninguno)
-            }
-        }
-    }
-
-    fun conectarBar(host: String, puerto: Int) {
-        viewModelScope.launch {
-            _busy.value = true
-            val r = repo.conectarBar(host, puerto)
-            _busy.value = false
-            _mensaje.value = when {
-                !r.ok -> ctx.getString(R.string.sesion_bar_no_health)
-                r.contraste == ContrasteMembresia.NoCoincide ->
-                    ctx.getString(
-                        R.string.sesion_bar_conectado_sin_membresia,
-                        r.nombreBar ?: host,
-                    )
-                r.admitido -> ctx.getString(
-                    R.string.sesion_bar_conectado_admitido,
-                    r.nombreBar ?: host,
-                )
-                else -> ctx.getString(R.string.sesion_bar_conectado_pendiente)
-            }
-        }
-    }
-
     fun desconectarBar() {
         repo.desconectarBar()
-    }
-
-    fun iniciarJornada() {
-        viewModelScope.launch {
-            _busy.value = true
-            val r = repo.iniciarJornada()
-            _busy.value = false
-            _mensaje.value = when {
-                !r.ok -> ctx.getString(R.string.sesion_jornada_rechazada)
-                r.nodoViejo -> ctx.getString(R.string.sesion_jornada_nodo_viejo)
-                r.sesionActiva -> {
-                    val vigente = repo.modo.value as? ModoSesion.Establecimiento
-                    val libro = IdentityJson.establecimientoIdPorHealth(
-                        vigente?.nombreEstablecimiento,
-                        repo.membresias.value,
-                    )
-                    if (libro == null) {
-                        ctx.getString(R.string.sesion_jornada_sin_libro)
-                    } else {
-                        ctx.getString(
-                            R.string.sesion_jornada_iniciada,
-                            vigente?.etiquetaLocal().orEmpty(),
-                        )
-                    }
-                }
-                else -> ctx.getString(R.string.sesion_jornada_pendiente_bar)
-            }
-        }
-    }
-
-    fun cortarJornada() {
-        viewModelScope.launch {
-            _busy.value = true
-            repo.cortarJornada()
-            _busy.value = false
-            _mensaje.value = ctx.getString(R.string.sesion_jornada_terminada)
-        }
     }
 
     fun cargarInvitaciones() {

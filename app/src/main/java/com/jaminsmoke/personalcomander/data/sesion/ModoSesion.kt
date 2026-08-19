@@ -4,7 +4,8 @@ import com.google.gson.annotations.SerializedName
 
 /**
  * Sesión de primer nivel del camarero. Local no exige cuenta.
- * [Establecimiento] con [admitido] false = Bar visto por health, pendiente de lista blanca.
+ * [Establecimiento] se persiste solo si Bar te tiene en lista blanca ([admitido]).
+ * Un Bar visto en la LAN y no admitido no liga el teléfono: el radar de Resumen lo pinta apagado.
  */
 sealed class ModoSesion {
     data object Local : ModoSesion()
@@ -135,8 +136,9 @@ val ModoSesion.esActivo: Boolean
 val ModoSesion.esJornada: Boolean
     get() = this is ModoSesion.Establecimiento && sesionTrabajo
 
+/** Nombre de sala para UI. Vacío si el health no trajo establecimiento; nunca una IP. */
 fun ModoSesion.Establecimiento.etiquetaLocal(): String =
-    nombreEstablecimiento?.trim()?.takeIf { it.isNotEmpty() } ?: "$barHost:$barPuerto"
+    nombreEstablecimiento?.trim().orEmpty()
 
 val ModoSesion.cartaEditable: Boolean
     get() = when (this) {

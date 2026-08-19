@@ -118,7 +118,6 @@ fun PersonalComanderApp() {
                 exitTransition = { fadeOut(animationSpec = tween(ANIM_DURATION)) },
             ) {
                 HomeScreen(
-                    onOpenAjustes = { navigateAjustes(AjustesAcceso.TURNO.navKey) },
                     onOpenAuth = { navController.navigate("auth") },
                     onOpenPerfil = { navController.navigate("perfil") },
                 )
@@ -163,7 +162,7 @@ fun PersonalComanderApp() {
             ) { entry ->
                 GestionScreen(
                     abrir = entry.arguments?.getString("abrir"),
-                    onOpenAjustes = { navigateAjustes(AjustesAcceso.TURNO.navKey) },
+                    onOpenHome = { navigateTopLevel(TopLevelDestination.HOME) },
                     onOpenAuth = { navController.navigate("auth") },
                     onOpenPerfil = { navController.navigate("perfil") },
                 )

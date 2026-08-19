@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.room.withTransaction
 import com.jaminsmoke.personalcomander.data.AppDatabase
 import com.jaminsmoke.personalcomander.data.EscaneadorRed
-import com.jaminsmoke.personalcomander.data.ServidorDescubierto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +42,7 @@ class SesionRepository(
         }
 
     init {
+        soltarSiNoAdmitido()
         scope.launch { hidratar() }
     }
 
@@ -97,6 +97,7 @@ class SesionRepository(
             }
             if (qr == null && _modo.value is ModoSesion.Establecimiento) desconectarBar()
             persistir(perfil, qr, token, fichaUrl)
+            soltarSiNoAdmitido()
             cargarFoto(token, perfil.fotoUrl)
             refrescarMembresias(token)
             refrescarVisibilidad(token)
@@ -220,13 +221,22 @@ class SesionRepository(
             if (!BarLanCliente.esBar(health)) return@withContext ConectarBarResult(ok = false)
             val sesion = BarLanCliente.postSesion(host, puerto, qr)
             val nombre = health?.establecimiento?.trim()?.takeIf { it.isNotEmpty() }
+            val contraste = IdentityJson.contrastarHealth(nombre, _membresias.value)
+            if (sesion?.admitido != true) {
+                return@withContext ConectarBarResult(
+                    ok = true,
+                    contraste = contraste,
+                    nombreBar = nombre,
+                    admitido = false,
+                )
+            }
             val establecimiento = ModoSesion.Establecimiento(
                 perfil = perfil,
                 qr = qr,
                 token = token,
                 barHost = host,
                 barPuerto = puerto,
-                admitido = sesion?.admitido == true,
+                admitido = true,
                 nombreEstablecimiento = nombre,
                 sesionTrabajo = false,
                 fichaUrl = actual.fichaUrl,
@@ -234,12 +244,12 @@ class SesionRepository(
             store.guardarEstablecimiento(establecimiento)
             _modo.value = establecimiento
             espejarCarta(host, puerto)
-            if (establecimiento.admitido) espejarMapa(host, puerto)
+            espejarMapa(host, puerto)
             ConectarBarResult(
                 ok = true,
-                contraste = IdentityJson.contrastarHealth(nombre, _membresias.value),
+                contraste = contraste,
                 nombreBar = nombre,
-                admitido = establecimiento.admitido,
+                admitido = true,
             )
         }
 
@@ -264,6 +274,23 @@ class SesionRepository(
         )
         store.guardarIdentidad(identidad.perfil, identidad.qr, identidad.token, identidad.fichaUrl)
         _modo.value = identidad
+    }
+
+    suspend fun pedirJornada(host: String, puerto: Int): BarLanCliente.JornadaLanResult {
+        val actual = _modo.value
+        if (actual is ModoSesion.Establecimiento &&
+            actual.sesionTrabajo &&
+            !mismosNodo(host, puerto, actual)
+        ) {
+            cortarJornada()
+        }
+        val ligado = _modo.value as? ModoSesion.Establecimiento
+        if (ligado == null || !mismosNodo(host, puerto, ligado) || !ligado.admitido) {
+            val r = conectarBar(host, puerto)
+            if (!r.ok) return BarLanCliente.JornadaLanResult(ok = false, codigo = 0)
+            if (!r.admitido) return BarLanCliente.JornadaLanResult(ok = false, codigo = 403)
+        }
+        return iniciarJornada()
     }
 
     suspend fun iniciarJornada(): BarLanCliente.JornadaLanResult {
@@ -348,6 +375,13 @@ class SesionRepository(
         val qr = actual.qr ?: return
         withContext(Dispatchers.IO) {
             val sesion = BarLanCliente.postSesion(actual.barHost, actual.barPuerto, qr)
+            if (sesion != null && !sesion.admitido) {
+                if (actual.sesionTrabajo) {
+                    BarLanCliente.postCortar(actual.barHost, actual.barPuerto, qr)
+                }
+                withContext(Dispatchers.Main.immediate) { desconectarBar() }
+                return@withContext
+            }
             val health = BarLanCliente.health(actual.barHost, actual.barPuerto)
             val admitido = sesion?.admitido ?: actual.admitido
             val nombre = health?.establecimiento?.trim()?.takeIf { it.isNotEmpty() }
@@ -408,8 +442,48 @@ class SesionRepository(
         }
     }
 
-    suspend fun buscarBares(): List<ServidorDescubierto> = withContext(Dispatchers.IO) {
-        EscaneadorRed.escanear(listOf(BarLanCliente.PUERTO))
+    /**
+     * Radar de la Wi‑Fi actual. No liga si Bar no admite.
+     * El host `10.0.2.2` (emulador) se prueba además del scan; nunca se enseña.
+     */
+    suspend fun sondearLan(): List<LanLocalUi> = withContext(Dispatchers.IO) {
+        val actual = _modo.value
+        val qr = actual.qr
+        if (actual is ModoSesion.Local || qr == null) return@withContext emptyList()
+        val scan = EscaneadorRed.escanear(listOf(BarLanCliente.PUERTO))
+        val clavesScan = scan.map { "${it.ip}:${it.puerto}" }.toHashSet()
+        val candidatos = candidatosLan(scan)
+        val vigente = actual as? ModoSesion.Establecimiento
+        candidatos.mapNotNull { s ->
+            val health = BarLanCliente.health(s.ip, s.puerto)
+            val nombre = nombreLanVisible(health?.establecimiento)
+            val enScan = "${s.ip}:${s.puerto}" in clavesScan
+            if (!BarLanCliente.esBar(health)) {
+                val aspecto = aspectoSondeo(enScan, errorConexion = true, admitido = false, jornada = false)
+                    ?: return@mapNotNull null
+                return@mapNotNull LanLocalUi(s.ip, s.puerto, nombre, aspecto)
+            }
+            val jornada = vigente != null &&
+                vigente.sesionTrabajo &&
+                mismosNodo(s.ip, s.puerto, vigente)
+            if (jornada) {
+                return@mapNotNull LanLocalUi(
+                    s.ip,
+                    s.puerto,
+                    nombre.ifEmpty { vigente.etiquetaLocal() },
+                    LanLocalAspecto.VERDE,
+                )
+            }
+            val sesion = BarLanCliente.postSesion(s.ip, s.puerto, qr)
+            val admitido = sesion?.admitido == true
+            LanLocalUi(s.ip, s.puerto, nombre, aspectoLan(false, admitido, false))
+        }
+    }
+
+    /** Prefs antiguas: ligado sin lista blanca no debe candar carta ni mapa. */
+    private fun soltarSiNoAdmitido() {
+        val vigente = _modo.value as? ModoSesion.Establecimiento ?: return
+        if (!vigente.admitido && !vigente.sesionTrabajo) desconectarBar()
     }
 
     private fun persistir(

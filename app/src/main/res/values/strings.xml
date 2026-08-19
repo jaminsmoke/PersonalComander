@@ -27,6 +27,16 @@
     <string name="home_oficio_vacio">Sin actividad en esta ventana.</string>
     <string name="home_oficio_grafica">Horas de jornada por día</string>
     <string name="home_oficio_error">No se pudo leer el oficio.</string>
+    <string name="home_lan_title">En esta red</string>
+    <string name="home_lan_entrar">Entra para ver los locales de esta Wi‑Fi.</string>
+    <string name="home_lan_escaneando">Buscando locales…</string>
+    <string name="home_lan_vacio">Ningún Bar en esta red.</string>
+    <string name="home_lan_local_sin_nombre">Local</string>
+    <string name="home_lan_apagado">Este local tiene que darte de alta como camarero.</string>
+    <string name="home_lan_estado_apagado">Sin alta en el local</string>
+    <string name="home_lan_estado_amarillo">Pedir jornada</string>
+    <string name="home_lan_estado_verde">Jornada en curso</string>
+    <string name="home_lan_estado_rojo">Sin conexión. Toca para reintentar</string>
 
     <!-- Mesas Screen -->
     <string name="mesas_title">Personal Comander</string>
@@ -74,7 +84,7 @@
     <string name="gestion_carta">Carta</string>
     <string name="gestion_locales">Locales</string>
     <string name="gestion_invitaciones">Invitaciones</string>
-    <string name="gestion_locales_ir_turno">Turno en Ajustes</string>
+    <string name="gestion_locales_ir_turno">Ver locales en esta red</string>
     <string name="gestion_invitaciones_vacio_titulo">Sin invitaciones</string>
     <string name="gestion_invitaciones_vacio_desc">Cuando un local te invite, aparecerán aquí.</string>
     <string name="gestion_invitaciones_ver_qr">Ver mi ficha</string>
@@ -167,7 +177,6 @@
 
     <!-- Ajustes Screen -->
     <string name="ajustes_title">Ajustes</string>
-    <string name="ajustes_acceso_turno">Turno</string>
     <string name="ajustes_acceso_tpv">TPV</string>
     <string name="ajustes_acceso_copias">Copias</string>
     <string name="ajustes_import_preview_title">Vista previa de importación</string>
@@ -353,21 +362,13 @@
     <string name="sesion_jornada_nodo_viejo">Este Bar aún no gestiona jornada. Se envía como hasta ahora.</string>
     <string name="sesion_jornada_pendiente_bar">Jornada pedida. Espera a que Bar acepte.</string>
     <string name="sesion_jornada_sin_libro">Jornada activa en sala. El libro de oficio no se abrió: el local no coincide con tus membresías.</string>
-    <string name="sesion_ronda_sin_jornada">No hay jornada activa. Empieza la jornada en Ajustes.</string>
+    <string name="sesion_ronda_sin_jornada">No hay jornada activa. Pídela en Resumen, en el local de esta red.</string>
     <string name="sesion_cerrar">Cerrar sesión</string>
     <string name="sesion_error_generico">No se pudo completar. Revisa la URL de Identity y la red.</string>
-    <string name="sesion_bar_ninguno">No se encontró ningún Bar en el puerto 8787.</string>
-    <string name="sesion_bar_conectado_pendiente">Turno en el nodo. Pendiente de lista blanca: enseña el QR en barra. La carta local no se bloquea.</string>
-    <string name="sesion_bar_conectado_admitido">Turno activo en «%1$s». Carta y mapa los marca el Bar.</string>
-    <string name="sesion_bar_conectado_sin_membresia">Turno en «%1$s». Identity no lista este local en tus registros (Bar puede no haberlo escrito aún). El turno sigue activo.</string>
-    <string name="sesion_bar_no_health">No hay un Bar respondiendo en esa dirección.</string>
     <string name="sesion_carta_solo_lectura">La carta la marca el Bar. No se puede editar en este dispositivo.</string>
     <string name="sesion_mapa_solo_lectura">El mapa lo marca el Bar. No se puede editar en este dispositivo.</string>
     <string name="sesion_banner_solo_lectura">Carta del establecimiento (solo lectura). Los cambios se hacen en el Bar.</string>
     <string name="sesion_banner_mapa_solo_lectura">Mapa del establecimiento (solo lectura). Los cambios se hacen en el Bar.</string>
-    <string name="sesion_sala_title">Turno en el establecimiento</string>
-    <string name="sesion_sala_desc">Activa el turno en un Bar de la red local (puerto 8787). Puedes estar registrado en varios locales; activo solo en uno. Hace falta cuenta y QR.</string>
-    <string name="sesion_sala_login_primero">Entra con tu cuenta para activar un turno.</string>
     <string name="sesion_membresias_titulo">Registrado en</string>
     <string name="sesion_membresias_desc">Membresías en Identity. Registrado no es lo mismo que turno activo.</string>
     <string name="sesion_membresias_vacio">Ningún local en Identity todavía. La invitación la manda Bar.</string>
@@ -376,9 +377,6 @@
     <string name="sesion_membresia_linea">%1$s · %2$s</string>
     <string name="sesion_rol_dueno">dueño</string>
     <string name="sesion_rol_staff">staff</string>
-    <string name="sesion_buscar_bares">Buscar Bar</string>
-    <string name="sesion_conectar_bar">Activar turno</string>
-    <string name="sesion_bar_host">Host del Bar</string>
     <string name="sesion_tpv_bloqueado">Sincronizar TPV e importar carta está desactivado: la carta la marca el Bar.</string>
 
     <!-- Empty States -->

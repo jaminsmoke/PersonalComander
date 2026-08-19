@@ -4,9 +4,16 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jaminsmoke.personalcomander.PersonalComanderApp
+import com.jaminsmoke.personalcomander.R
+import com.jaminsmoke.personalcomander.data.sesion.IdentityJson
+import com.jaminsmoke.personalcomander.data.sesion.LanLocalAspecto
+import com.jaminsmoke.personalcomander.data.sesion.LanLocalUi
+import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.OficioPunto
 import com.jaminsmoke.personalcomander.data.sesion.OficioVentana
+import com.jaminsmoke.personalcomander.data.sesion.etiquetaLocal
 import com.jaminsmoke.personalcomander.data.sesion.limites
+import com.jaminsmoke.personalcomander.data.sesion.qr
 import com.jaminsmoke.personalcomander.data.sesion.serie
 import com.jaminsmoke.personalcomander.data.sesion.token
 import kotlinx.coroutines.delay
@@ -42,6 +49,14 @@ data class OficioUiState(
     val error: String? = null,
 )
 
+data class LanRadarUiState(
+    val conSesion: Boolean = false,
+    val escaneando: Boolean = false,
+    val ocupado: Boolean = false,
+    val locales: List<LanLocalUi> = emptyList(),
+    val mensaje: String? = null,
+)
+
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val app = application as PersonalComanderApp
@@ -54,6 +69,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _refrescoOficio = MutableStateFlow(0)
     private val _oficio = MutableStateFlow(OficioUiState())
     val oficio: StateFlow<OficioUiState> = _oficio.asStateFlow()
+
+    private val _lan = MutableStateFlow(LanRadarUiState())
+    val lan: StateFlow<LanRadarUiState> = _lan.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -83,6 +101,78 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun refrescarOficio() {
         _refrescoOficio.value = _refrescoOficio.value + 1
+    }
+
+    fun sondearLan() {
+        viewModelScope.launch {
+            val modo = sesion.modo.value
+            val conSesion = modo !is ModoSesion.Local && modo.qr != null
+            _lan.value = _lan.value.copy(conSesion = conSesion, escaneando = conSesion)
+            if (!conSesion) {
+                _lan.value = LanRadarUiState(conSesion = false)
+                return@launch
+            }
+            val locales = sesion.sondearLan()
+            _lan.value = _lan.value.copy(escaneando = false, locales = locales)
+        }
+    }
+
+    fun limpiarMensajeLan() {
+        _lan.value = _lan.value.copy(mensaje = null)
+    }
+
+    fun alPulsarLocal(item: LanLocalUi) {
+        if (_lan.value.ocupado || _lan.value.escaneando) return
+        when (item.aspecto) {
+            LanLocalAspecto.APAGADO ->
+                _lan.value = _lan.value.copy(mensaje = getApplication<Application>().getString(R.string.home_lan_apagado))
+            LanLocalAspecto.ROJO -> sondearLan()
+            LanLocalAspecto.AMARILLO -> pedirJornada(item)
+            LanLocalAspecto.VERDE -> cortarJornada()
+        }
+    }
+
+    private fun pedirJornada(item: LanLocalUi) {
+        viewModelScope.launch {
+            _lan.value = _lan.value.copy(ocupado = true, mensaje = null)
+            val r = sesion.pedirJornada(item.host, item.puerto)
+            val ctx = getApplication<Application>()
+            val vigente = sesion.modo.value as? ModoSesion.Establecimiento
+            val nombre = vigente?.etiquetaLocal()?.ifBlank { null }
+                ?: item.nombre.ifBlank { ctx.getString(R.string.home_lan_local_sin_nombre) }
+            val mensaje = when {
+                !r.ok -> ctx.getString(R.string.sesion_jornada_rechazada)
+                r.nodoViejo -> ctx.getString(R.string.sesion_jornada_nodo_viejo)
+                r.sesionActiva -> {
+                    val libro = IdentityJson.establecimientoIdPorHealth(
+                        vigente?.nombreEstablecimiento,
+                        sesion.membresias.value,
+                    )
+                    if (libro == null) {
+                        ctx.getString(R.string.sesion_jornada_sin_libro)
+                    } else {
+                        ctx.getString(R.string.sesion_jornada_iniciada, nombre)
+                    }
+                }
+                else -> ctx.getString(R.string.sesion_jornada_pendiente_bar)
+            }
+            _lan.value = _lan.value.copy(ocupado = false, mensaje = mensaje)
+            refrescarOficio()
+            sondearLan()
+        }
+    }
+
+    private fun cortarJornada() {
+        viewModelScope.launch {
+            _lan.value = _lan.value.copy(ocupado = true, mensaje = null)
+            sesion.cortarJornada()
+            _lan.value = _lan.value.copy(
+                ocupado = false,
+                mensaje = getApplication<Application>().getString(R.string.sesion_jornada_terminada),
+            )
+            refrescarOficio()
+            sondearLan()
+        }
     }
 
     val uiState: StateFlow<HomeUiState> = _inicioDelDia.flatMapLatest { inicio ->
