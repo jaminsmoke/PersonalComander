@@ -63,7 +63,7 @@ class ModoSesionTest {
         assertTrue(modo.cartaEditable)
         assertTrue(modo.mapaEditable)
         assertTrue(modo.puedeAdherirseABar)
-        assertEquals("192.168.1.10:8787", modo.etiquetaLocal())
+        assertEquals("", modo.etiquetaLocal())
         assertTrue(modo.esActivo)
         assertFalse(modo.esJornada)
         assertFalse(modo.esStandalone)

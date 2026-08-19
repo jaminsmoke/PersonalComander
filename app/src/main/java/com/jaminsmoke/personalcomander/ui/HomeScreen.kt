@@ -2,6 +2,7 @@ package com.jaminsmoke.personalcomander.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +53,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jaminsmoke.personalcomander.R
+import com.jaminsmoke.personalcomander.data.sesion.LanLocalAspecto
+import com.jaminsmoke.personalcomander.data.sesion.LanLocalUi
 import com.jaminsmoke.personalcomander.data.sesion.ModoSesion
 import com.jaminsmoke.personalcomander.data.sesion.OficioVentana
 import com.jaminsmoke.personalcomander.data.sesion.formatoHorasOficio
@@ -64,7 +67,6 @@ import com.jaminsmoke.personalcomander.ui.sesion.SesionViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onOpenAjustes: () -> Unit,
     onOpenAuth: () -> Unit,
     onOpenPerfil: () -> Unit,
     viewModel: HomeViewModel = viewModel(),
@@ -72,6 +74,7 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val oficio by viewModel.oficio.collectAsState()
+    val lan by viewModel.lan.collectAsState()
     val modo by sesionViewModel.modo.collectAsState()
     val fotoSesion by sesionViewModel.foto.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -81,12 +84,19 @@ fun HomeScreen(
     LaunchedEffect(state.error) {
         state.error?.let { snackbarHostState.showSnackbar(it) }
     }
+    LaunchedEffect(lan.mensaje) {
+        lan.mensaje?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.limpiarMensajeLan()
+        }
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
                 sesionViewModel.revalidarTurno()
                 viewModel.refrescarOficio()
+                viewModel.sondearLan()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -111,9 +121,7 @@ fun HomeScreen(
                 supportingContent = {
                     PcTurnoIndicador(
                         modo = modo,
-                        onClick = {
-                            if (modo is ModoSesion.Local) onOpenAuth() else onOpenAjustes()
-                        },
+                        onClick = if (modo is ModoSesion.Local) onOpenAuth else null,
                     )
                 },
             )
@@ -139,6 +147,12 @@ fun HomeScreen(
                 } else {
                     ResumenDiaCard(state)
                 }
+            }
+            item {
+                LanRadarCard(
+                    state = lan,
+                    onPulsar = viewModel::alPulsarLocal,
+                )
             }
             item {
                 OficioCard(
@@ -209,6 +223,127 @@ private fun ResumenDiaCard(state: HomeUiState) {
                     modifier = Modifier.weight(1f),
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun LanRadarCard(
+    state: LanRadarUiState,
+    onPulsar: (LanLocalUi) -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(scheme.surfaceContainer, scheme.surfaceContainerLowest)
+                )
+            )
+            .border(
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    listOf(
+                        scheme.secondary.copy(alpha = 0.28f),
+                        scheme.secondary.copy(alpha = 0.06f),
+                    )
+                ),
+                shape = RoundedCornerShape(12.dp),
+            )
+            .padding(20.dp),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = stringResource(R.string.home_lan_title).uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                color = scheme.onSurfaceVariant,
+            )
+            if (!state.conSesion) {
+                Text(
+                    text = stringResource(R.string.home_lan_entrar),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = scheme.onSurfaceVariant,
+                )
+            } else if (state.escaneando && state.locales.isEmpty()) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                Text(
+                    text = stringResource(R.string.home_lan_escaneando),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = scheme.onSurfaceVariant,
+                )
+            } else if (state.locales.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.home_lan_vacio),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = scheme.onSurfaceVariant,
+                )
+            } else {
+                if (state.escaneando || state.ocupado) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+                state.locales.forEach { local ->
+                    LanLocalFila(
+                        local = local,
+                        enabled = !state.ocupado && !state.escaneando,
+                        onClick = { onPulsar(local) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LanLocalFila(
+    local: LanLocalUi,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val color = when (local.aspecto) {
+        LanLocalAspecto.APAGADO -> scheme.outline
+        LanLocalAspecto.AMARILLO -> scheme.secondary
+        LanLocalAspecto.VERDE -> scheme.tertiary
+        LanLocalAspecto.ROJO -> scheme.error
+    }
+    val estado = stringResource(
+        when (local.aspecto) {
+            LanLocalAspecto.APAGADO -> R.string.home_lan_estado_apagado
+            LanLocalAspecto.AMARILLO -> R.string.home_lan_estado_amarillo
+            LanLocalAspecto.VERDE -> R.string.home_lan_estado_verde
+            LanLocalAspecto.ROJO -> R.string.home_lan_estado_rojo
+        },
+    )
+    val nombre = local.nombre.ifBlank { stringResource(R.string.home_lan_local_sin_nombre) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(12.dp)
+                .clip(CircleShape)
+                .background(color),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = nombre,
+                style = MaterialTheme.typography.titleMedium,
+                color = scheme.onSurface,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                text = estado,
+                style = MaterialTheme.typography.bodySmall,
+                color = color,
+            )
         }
     }
 }

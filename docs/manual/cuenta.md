@@ -34,17 +34,17 @@ El nick que se ve en los locales se edita aquí, en registro o perfil.
 
 ## Indicador de turno
 
-Bajo el título, en **Resumen** y **Gestión**, aparece **Standalone** si no hay local, o el nombre del establecimiento (Activo / En nodo / Pendiente). Un toque abre **Entrar** en modo Local, o **Ajustes → Turno** si ya hay sesión.
+Bajo el título, en **Resumen** y **Gestión**, aparece **Standalone** si no hay local, o el nombre del establecimiento (Activo / En nodo). En modo Local un toque abre **Entrar**. Con sesión, el radar de esta Wi‑Fi está en **Resumen**; desde Gestión → Locales el indicador y **Ver locales en esta red** llevan a Resumen.
 
 ## Turno en un establecimiento
 
 El camarero se liga en **turno** al nodo Bar del local, no a una «sala» como si fuera un servidor. El registro canónico del negocio y de la membresía vive en Identity. Las **salas** (barra, interior, terraza…) son zonas del mapa.
 
-1. En **Ajustes → Turno**, busca Bares en la LAN.
-2. Conecta con el QR / sesión de camarero.
-3. Comprueba admisión y, si el nodo lo pide, inicia jornada.
+1. En **Resumen**, espera a que el radar muestre los Bares de esta Wi‑Fi.
+2. Amarillo: pide jornada (Commander liga solo si Bar te admite). Verde: jornada en curso; toca para terminarla. Gris: el local tiene que darte de alta; no se liga el teléfono.
+3. Rojo es fallo de red o Bar caído: toca para reintentar. No se enseña la IP.
 
-Cuando el dispositivo está ligado:
+Cuando el dispositivo está ligado y admitido:
 
 - El mapa puede quedar en solo lectura.
 - La carta puede quedar bloqueada para edición local.

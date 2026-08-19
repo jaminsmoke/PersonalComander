@@ -70,7 +70,7 @@ private const val HUB_COLUMNAS = 2
 @Composable
 fun GestionScreen(
     abrir: String? = null,
-    onOpenAjustes: () -> Unit,
+    onOpenHome: () -> Unit,
     onOpenAuth: () -> Unit,
     onOpenPerfil: () -> Unit,
     sesionViewModel: SesionViewModel = viewModel(),
@@ -93,7 +93,7 @@ fun GestionScreen(
         GestionAcceso.CARTA -> MenuScreen(onBack = { seleccion = null })
         GestionAcceso.LOCALES -> LocalesGestionScreen(
             onBack = { seleccion = null },
-            onOpenAjustes = onOpenAjustes,
+            onOpenHome = onOpenHome,
             onOpenAuth = onOpenAuth,
             sesionViewModel = sesionViewModel,
         )
@@ -200,7 +200,7 @@ private fun GestionTile(
 @Composable
 private fun LocalesGestionScreen(
     onBack: () -> Unit,
-    onOpenAjustes: () -> Unit,
+    onOpenHome: () -> Unit,
     onOpenAuth: () -> Unit,
     sesionViewModel: SesionViewModel,
 ) {
@@ -234,7 +234,7 @@ private fun LocalesGestionScreen(
                 PcTurnoIndicador(
                     modo = modo,
                     onClick = {
-                        if (modo is ModoSesion.Local) onOpenAuth() else onOpenAjustes()
+                        if (modo is ModoSesion.Local) onOpenAuth() else onOpenHome()
                     },
                 )
             }
@@ -249,7 +249,7 @@ private fun LocalesGestionScreen(
                 } else {
                     PcPrimaryButton(
                         text = stringResource(R.string.gestion_locales_ir_turno),
-                        onClick = onOpenAjustes,
+                        onClick = onOpenHome,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }

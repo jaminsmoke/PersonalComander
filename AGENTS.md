@@ -46,7 +46,7 @@ app/src/main/java/com/jaminsmoke/personalcomander/
     ├── MesasScreen.kt / MesasViewModel.kt / MesasBoard.kt  # Board + list views
     ├── ComandaScreen.kt / ComandaViewModel.kt               # Order taking
     ├── MenuScreen.kt / MenuViewModel.kt                     # Product CRUD (Carta, desde Gestión)
-    ├── AjustesScreen.kt / AjustesAcceso.kt / AjustesViewModel.kt  # Hub Ajustes (Turno, TPV, Copias)
+    ├── AjustesScreen.kt / AjustesAcceso.kt / AjustesViewModel.kt  # Hub Ajustes (TPV, Copias)
     ├── gestion/              # Hub Gestión (Carta, Locales, Invitaciones)
     ├── sesion/               # Auth, perfil (QR, visibilidad, nick)
     ├── Voz.kt / VozParser.kt     # Voice recognition + NL parser
@@ -91,10 +91,10 @@ Barra inferior (solo rutas top-level; se oculta en `auth`, `perfil` y `comanda/{
 
 | Tab (string) | Ruta | Pantalla | Qué es |
 |---|---|---|---|
-| Resumen | `home` | `HomeScreen.kt` | Facturado hoy |
+| Resumen | `home` | `HomeScreen.kt` | Facturado hoy + radar LAN |
 | Mesas | `mesas` | `MesasScreen.kt` | Tablero. **Sin** chip de sesión |
 | Gestión | `menu` | `GestionScreen.kt` | Hub: Carta, Locales, Invitaciones |
-| Ajustes | `ajustes` | `AjustesScreen.kt` | Hub: Turno, TPV, Copias (`ajustes?abrir=`) |
+| Ajustes | `ajustes` | `AjustesScreen.kt` | Hub: TPV, Copias (`ajustes?abrir=`) |
 
 ### Sesión (Identity)
 
@@ -104,20 +104,19 @@ El camino diario está en el **header**, no en Ajustes. `PcSesionChip` vive en `
 |---|---|---|---|
 | TextButton **Entrar** (modo Local) | tap | `auth` | `AuthScreen.kt` — título «Iniciar sesión» |
 | Chip avatar + nick (hay sesión) | tap | `perfil` | `PerfilScreen.kt` — título «Mi perfil» |
-| **Standalone** / nombre del local (`PcTurnoIndicador`, bajo el título) | tap | `auth` si Local; `ajustes?abrir=turno` si hay sesión | Home y Gestión |
+| **Standalone** / nombre del local (`PcTurnoIndicador`, bajo el título) | tap | `auth` si Local; **Resumen** (radar) si hay sesión desde Gestión | Home y Gestión |
 
 **Iniciar sesión (`auth`):** pestañas Entrar / Registro. Campos **Correo** y **Contraseña** (no «Email»). Botón amarillo **Entrar**. **No hay URL de Identity.** Default: `SesionStore.DEFAULT_IDENTITY_URL` = `https://camareros.siberia.solutions` (VPS; Docker en el servidor). Prefs con Docker local (`10.0.2.2:8080`) se reescriben al VPS.
 
 **Mi perfil (`perfil`):** nick, foto, «Qué se ve en tu ficha» (8 switches contra Identity), card **Directorio de locales** (`nunca` / `solo_libre` / `siempre`), bloque de membresías con estado **Libre** / **Trabajador de X**, QR, **Ver mi ficha**, renovar/revocar clave, cerrar sesión. Visibilidad, directorio y ficha **no** están en Ajustes.
 
-**Ajustes — Turno:** Bar LAN `:8787` (`10.0.2.2` en emulador con `adb forward`); las membresías siguen aquí. **Ajustes — TPV** y **Copias:** catálogo LAN y JSON. Identity va al VPS (`SesionStore.DEFAULT_IDENTITY_URL`); no hay campo de URL en la UI. Commander no llama a `:8082`.
-
-Hay **otro** «Entrar» en `SalaCard` si Local. Es un atajo, no el flujo de uso.
+**Ajustes — TPV** y **Copias:** catálogo LAN y JSON. El turno de sala (Bares de esta Wi‑Fi) vive en **Resumen**, no en Ajustes. Identity va al VPS (`SesionStore.DEFAULT_IDENTITY_URL`); no hay campo de URL en la UI. Commander no llama a `:8082`. El emulador sigue necesitando `adb forward` al `:8787` del tablet; el radar prueba `10.0.2.2` sin pintar la IP.
 
 ### Gestión y sala
 
 - Hub Gestión: Carta (`MenuScreen`), Locales (membresías Identity), Invitaciones (bandeja: aceptar/rechazar + historial).
-- Hub Ajustes: Turno (Bar LAN + membresías), TPV, Copias. Los hubs se parecen a propósito; más adelante pueden diferenciarse (fondo) o intercambiar baldosas.
+- Hub Ajustes: TPV, Copias. Los hubs se parecen a propósito; más adelante pueden diferenciarse (fondo) o intercambiar baldosas.
+- Resumen: radar LAN de Bares en esta Wi‑Fi (nombres, nunca host). Locales Identity ≠ locales de esta red.
 - Mesas → tap mesa → `comanda/{mesaId}` (`ComandaScreen.kt`). Voz y comanda viven ahí.
 
 ## Familia PersonalHostel

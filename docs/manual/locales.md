@@ -14,8 +14,8 @@
 
 - Muestra los locales que Identity conoce para tu cuenta, con el estado **Libre** (ninguna membresía) o **Trabajador de** esos locales.
 - Si no hay sesión, el botón **Entrar** abre el login.
-- Si ya hay cuenta, **Turno en Ajustes** abre **Ajustes → Turno** para ligar el teléfono a un Bar de la LAN.
+- Si ya hay cuenta, **Ver locales en esta red** abre **Resumen**, donde el radar muestra los Bares de esta Wi‑Fi.
 
-El registro canónico del negocio vive en Identity. El **turno** (nodo `:8787`, admisión, jornada) se activa en [Ajustes](ajustes.md), no aquí.
+El registro canónico del negocio vive en Identity. El **turno** (nodo LAN, admisión, jornada) se activa en [Resumen](resumen.md), no aquí. Aquí no se enseña host ni puerto.
 
 Bajo el título puedes tocar el indicador de turno (**Standalone** o el nombre del local). El flujo está en [Cuenta y turno](cuenta.md).

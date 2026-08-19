@@ -193,7 +193,9 @@ fun PerfilScreen(
                                 actual.admitido -> R.string.sesion_modo_sala_sin_jornada
                                 else -> R.string.sesion_modo_sala_pendiente
                             },
-                            actual.etiquetaLocal(),
+                            actual.etiquetaLocal().ifBlank {
+                                stringResource(R.string.home_lan_local_sin_nombre)
+                            },
                         ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.secondary,

@@ -1,22 +1,18 @@
 # Ajustes
 
-La pestaña **Ajustes** abre un hub de baldosas (el mismo patrón que Gestión): **Turno**, **TPV** y **Copias**. Cada baldosa lleva a su sección; la flecha vuelve al hub.
+La pestaña **Ajustes** abre un hub de baldosas (el mismo patrón que Gestión): **TPV** y **Copias**. Cada baldosa lleva a su sección; la flecha vuelve al hub.
 
 El login diario **no está aquí**. Para entrar o ver el perfil usa el chip **Entrar** / avatar del header (Resumen, Gestión o Ajustes). El flujo de cuenta está en [Cuenta y turno](cuenta.md).
 
-El indicador de turno en Resumen y en Gestión → Locales abre **Ajustes → Turno** (`ajustes?abrir=turno`), no el hub.
+El turno de sala no vive en Ajustes: los Bares de **esta Wi‑Fi** se ven en [Resumen](resumen.md). Las membresías de Identity están en [Gestión → Locales](locales.md).
 
 <div class="pc-doc-shot" markdown>
 
 ![Ajustes](../screenshots/ajustes.png)
 
-*Hub de Ajustes: Turno, TPV y Copias.*
+*Hub de Ajustes: TPV y Copias.*
 
 </div>
-
-## Turno
-
-En **Ajustes → Turno** buscas el Bar de la LAN (`:8787`) y ligas el teléfono al local. Las membresías de Identity siguen en esta sección. Qué implica el turno está en [Cuenta y turno](cuenta.md).
 
 ## Sincronización con TPV
 
