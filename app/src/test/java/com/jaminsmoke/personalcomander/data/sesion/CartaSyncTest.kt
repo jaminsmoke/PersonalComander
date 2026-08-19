@@ -2,6 +2,7 @@ package com.jaminsmoke.personalcomander.data.sesion
 
 import com.jaminsmoke.personalcomander.data.Producto
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -67,5 +68,86 @@ class CartaSyncTest {
         assertEquals("Caña", plan.actualizar[0].nombre)
         assertEquals("cana", plan.actualizar[0].codigoBar)
         assertEquals("Seed local", locales[1].nombre)
+    }
+
+    @Test
+    fun parse_propaga_schema() {
+        val carta = CartaSync.parse("""{"schema":2,"productos":[]}""")!!
+        assertEquals(2, carta.schema)
+    }
+
+    @Test
+    fun parse_sin_schema_es_cero() {
+        val carta = CartaSync.parse("""{"productos":[]}""")!!
+        assertEquals(0, carta.schema)
+    }
+
+    @Test
+    fun debeReconstruir_si_schema_cambia() {
+        assertTrue(
+            CartaSync.debeReconstruir(
+                schemaRemoto = 2,
+                schemaGuardado = 0,
+                existentes = emptyList(),
+                remotos = emptyList(),
+            ),
+        )
+    }
+
+    @Test
+    fun debeReconstruir_si_remotos_son_uuid_y_locales_slug() {
+        val locales = listOf(
+            Producto(id = 9, nombre = "Caña", categoria = "Bebida", precio = 2.0, codigoBar = "cana"),
+        )
+        val remotos = listOf(
+            ProductoLan(id = "550e8400-e29b-41d4-a716-446655440000", nombre = "Caña", categoria = "Bebida", precio = 2.5),
+        )
+        assertTrue(
+            CartaSync.debeReconstruir(
+                schemaRemoto = 0,
+                schemaGuardado = 0,
+                existentes = locales,
+                remotos = remotos,
+            ),
+        )
+    }
+
+    @Test
+    fun debeReconstruir_falso_si_ya_estan_en_uuid() {
+        val uuid = "550e8400-e29b-41d4-a716-446655440000"
+        val locales = listOf(
+            Producto(id = 9, nombre = "Caña", categoria = "Bebida", precio = 2.0, codigoBar = uuid),
+        )
+        val remotos = listOf(
+            ProductoLan(id = uuid, nombre = "Caña", categoria = "Bebida", precio = 2.5),
+        )
+        assertFalse(
+            CartaSync.debeReconstruir(
+                schemaRemoto = 2,
+                schemaGuardado = 2,
+                existentes = locales,
+                remotos = remotos,
+            ),
+        )
+    }
+
+    @Test
+    fun planReconstruccion_reapunta_por_nombre_y_no_toca_locales() {
+        val uuid = "550e8400-e29b-41d4-a716-446655440000"
+        val locales = listOf(
+            Producto(id = 9, nombre = "Caña", categoria = "Bebida", precio = 2.0, codigoBar = "cana"),
+            Producto(id = 1, nombre = "Seed local", categoria = "Bebidas", precio = 1.5),
+        )
+        val remotos = listOf(
+            ProductoLan(id = uuid, nombre = "Caña", categoria = "Bebida", precio = 2.5),
+            ProductoLan(id = "7f4c2c2e-0000-4000-8000-000000000000", nombre = "Croquetas", categoria = "Comida", precio = 6.0),
+        )
+        val plan = CartaSync.planReconstruccion(locales, remotos)
+        assertEquals(1, plan.actualizar.size)
+        assertEquals(9L, plan.actualizar[0].id)          // conserva el id Long local
+        assertEquals(uuid, plan.actualizar[0].codigoBar) // re-apunta al nuevo id
+        assertEquals(1, plan.insertar.size)
+        assertEquals("Croquetas", plan.insertar[0].nombre)
+        assertEquals("Seed local", locales[1].nombre)    // local sin codigoBar intacto
     }
 }

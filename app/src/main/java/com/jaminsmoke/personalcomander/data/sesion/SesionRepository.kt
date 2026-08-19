@@ -421,16 +421,34 @@ class SesionRepository(
         }
     }
 
-    /** Best-effort: 404 o red caída no deshacen el ligue. No borra productos locales. */
+    /**
+     * Best-effort: 404 o red caída no deshacen el ligue. No borra productos locales.
+     * Si el esquema de carta cambió (p. ej. slug→UUID), reconstruye el espejo
+     * re-apuntando `codigoBar` por nombre — sin borrar, para no romper líneas históricas.
+     */
     private suspend fun espejarCarta(host: String, puerto: Int) {
         val carta = BarLanCliente.carta(host, puerto) ?: return
         val existentes = db.productoDao().getAllIncluyendoOcultos()
-        val plan = CartaSync.plan(existentes, carta.productos)
-        if (plan.insertar.isEmpty() && plan.actualizar.isEmpty()) return
+        val reconstruir = CartaSync.debeReconstruir(
+            schemaRemoto = carta.schema,
+            schemaGuardado = store.cartaSchema,
+            existentes = existentes,
+            remotos = carta.productos,
+        )
+        val plan = if (reconstruir) {
+            CartaSync.planReconstruccion(existentes, carta.productos)
+        } else {
+            CartaSync.plan(existentes, carta.productos)
+        }
+        if (plan.insertar.isEmpty() && plan.actualizar.isEmpty()) {
+            if (reconstruir) store.cartaSchema = carta.schema
+            return
+        }
         db.withTransaction {
             if (plan.insertar.isNotEmpty()) db.productoDao().insertAll(plan.insertar)
             if (plan.actualizar.isNotEmpty()) db.productoDao().updateAll(plan.actualizar)
         }
+        if (reconstruir) store.cartaSchema = carta.schema
     }
 
     /**
