@@ -22,6 +22,13 @@ class SesionStore(context: Context) {
             prefs.edit().putString(KEY_URL, urlIdentityEfectiva(value)).apply()
         }
 
+    /** Último esquema de carta visto (`GET /v1/carta`). 0 = aún no visto. */
+    var cartaSchema: Int
+        get() = prefs.getInt(KEY_CARTA_SCHEMA, 0)
+        set(value) {
+            prefs.edit().putInt(KEY_CARTA_SCHEMA, value).apply()
+        }
+
     fun cargar(): ModoSesion {
         val token = prefs.getString(KEY_TOKEN, null) ?: return ModoSesion.Local
         val perfilJson = prefs.getString(KEY_PERFIL, null) ?: return ModoSesion.Local
@@ -170,5 +177,6 @@ class SesionStore(context: Context) {
         private const val KEY_BAR_SESION_TRABAJO = "bar_sesion_trabajo"
         private const val KEY_MEMBRESIAS = "membresias_identity"
         private const val KEY_VISIBILIDAD = "visibilidad"
+        private const val KEY_CARTA_SCHEMA = "carta_schema"
     }
 }
