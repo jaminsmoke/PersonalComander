@@ -23,6 +23,23 @@ class CartaSyncTest {
     }
 
     @Test
+    fun parse_propaga_subfamilia_grupos_y_modificadores() {
+        val carta = CartaSync.parse(
+            """
+            {"productos":[{"id":"burger","nombre":"Burger","categoria":"Burgers","precio":8,
+              "subfamilia":"Clásicas","permiteNota":true,"grupos":["punto"]}],
+             "gruposModificador":[{"id":"punto","nombre":"Punto","obligatorio":true,
+               "opciones":[{"id":"al-punto","nombre":"Al punto","alias":"punto"}]}]}
+            """.trimIndent(),
+        )!!
+        assertEquals("Clásicas", carta.productos[0].subfamilia)
+        assertTrue(carta.productos[0].permiteNota)
+        assertEquals(listOf("punto"), carta.productos[0].grupos)
+        assertEquals("Punto", carta.gruposModificador.single().nombre)
+        assertEquals("Al punto", carta.gruposModificador.single().opciones.single().nombre)
+    }
+
+    @Test
     fun parse_ignora_sin_id_o_nombre() {
         val carta = CartaSync.parse(
             """{"productos":[{"id":"","nombre":"X"},{"id":"cana","nombre":""},{"id":"cana","nombre":"Caña"}]}""",
@@ -59,7 +76,7 @@ class CartaSyncTest {
             Producto(id = 1, nombre = "Seed local", categoria = "Bebidas", precio = 2.0),
         )
         val remotos = listOf(
-            ProductoLan(id = "cana", nombre = "Caña", categoria = "Bebida", precio = 3.0),
+            ProductoLan(id = "cana", nombre = "Caña", categoria = "Bebida", precio = 3.0, subfamilia = "Cerveza", permiteNota = true),
         )
         val plan = CartaSync.plan(locales, remotos)
         assertTrue(plan.insertar.isEmpty())
@@ -67,6 +84,8 @@ class CartaSyncTest {
         assertEquals(9L, plan.actualizar[0].id)
         assertEquals("Caña", plan.actualizar[0].nombre)
         assertEquals("cana", plan.actualizar[0].codigoBar)
+        assertEquals("Cerveza", plan.actualizar[0].subfamilia)
+        assertTrue(plan.actualizar[0].permiteNota)
         assertEquals("Seed local", locales[1].nombre)
     }
 

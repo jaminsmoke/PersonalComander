@@ -159,6 +159,72 @@ data class Producto(
     val disponible: Boolean = true,
     /** Id de red del catálogo de Bar (`cana`). Null = producto solo local. */
     val codigoBar: String? = null,
+    /** Agrupación visual dentro de [categoria] (p. ej. Coca-Cola). Null = suelto. */
+    val subfamilia: String? = null,
+    /** Si true, la línea puede llevar una nota libre además de modificadores. */
+    val permiteNota: Boolean = false,
+)
+
+@Entity(
+    tableName = "grupos_modificador",
+    indices = [Index(value = ["codigoBar"], unique = true)],
+)
+data class GrupoModificador(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val nombre: String,
+    /** Varias opciones a la vez (extras). False = una sola (punto de la carne). */
+    val multiple: Boolean = false,
+    val obligatorio: Boolean = false,
+    val codigoBar: String? = null,
+)
+
+@Entity(
+    tableName = "opciones_modificador",
+    foreignKeys = [
+        ForeignKey(
+            entity = GrupoModificador::class,
+            parentColumns = ["id"],
+            childColumns = ["grupoId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [
+        Index(value = ["grupoId"]),
+        Index(value = ["codigoBar"], unique = true),
+    ],
+)
+data class OpcionModificador(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val grupoId: Long,
+    val nombre: String,
+    val deltaPrecio: Double = 0.0,
+    /** Alias de voz separados por `|` (p. ej. `muy hecha|bien hecho`). */
+    val alias: String = "",
+    val codigoBar: String? = null,
+)
+
+@Entity(
+    tableName = "producto_grupos",
+    primaryKeys = ["productoId", "grupoId"],
+    foreignKeys = [
+        ForeignKey(
+            entity = Producto::class,
+            parentColumns = ["id"],
+            childColumns = ["productoId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = GrupoModificador::class,
+            parentColumns = ["id"],
+            childColumns = ["grupoId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index(value = ["grupoId"])],
+)
+data class ProductoGrupo(
+    val productoId: Long,
+    val grupoId: Long,
 )
 
 @Entity(
@@ -214,4 +280,7 @@ data class LineaPedido(
     val estado: LineaEstado = LineaEstado.PENDIENTE,
     /** Id del ticket Bar (`{rondaId}-barra` / `-cocina`) tras el POST de ronda. */
     val ticketId: String? = null,
+    val nota: String? = null,
+    /** Snapshot JSON de [ModificadorElegido]: no se reconsulta el catálogo. */
+    val modificadoresJson: String = "[]",
 )

@@ -36,6 +36,7 @@ app/src/main/java/com/jaminsmoke/personalcomander/
 │   ├── Daos.kt                  # Room DAOs + @Transaction ops
 │   ├── AppDatabase.kt           # Room DB, migrations, repos
 │   ├── Seed.kt                  # First-launch seed
+│   ├── CartaModificadores.kt    # Grupos, snapshot JSON, precio con delta
 │   ├── BackupJson.kt            # JSON import/export models
 │   ├── Tpv.kt / TpvCliente.kt   # POS sync adapters
 │   ├── CategoriaIcono.kt        # Category → emoji mapping
@@ -441,6 +442,7 @@ Sala (room of the venue)  1──* Mesa (table)  1──* Pedido (order)  1─�
                                     └── linked via comandaActivaId on Mesa
 
 Producto (product) ─── referenced by LineaPedido.productoId
+ └── *──* GrupoModificador ──* OpcionModificador
 ```
 
 El camarero se liga en turno a un **establecimiento** vía Bar LAN, no a una sala. Las **salas** (barra, interior, terraza…) son del mapa del local. Las membresías canónicas (`GET /v1/camareros/me/establecimientos`) viven en Identity; Room y `SesionStore` cachean. `ModoSesion.Establecimiento` + `admitido` candan carta y mapa.

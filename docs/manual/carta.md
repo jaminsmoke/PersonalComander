@@ -20,12 +20,13 @@ La carta se gestiona desde la pestaña **Gestión → Carta**, no desde Ajustes.
 
 ## Operaciones
 
-- Añadir producto: nombre, precio, categoría e icono.
-- Editar nombre, precio o categoría.
+- Añadir producto: nombre, precio, categoría, **subfamilia** opcional (Coca-Cola → Zero / Light) e icono.
+- Editar nombre, precio, categoría o subfamilia.
+- Asignar **grupos de modificadores** reutilizables (punto de la carne, extras…) a cualquier SKU.
 - Quitar un producto del catálogo.
-- Organizar por categorías (bebidas, burgers, postres…).
+- Organizar por categorías (bebidas, burgers, postres…). Dentro de cada categoría, la comanda agrupa por subfamilia.
 
-Cada categoría lleva un icono emoji, el mismo que ves en la comanda.
+Cada categoría lleva un icono emoji, el mismo que ves en la comanda. Los modificadores no sustituyen a un SKU: Coca-Cola Zero es un producto; «al punto» es una opción de línea.
 
 ## De dónde sale el catálogo
 

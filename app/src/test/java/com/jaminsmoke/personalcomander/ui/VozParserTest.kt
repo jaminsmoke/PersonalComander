@@ -1,6 +1,9 @@
 package com.jaminsmoke.personalcomander.ui
 
+import com.jaminsmoke.personalcomander.data.GrupoConOpciones
+import com.jaminsmoke.personalcomander.data.GrupoModificador
 import com.jaminsmoke.personalcomander.data.LineaPedido
+import com.jaminsmoke.personalcomander.data.OpcionModificador
 import com.jaminsmoke.personalcomander.data.Producto
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -399,5 +402,52 @@ class VozParserTest {
         val r = parsearComanda("las dos hamburguesas para cuatro", catalogo)
         assertTrue(r.lineas.none { it.producto.nombre.contains("Pizza") })
         assertTrue(r.lineas.any { it.producto.nombre.startsWith("Hamburguesa") })
+    }
+
+    @Test
+    fun parsear_coca_cola_zero_elige_el_sku_largo() {
+        val carta = listOf(
+            Producto(id = 3, nombre = "Coca-Cola", categoria = "Bebidas", precio = 2.0, subfamilia = "Coca-Cola"),
+            Producto(id = 11, nombre = "Coca-Cola Zero", categoria = "Bebidas", precio = 2.0, subfamilia = "Coca-Cola"),
+        )
+        val r = parsearComanda("una coca cola zero", carta)
+        assertEquals(1, r.lineas.size)
+        assertEquals("Coca-Cola Zero", r.lineas[0].producto.nombre)
+    }
+
+    @Test
+    fun parsear_al_punto_y_muy_hecho_son_lineas_distintas() {
+        val burger = Producto(id = 10, nombre = "Hamburguesa Clásica", categoria = "Burgers", precio = 8.0)
+        val punto = GrupoModificador(id = 1, nombre = "Punto", multiple = false, obligatorio = true)
+        val ops = listOf(
+            OpcionModificador(id = 1, grupoId = 1, nombre = "Al punto", alias = "punto|al punto"),
+            OpcionModificador(id = 2, grupoId = 1, nombre = "Muy hecho", alias = "muy hecha|muy hechas"),
+        )
+        val carta = CartaVoz(
+            productos = listOf(burger),
+            gruposPorProducto = mapOf(10L to listOf(GrupoConOpciones(punto, ops))),
+        )
+        val r = parsearComanda("dos hamburguesas muy hechas y una al punto", carta)
+        assertEquals(2, r.lineas.size)
+        assertEquals(2, r.lineas[0].cantidad)
+        assertEquals("Muy hecho", r.lineas[0].modificadores.single().opcionNombre)
+        assertEquals(1, r.lineas[1].cantidad)
+        assertEquals("Al punto", r.lineas[1].modificadores.single().opcionNombre)
+        assertTrue(r.lineas.none { it.faltaObligatorio })
+    }
+
+    @Test
+    fun parsear_hamburguesa_sin_punto_marca_obligatorio() {
+        val burger = Producto(id = 10, nombre = "Hamburguesa Clásica", categoria = "Burgers", precio = 8.0)
+        val punto = GrupoModificador(id = 1, nombre = "Punto", multiple = false, obligatorio = true)
+        val ops = listOf(OpcionModificador(id = 1, grupoId = 1, nombre = "Al punto", alias = "punto"))
+        val carta = CartaVoz(
+            productos = listOf(burger),
+            gruposPorProducto = mapOf(10L to listOf(GrupoConOpciones(punto, ops))),
+        )
+        val r = parsearComanda("una hamburguesa clasica", carta)
+        assertEquals(1, r.lineas.size)
+        assertTrue(r.lineas[0].faltaObligatorio)
+        assertTrue(r.lineas[0].modificadores.isEmpty())
     }
 }

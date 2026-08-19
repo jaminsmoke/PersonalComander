@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 
 package com.jaminsmoke.personalcomander.ui
 
@@ -26,6 +26,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,7 +39,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
@@ -58,8 +63,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.SnackbarDuration
@@ -79,6 +87,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -97,9 +106,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jaminsmoke.personalcomander.data.CartaModificadores
 import com.jaminsmoke.personalcomander.data.CategoriaIcono
+import com.jaminsmoke.personalcomander.data.GrupoConOpciones
 import com.jaminsmoke.personalcomander.data.LineaEstado
 import com.jaminsmoke.personalcomander.data.LineaPedido
+import com.jaminsmoke.personalcomander.data.ModificadorElegido
+import com.jaminsmoke.personalcomander.data.detalleModificadores
 import com.jaminsmoke.personalcomander.data.esEditable
 import com.jaminsmoke.personalcomander.data.sesion.RecogerLogica
 import com.jaminsmoke.personalcomander.data.MesaVisualStatus
@@ -445,18 +458,12 @@ fun ComandaScreen(
                         } else {
                         val gridCols = if (state.categoria == null && state.busqueda.isBlank()) 3 else 4
                         if (state.categoria == null && state.busqueda.isBlank()) {
-                            val agrupados = state.productos.groupBy { it.categoria }
                             LazyColumn(
                                 Modifier.weight(1f).fillMaxSize(),
                                 contentPadding = PaddingValues(4.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                agrupados.forEach { (categoria, prods) ->
-                                    stickyHeader {
-                                        Text("${CategoriaIcono.de(categoria)} $categoria", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp))
-                                    }
-                                    items(prods, key = { it.id }) { p -> ProductoRow(p, onClick = { viewModel.addProducto(p) }) }
-                                }
+                                catalogoLista(state.productos, conCategoria = true) { viewModel.pedirProducto(it) }
                             }
                         } else {
                             LazyVerticalGrid(
@@ -466,7 +473,7 @@ fun ComandaScreen(
                                 verticalArrangement = Arrangement.spacedBy(6.dp),
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                items(state.productos, key = { it.id }) { p -> ProductoGridCard(p, onClick = { viewModel.addProducto(p) }) }
+                                catalogoGrid(state.productos) { viewModel.pedirProducto(it) }
                             }
                         }
                         } // end else (productos no vacíos)
@@ -505,20 +512,12 @@ fun ComandaScreen(
                                 modifier = Modifier.weight(1f)
                             )
                         } else if (state.categoria == null && state.busqueda.isBlank()) {
-                            val agrupados = state.productos.groupBy { it.categoria }
                             LazyColumn(
                                 Modifier.fillMaxWidth().weight(1f),
                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                agrupados.forEach { (categoria, prods) ->
-                                    stickyHeader {
-                                        Surface(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surfaceContainerLowest) {
-                                            Text("${CategoriaIcono.de(categoria)} $categoria", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp))
-                                        }
-                                    }
-                                    items(prods, key = { it.id }) { p -> ProductoRow(p, onClick = { viewModel.addProducto(p) }) }
-                                }
+                                catalogoLista(state.productos, conCategoria = true) { viewModel.pedirProducto(it) }
                             }
                         } else {
                             LazyVerticalGrid(
@@ -528,7 +527,7 @@ fun ComandaScreen(
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                items(state.productos, key = { it.id }) { p -> ProductoGridCard(p, onClick = { viewModel.addProducto(p) }) }
+                                catalogoGrid(state.productos) { viewModel.pedirProducto(it) }
                             }
                         }
                     }
@@ -547,6 +546,7 @@ fun ComandaScreen(
                 viewModel::marcarTodasListasServidas,
                 viewModel::enviarACocina,
                 viewModel::solicitarCierre,
+                viewModel::editarLinea,
             )
         }
     }
@@ -570,6 +570,15 @@ fun ComandaScreen(
                     Text(stringResource(R.string.menu_cancel))
                 }
             }
+        )
+    }
+
+    state.hoja?.let { hoja ->
+        HojaModificadoresSheet(
+            hoja = hoja,
+            grupos = state.gruposDe(hoja.producto.id),
+            onDismiss = viewModel::cerrarHoja,
+            onConfirm = viewModel::confirmarHoja,
         )
     }
 }
@@ -623,6 +632,7 @@ private fun ComandaPanel(
     onServirTodas: () -> Unit,
     onEnviarACocina: () -> Unit,
     onCerrarMesa: () -> Unit,
+    onEditar: (LineaPedido) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
     val scheme = MaterialTheme.colorScheme
@@ -654,6 +664,7 @@ private fun ComandaPanel(
                                 onAumentar = { onAumentar(linea) },
                                 onDisminuir = { onDisminuir(linea) },
                                 onServir = { onServir(linea) },
+                                onEditar = { onEditar(linea) },
                             )
                         }
                     }
@@ -684,6 +695,7 @@ private fun ComandaPanel(
                                 onAumentar = {},
                                 onDisminuir = {},
                                 onServir = { onServir(linea) },
+                                onEditar = {},
                             )
                         }
                     }
@@ -706,6 +718,7 @@ private fun ComandaPanel(
                                 onAumentar = {},
                                 onDisminuir = {},
                                 onServir = {},
+                                onEditar = {},
                             )
                         }
                     }
@@ -745,18 +758,35 @@ private fun LineaRow(
     onAumentar: () -> Unit,
     onDisminuir: () -> Unit,
     onServir: () -> Unit,
+    onEditar: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val detalle = linea.detalleModificadores()
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text("${linea.cantidad}×", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = scheme.secondary)
-        Text(
-            linea.nombreProducto,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            color = scheme.onSurface,
-            modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
-        )
+        Column(
+            Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp)
+                .then(if (editable) Modifier.clickable(onClick = onEditar) else Modifier),
+        ) {
+            Text(
+                linea.nombreProducto,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = scheme.onSurface,
+            )
+            if (detalle.isNotEmpty()) {
+                Text(
+                    detalle,
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    color = scheme.onSurfaceVariant,
+                )
+            }
+        }
         if (enCola) {
             Text(
                 stringResource(R.string.comanda_en_cola),
@@ -818,4 +848,169 @@ private fun estadoVisualLabel(status: MesaVisualStatus?): String = when (status)
     MesaVisualStatus.RESERVADA -> stringResource(R.string.mesas_reserved)
     MesaVisualStatus.BLOQUEADA -> stringResource(R.string.mesas_blocked)
     null -> ""
+}
+
+private fun LazyListScope.catalogoLista(
+    productos: List<Producto>,
+    conCategoria: Boolean,
+    onClick: (Producto) -> Unit,
+) {
+    if (conCategoria) {
+        productos.groupBy { it.categoria }.forEach { (categoria, prods) ->
+            stickyHeader(key = "cat-$categoria") {
+                Surface(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surfaceContainerLowest) {
+                    Text(
+                        "${CategoriaIcono.de(categoria)} $categoria",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                    )
+                }
+            }
+            catalogoSubfamilias(prods, onClick)
+        }
+    } else {
+        catalogoSubfamilias(productos, onClick)
+    }
+}
+
+private fun LazyListScope.catalogoSubfamilias(
+    productos: List<Producto>,
+    onClick: (Producto) -> Unit,
+) {
+    CartaModificadores.agruparPorSubfamilia(productos).forEach { (sub, items) ->
+        if (sub != null) {
+            stickyHeader(key = "sub-$sub-${items.first().id}") {
+                Surface(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface) {
+                    Text(
+                        sub,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                    )
+                }
+            }
+        }
+        items(items, key = { it.id }) { p -> ProductoRow(p, onClick = { onClick(p) }) }
+    }
+}
+
+private fun LazyGridScope.catalogoGrid(
+    productos: List<Producto>,
+    onClick: (Producto) -> Unit,
+) {
+    CartaModificadores.agruparPorSubfamilia(productos).forEach { (sub, items) ->
+        if (sub != null) {
+            item(key = "gsub-$sub-${items.first().id}", span = { GridItemSpan(maxLineSpan) }) {
+                Text(
+                    sub,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
+                )
+            }
+        }
+        items(items, key = { it.id }) { p -> ProductoGridCard(p, onClick = { onClick(p) }) }
+    }
+}
+
+@Composable
+private fun HojaModificadoresSheet(
+    hoja: HojaModificadores,
+    grupos: List<GrupoConOpciones>,
+    onDismiss: () -> Unit,
+    onConfirm: (List<ModificadorElegido>, String, Int) -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var elegidos by remember(hoja.lineaId, hoja.producto.id) { mutableStateOf(hoja.elegidos) }
+    var nota by remember(hoja.lineaId, hoja.producto.id) { mutableStateOf(hoja.nota) }
+    var cantidad by remember(hoja.lineaId, hoja.producto.id) { mutableIntStateOf(hoja.cantidad.coerceAtLeast(1)) }
+    val puedeConfirmar = !CartaModificadores.faltanObligatorios(grupos, elegidos)
+    val precio = CartaModificadores.precioUnitario(hoja.producto.precio, elegidos)
+
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(hoja.producto.nombre, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(
+                stringResource(R.string.comanda_mod_precio_unidad, precio.formatoEuro()),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+            grupos.forEach { gc ->
+                val titulo = buildString {
+                    append(gc.grupo.nombre)
+                    if (gc.grupo.obligatorio) append(" *")
+                }
+                Text(titulo, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    gc.opciones.forEach { op ->
+                        val sel = elegidos.any { it.opcionId == op.id }
+                        val etiqueta = if (op.deltaPrecio == 0.0) op.nombre
+                        else "${op.nombre} (${if (op.deltaPrecio > 0) "+" else ""}${op.deltaPrecio.formatoEuro()})"
+                        FilterChip(
+                            selected = sel,
+                            onClick = {
+                                val elegido = ModificadorElegido(
+                                    grupoId = gc.grupo.id,
+                                    grupoNombre = gc.grupo.nombre,
+                                    opcionId = op.id,
+                                    opcionNombre = op.nombre,
+                                    deltaPrecio = op.deltaPrecio,
+                                )
+                                elegidos = if (gc.grupo.multiple) {
+                                    if (sel) elegidos.filter { it.opcionId != op.id } else elegidos + elegido
+                                } else {
+                                    elegidos.filter { it.grupoId != gc.grupo.id } + elegido
+                                }
+                            },
+                            label = { Text(etiqueta) },
+                        )
+                    }
+                }
+            }
+            if (hoja.producto.permiteNota) {
+                OutlinedTextField(
+                    value = nota,
+                    onValueChange = { nota = it },
+                    label = { Text(stringResource(R.string.comanda_mod_nota)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 1,
+                    maxLines = 3,
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.comanda_mod_cantidad), style = MaterialTheme.typography.bodyMedium)
+                IconButton(onClick = { if (cantidad > 1) cantidad-- }) {
+                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.btn_remove))
+                }
+                Text("$cantidad", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                IconButton(onClick = { cantidad++ }) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.btn_add))
+                }
+            }
+            if (!puedeConfirmar) {
+                Text(
+                    stringResource(R.string.comanda_mod_obligatorio),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            Button(
+                onClick = { onConfirm(elegidos, nota, cantidad) },
+                enabled = puedeConfirmar,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.comanda_mod_confirm))
+            }
+        }
+    }
 }

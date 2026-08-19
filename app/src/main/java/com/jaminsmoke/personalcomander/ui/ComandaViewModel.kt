@@ -7,10 +7,16 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.jaminsmoke.personalcomander.PersonalComanderApp
 import com.jaminsmoke.personalcomander.R
-import com.jaminsmoke.personalcomander.data.AppDatabase
+import com.jaminsmoke.personalcomander.data.CartaModificadores
+import com.jaminsmoke.personalcomander.data.GrupoConOpciones
+import com.jaminsmoke.personalcomander.data.GrupoModificador
 import com.jaminsmoke.personalcomander.data.LineaEstado
 import com.jaminsmoke.personalcomander.data.LineaPedido
+import com.jaminsmoke.personalcomander.data.ModificadorElegido
+import com.jaminsmoke.personalcomander.data.OpcionModificador
+import com.jaminsmoke.personalcomander.data.ProductoGrupo
 import com.jaminsmoke.personalcomander.data.esEditable
+import com.jaminsmoke.personalcomander.data.modificadores
 import com.jaminsmoke.personalcomander.data.normalizarNombre
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaEstado
@@ -38,6 +44,14 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+data class HojaModificadores(
+    val producto: Producto,
+    val lineaId: Long? = null,
+    val elegidos: List<ModificadorElegido> = emptyList(),
+    val nota: String = "",
+    val cantidad: Int = 1,
+)
+
 data class ComandaUiState(
     val mesa: Mesa? = null,
     val salaNombre: String = "",
@@ -45,6 +59,9 @@ data class ComandaUiState(
     val lineas: List<LineaPedido> = emptyList(),
     val categorias: List<String> = emptyList(),
     val productos: List<Producto> = emptyList(),
+    val grupos: List<GrupoModificador> = emptyList(),
+    val opciones: List<OpcionModificador> = emptyList(),
+    val asignaciones: List<ProductoGrupo> = emptyList(),
     val busqueda: String = "",
     val categoria: String? = null,
     val escuchandoVoz: Boolean = false,
@@ -52,8 +69,12 @@ data class ComandaUiState(
     val feedbackVoz: String? = null,
     val error: String? = null,
     val ligadoAlBar: Boolean = false,
+    val hoja: HojaModificadores? = null,
 ) {
     val total: Double get() = lineas.sumOf { it.precioUnitario * it.cantidad }
+
+    fun gruposDe(productoId: Long): List<GrupoConOpciones> =
+        CartaModificadores.gruposDeProducto(productoId, grupos, opciones, asignaciones)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -102,6 +123,8 @@ class ComandaViewModel(
     private val _feedbackVoz = MutableStateFlow<String?>(null)
     private val _error = MutableStateFlow<String?>(null)
 
+    private val _hoja = MutableStateFlow<HojaModificadores?>(null)
+
     val uiState: StateFlow<ComandaUiState> = run {
         val datos = combine(
             db.mesaDao().observeById(mesaId),
@@ -117,9 +140,15 @@ class ComandaViewModel(
         }
             .distinctUntilChanged()
 
+        val catalogo = combine(
+            db.grupoModificadorDao().observeAll(),
+            db.opcionModificadorDao().observeAll(),
+            db.productoGrupoDao().observeAll(),
+        ) { g, o, a -> Triple(g, o, a) }
+
         val _snackState = combine(_feedbackVoz, _error, _procesandoVoz) { f, e, p -> SnackState(f, e, p) }
 
-        val sinBar = combine(datos, _busqueda, _categoria, _escuchandoVoz, _snackState) { d, busqueda, categoria, escuchando, ss ->
+        val sinBar = combine(datos, catalogo, _busqueda, _categoria, _escuchandoVoz) { d, cat, busqueda, categoria, escuchando ->
             val cats = d.productos.map { it.categoria }.distinct()
             val porCategoria = d.productos.filter { categoria == null || it.categoria == categoria }
             val filtrados = if (busqueda.isBlank()) porCategoria
@@ -130,12 +159,19 @@ class ComandaViewModel(
             ComandaUiState(
                 mesa = d.mesa, salaNombre = d.salaNombre, pedido = d.pedido, lineas = d.lineas,
                 categorias = cats, productos = filtrados,
+                grupos = cat.first, opciones = cat.second, asignaciones = cat.third,
                 busqueda = busqueda, categoria = categoria,
-                escuchandoVoz = escuchando, procesandoVoz = ss.procesando, feedbackVoz = ss.feedbackVoz, error = ss.error
+                escuchandoVoz = escuchando,
             )
         }
-        combine(sinBar, sesion.modo) { state, modo ->
-            state.copy(ligadoAlBar = modo is ModoSesion.Establecimiento)
+        combine(sinBar, _snackState, _hoja, sesion.modo) { state, ss, hoja, modo ->
+            state.copy(
+                procesandoVoz = ss.procesando,
+                feedbackVoz = ss.feedbackVoz,
+                error = ss.error,
+                hoja = hoja,
+                ligadoAlBar = modo is ModoSesion.Establecimiento,
+            )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ComandaUiState())
     }
 
@@ -189,11 +225,39 @@ class ComandaViewModel(
 
     private suspend fun procesarAnadir(comanda: String, textoOriginal: String) {
         val productos = db.productoDao().getAllDisponibles()
-        val resultado = parsearComanda(comanda, productos)
+        val grupos = db.grupoModificadorDao().getAll()
+        val opciones = db.opcionModificadorDao().getAll()
+        val asignaciones = db.productoGrupoDao().getAll()
+        val carta = CartaVoz(
+            productos = productos,
+            gruposPorProducto = productos.associate { p ->
+                p.id to CartaModificadores.gruposDeProducto(p.id, grupos, opciones, asignaciones)
+            },
+        )
+        val resultado = parsearComanda(comanda, carta)
         if (resultado.lineas.isNotEmpty()) {
             addProductosBatch(resultado.lineas)
         }
-        val resumen = resultado.lineas.joinToString(", ") { "${it.cantidad}× ${it.producto.nombre}" }
+        resultado.lineas.firstOrNull { it.faltaObligatorio }?.let { lv ->
+            val p = db.pedidoDao().getActivo(mesaId)
+            val json = CartaModificadores.canonicalJson(lv.modificadores)
+            val nota = lv.nota?.trim()?.takeIf { it.isNotEmpty() }
+            val linea = p?.let { db.lineaPedidoDao().getForPedido(it.id) }?.let { lineas ->
+                RecogerLogica.lineaPendienteCompatible(lineas, lv.producto.id, nota, json)
+            }
+            _hoja.value = HojaModificadores(
+                producto = lv.producto,
+                lineaId = linea?.id,
+                elegidos = lv.modificadores,
+                nota = lv.nota.orEmpty(),
+                cantidad = linea?.cantidad ?: lv.cantidad,
+            )
+        }
+        val resumen = resultado.lineas.joinToString(", ") {
+            val extra = CartaModificadores.textoLinea(it.modificadores, it.nota)
+            if (extra.isEmpty()) "${it.cantidad}× ${it.producto.nombre}"
+            else "${it.cantidad}× ${it.producto.nombre} ($extra)"
+        }
         val pendientes = resultado.noEntendido.joinToString(" ")
         _feedbackVoz.value = when {
             resumen.isEmpty() && pendientes.isNotEmpty() -> ctx.getString(R.string.comanda_voice_unrecognized, textoOriginal, pendientes)
@@ -271,16 +335,33 @@ class ComandaViewModel(
                     db.pedidoDao().update(p.copy(estado = PedidoEstado.ABIERTA))
                     marcarOcupada(mesaId, p.id)
                 }
-                val lineas = db.lineaPedidoDao().getForPedido(p.id)
+                val lineas = db.lineaPedidoDao().getForPedido(p.id).toMutableList()
                 for (lv in lineasVoz) {
-                    val existente = RecogerLogica.lineaPendienteDelProducto(lineas, lv.producto.id)
+                    val json = CartaModificadores.canonicalJson(lv.modificadores)
+                    val nota = lv.nota?.trim()?.takeIf { it.isNotEmpty() }
+                    val precio = CartaModificadores.precioUnitario(lv.producto.precio, lv.modificadores)
+                    val existente = RecogerLogica.lineaPendienteCompatible(
+                        lineas, lv.producto.id, nota, json,
+                    )
                     if (existente != null) {
-                        db.lineaPedidoDao().update(existente.copy(cantidad = existente.cantidad + lv.cantidad))
+                        val actualizada = existente.copy(cantidad = existente.cantidad + lv.cantidad)
+                        db.lineaPedidoDao().update(actualizada)
+                        val idx = lineas.indexOfFirst { it.id == existente.id }
+                        if (idx >= 0) lineas[idx] = actualizada
                     } else {
-                        db.lineaPedidoDao().insert(LineaPedido(
+                        val id = db.lineaPedidoDao().insert(LineaPedido(
                             pedidoId = p.id, productoId = lv.producto.id,
-                            nombreProducto = lv.producto.nombre, precioUnitario = lv.producto.precio, cantidad = lv.cantidad
+                            nombreProducto = lv.producto.nombre, precioUnitario = precio, cantidad = lv.cantidad,
+                            nota = nota,
+                            modificadoresJson = json,
                         ))
+                        lineas.add(
+                            LineaPedido(
+                                id = id, pedidoId = p.id, productoId = lv.producto.id,
+                                nombreProducto = lv.producto.nombre, precioUnitario = precio, cantidad = lv.cantidad,
+                                nota = nota, modificadoresJson = json,
+                            ),
+                        )
                     }
                 }
             }
@@ -320,40 +401,120 @@ class ComandaViewModel(
         }
     }
 
+    fun pedirProducto(producto: Producto) {
+        if (cerrada) return
+        val gruposProd = uiState.value.gruposDe(producto.id)
+        if (gruposProd.isNotEmpty() || producto.permiteNota) {
+            _hoja.value = HojaModificadores(producto = producto)
+        } else {
+            addProducto(producto)
+        }
+    }
+
+    fun cerrarHoja() { _hoja.value = null }
+
+    fun editarLinea(linea: LineaPedido) {
+        if (!linea.estado.esEditable()) return
+        viewModelScope.launch {
+            val producto = db.productoDao().getById(linea.productoId) ?: return@launch
+            _hoja.value = HojaModificadores(
+                producto = producto,
+                lineaId = linea.id,
+                elegidos = linea.modificadores(),
+                nota = linea.nota.orEmpty(),
+                cantidad = linea.cantidad,
+            )
+        }
+    }
+
+    fun confirmarHoja(
+        elegidos: List<ModificadorElegido>,
+        nota: String,
+        cantidad: Int,
+    ) {
+        val hoja = _hoja.value ?: return
+        viewModelScope.launch {
+            mutex.withLock {
+                val g = db.grupoModificadorDao().getAll()
+                val o = db.opcionModificadorDao().getAll()
+                val a = db.productoGrupoDao().getAll()
+                val gruposProd = CartaModificadores.gruposDeProducto(hoja.producto.id, g, o, a)
+                if (CartaModificadores.faltanObligatorios(gruposProd, elegidos)) return@withLock
+                val json = CartaModificadores.canonicalJson(elegidos)
+                val notaLimpia = nota.trim().takeIf { it.isNotEmpty() }
+                val precio = CartaModificadores.precioUnitario(hoja.producto.precio, elegidos)
+                val qty = cantidad.coerceAtLeast(1)
+                db.withTransaction {
+                    if (hoja.lineaId != null) {
+                        val p = db.pedidoDao().getActivo(mesaId) ?: return@withTransaction
+                        val linea = db.lineaPedidoDao().getForPedido(p.id).firstOrNull { it.id == hoja.lineaId }
+                            ?: return@withTransaction
+                        db.lineaPedidoDao().update(
+                            linea.copy(
+                                cantidad = qty,
+                                nota = notaLimpia,
+                                modificadoresJson = json,
+                                precioUnitario = precio,
+                            ),
+                        )
+                    } else {
+                        fusionarOInsertarLinea(hoja.producto, qty, notaLimpia, json, precio)
+                    }
+                }
+                _hoja.value = null
+            }
+        }
+    }
+
     fun addProducto(producto: Producto, cantidad: Int = 1) {
         if (cerrada) return
         viewModelScope.launch {
             mutex.withLock {
-                db.withTransaction {
-                    try {
-                        val p = db.pedidoDao().getActivo(mesaId)
-                        val pedidoActivo = if (p == null) {
-                            if (cerrada) return@withTransaction
-                            val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
-                            marcarOcupada(mesaId, nuevoId)
-                            Pedido(id = nuevoId, mesaId = mesaId)
-                        } else {
-                            if (p.estado == PedidoEstado.ENVIADA) {
-                                db.pedidoDao().update(p.copy(estado = PedidoEstado.ABIERTA))
-                                marcarOcupada(mesaId, p.id)
-                            }
-                            p
-                        }
-
-                        val lineas = db.lineaPedidoDao().getForPedido(pedidoActivo.id)
-                        val existente = RecogerLogica.lineaPendienteDelProducto(lineas, producto.id)
-                        if (existente != null) {
-                            db.lineaPedidoDao().update(existente.copy(cantidad = existente.cantidad + cantidad))
-                        } else {
-                            db.lineaPedidoDao().insert(LineaPedido(
-                                pedidoId = pedidoActivo.id, productoId = producto.id,
-                                nombreProducto = producto.nombre, precioUnitario = producto.precio, cantidad = cantidad
-                            ))
-                        }
-                    } catch (e: Exception) {
-                        _error.value = ctx.getString(R.string.error_add_product, e.message ?: e.javaClass.simpleName)
-                    }
+                try {
+                    val json = "[]"
+                    fusionarOInsertarLinea(
+                        producto, cantidad, nota = null, json = json, precio = producto.precio,
+                    )
+                } catch (e: Exception) {
+                    _error.value = ctx.getString(R.string.error_add_product, e.message ?: e.javaClass.simpleName)
                 }
+            }
+        }
+    }
+
+    private suspend fun fusionarOInsertarLinea(
+        producto: Producto,
+        cantidad: Int,
+        nota: String?,
+        json: String,
+        precio: Double,
+    ) {
+        db.withTransaction {
+            if (cerrada) return@withTransaction
+            val p = db.pedidoDao().getActivo(mesaId)
+            val pedidoActivo = if (p == null) {
+                val nuevoId = db.pedidoDao().insert(Pedido(mesaId = mesaId, creadoEn = System.currentTimeMillis()))
+                marcarOcupada(mesaId, nuevoId)
+                Pedido(id = nuevoId, mesaId = mesaId)
+            } else {
+                if (p.estado == PedidoEstado.ENVIADA) {
+                    db.pedidoDao().update(p.copy(estado = PedidoEstado.ABIERTA))
+                    marcarOcupada(mesaId, p.id)
+                }
+                p
+            }
+            val lineas = db.lineaPedidoDao().getForPedido(pedidoActivo.id)
+            val existente = RecogerLogica.lineaPendienteCompatible(lineas, producto.id, nota, json)
+            if (existente != null) {
+                db.lineaPedidoDao().update(existente.copy(cantidad = existente.cantidad + cantidad))
+            } else {
+                db.lineaPedidoDao().insert(
+                    LineaPedido(
+                        pedidoId = pedidoActivo.id, productoId = producto.id,
+                        nombreProducto = producto.nombre, precioUnitario = precio, cantidad = cantidad,
+                        nota = nota, modificadoresJson = json,
+                    ),
+                )
             }
         }
     }
@@ -566,7 +727,10 @@ fun resolverQuitar(
     val resto = lineas.toMutableList()
     for (lq in quitadas) {
         val idx = resto.indexOfFirst {
-            normalizarNombre(it.nombreProducto) == normalizarNombre(lq.nombreProducto)
+            normalizarNombre(it.nombreProducto) == normalizarNombre(lq.nombreProducto) &&
+                (lq.modificadoresJson == "[]" ||
+                    CartaModificadores.canonicalJson(it.modificadores()) ==
+                    CartaModificadores.canonicalJson(CartaModificadores.parseJson(lq.modificadoresJson)))
         }
         if (idx == -1) continue
         val linea = resto[idx]

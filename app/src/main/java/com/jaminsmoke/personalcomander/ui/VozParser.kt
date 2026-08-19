@@ -1,7 +1,13 @@
 package com.jaminsmoke.personalcomander.ui
 
+import com.jaminsmoke.personalcomander.data.CartaModificadores
+import com.jaminsmoke.personalcomander.data.GrupoConOpciones
+import com.jaminsmoke.personalcomander.data.GrupoModificador
 import com.jaminsmoke.personalcomander.data.LineaPedido
+import com.jaminsmoke.personalcomander.data.ModificadorElegido
+import com.jaminsmoke.personalcomander.data.OpcionModificador
 import com.jaminsmoke.personalcomander.data.Producto
+import com.jaminsmoke.personalcomander.data.modificadores
 import com.jaminsmoke.personalcomander.data.normalizarNombre
 
 /** Delegada a [normalizarNombre] en data — unifica la normalización de texto en un solo sitio. */
@@ -121,7 +127,18 @@ internal fun indiceTrasParaComensales(
 
 // ── Tipos de datos ──
 
-data class LineaVoz(val producto: Producto, val cantidad: Int)
+data class LineaVoz(
+    val producto: Producto,
+    val cantidad: Int,
+    val modificadores: List<ModificadorElegido> = emptyList(),
+    val nota: String? = null,
+    val faltaObligatorio: Boolean = false,
+)
+
+data class CartaVoz(
+    val productos: List<Producto>,
+    val gruposPorProducto: Map<Long, List<GrupoConOpciones>> = emptyMap(),
+)
 
 data class ResultadoVoz(
     val lineas: List<LineaVoz>,
@@ -133,7 +150,11 @@ sealed class AccionVoz {
     data class Quitar(val texto: String) : AccionVoz()
 }
 
-data class LineaQuitar(val nombreProducto: String, val cantidad: Int)
+data class LineaQuitar(
+    val nombreProducto: String,
+    val cantidad: Int,
+    val modificadoresJson: String = "[]",
+)
 
 data class ResultadoQuitar(
     val lineas: List<LineaQuitar>,
@@ -166,28 +187,34 @@ fun extraerAccion(texto: String): AccionVoz {
     return AccionVoz.Anadir(norm)
 }
 
+fun parsearComanda(texto: String, productos: List<Producto>): ResultadoVoz =
+    parsearComanda(texto, CartaVoz(productos))
+
 /**
  * Convierte una comanda hablada en líneas de productos.
  * Ej.: "dos cafés con leche y una tarta de queso" ->
  *      [(Café con leche, 2), (Tarta de queso, 1)]
+ * Tras el SKU consume opciones de modificador («al punto») y, si cabe, nota.
  */
-fun parsearComanda(texto: String, productos: List<Producto>): ResultadoVoz {
-    val tokens = normalizar(texto).split(" ")
+fun parsearComanda(texto: String, carta: CartaVoz): ResultadoVoz {
+    val tokens = normalizar(texto).split(" ").filter { it.isNotEmpty() }
     if (tokens.all { it.isEmpty() }) return ResultadoVoz(emptyList(), emptyList())
 
-    val productosTokens = productos.map { p -> normalizar(p.nombre).split(" ") to p }
+    val productosTokens = carta.productos.map { p -> normalizar(p.nombre).split(" ") to p }
+    val colaMod = primerosTokensOpcion(carta)
 
     val lineas = mutableListOf<LineaVoz>()
     val noEntendido = mutableListOf<String>()
     var i = 0
     var qty = 1
+    var ultimoProducto: Producto? = null
 
     while (i < tokens.size) {
         val tok = tokens[i]
 
         indiceTrasParaComensales(tokens, i) { j ->
             buscarExactoGen(tokens, j, productosTokens) != null ||
-                buscarDifusoGen(tokens, j, productosTokens) != null
+                buscarDifusoGen(tokens, j, productosTokens, colaMod) != null
         }?.let { i = it; continue }
 
         val compuesto = numeroCompuesto(tokens, i)
@@ -197,15 +224,37 @@ fun parsearComanda(texto: String, productos: List<Producto>): ResultadoVoz {
         if (numero != null) { qty = numero; i++; continue }
 
         val matchExacto = buscarExactoGen(tokens, i, productosTokens)
-        if (matchExacto != null) {
-            lineas.add(LineaVoz(matchExacto.second, qty))
-            qty = 1; i += matchExacto.first; continue
+        val matchDifuso = matchExacto ?: buscarDifusoGen(tokens, i, productosTokens, colaMod)
+        if (matchDifuso != null) {
+            val producto = matchDifuso.second
+            i += matchDifuso.first
+            ultimoProducto = producto
+            i = anadirLineaVoz(lineas, noEntendido, carta, tokens, i, producto, qty, productosTokens, colaMod)
+            qty = 1
+            continue
         }
 
-        val matchDifuso = buscarDifusoGen(tokens, i, productosTokens)
-        if (matchDifuso != null) {
-            lineas.add(LineaVoz(matchDifuso.second, qty))
-            qty = 1; i += matchDifuso.first; continue
+        val previo = ultimoProducto
+        if (previo != null) {
+            val grupos = carta.gruposPorProducto[previo.id].orEmpty()
+            val cola = consumirColaModificadores(
+                tokens, i, grupos, previo.permiteNota, productosTokens, colaMod,
+            )
+            if (cola.elegidos.isNotEmpty() || cola.nota != null) {
+                noEntendido.addAll(cola.noEntendido)
+                lineas.add(
+                    LineaVoz(
+                        producto = previo,
+                        cantidad = qty,
+                        modificadores = cola.elegidos,
+                        nota = cola.nota,
+                        faltaObligatorio = CartaModificadores.faltanObligatorios(grupos, cola.elegidos),
+                    ),
+                )
+                i = cola.indice
+                qty = 1
+                continue
+            }
         }
 
         if (tok in palabrasRelleno) { i++; continue }
@@ -215,16 +264,130 @@ fun parsearComanda(texto: String, productos: List<Producto>): ResultadoVoz {
     return ResultadoVoz(lineas, noEntendido)
 }
 
+private fun anadirLineaVoz(
+    lineas: MutableList<LineaVoz>,
+    noEntendido: MutableList<String>,
+    carta: CartaVoz,
+    tokens: List<String>,
+    start: Int,
+    producto: Producto,
+    qty: Int,
+    productosTokens: List<Pair<List<String>, Producto>>,
+    colaMod: Set<String>,
+): Int {
+    val grupos = carta.gruposPorProducto[producto.id].orEmpty()
+    val cola = consumirColaModificadores(
+        tokens, start, grupos, producto.permiteNota, productosTokens, colaMod,
+    )
+    noEntendido.addAll(cola.noEntendido)
+    lineas.add(
+        LineaVoz(
+            producto = producto,
+            cantidad = qty,
+            modificadores = cola.elegidos,
+            nota = cola.nota,
+            faltaObligatorio = CartaModificadores.faltanObligatorios(grupos, cola.elegidos),
+        ),
+    )
+    return cola.indice
+}
+
+private fun primerosTokensOpcion(carta: CartaVoz): Set<String> =
+    carta.gruposPorProducto.values.flatten()
+        .flatMap { gc -> gc.opciones }
+        .flatMap { CartaModificadores.tokensOpcion(it) }
+        .mapNotNull { it.firstOrNull() }
+        .toSet()
+
+private data class ColaModificadores(
+    val indice: Int,
+    val elegidos: List<ModificadorElegido>,
+    val nota: String?,
+    val noEntendido: List<String>,
+)
+
+private fun hayProductoOCantidadDesde(
+    tokens: List<String>,
+    i: Int,
+    productosTokens: List<Pair<List<String>, Producto>>,
+    colaMod: Set<String> = emptySet(),
+): Boolean {
+    if (i >= tokens.size) return false
+    if (esCantidad(tokens[i]) || numeroCompuesto(tokens, i) != null) return true
+    if (productosTokens.isEmpty()) return false
+    return buscarExactoGen(tokens, i, productosTokens) != null ||
+        buscarDifusoGen(tokens, i, productosTokens, colaMod) != null
+}
+
+internal fun candidatosOpcion(
+    grupos: List<GrupoConOpciones>,
+    usados: Set<Long>,
+): List<Pair<List<String>, Pair<GrupoConOpciones, OpcionModificador>>> {
+    val out = mutableListOf<Pair<List<String>, Pair<GrupoConOpciones, OpcionModificador>>>()
+    for (gc in grupos) {
+        if (!gc.grupo.multiple && gc.grupo.id in usados) continue
+        for (op in gc.opciones) {
+            for (toks in CartaModificadores.tokensOpcion(op)) {
+                out.add(toks to (gc to op))
+            }
+        }
+    }
+    return out
+}
+
+private fun consumirColaModificadores(
+    tokens: List<String>,
+    start: Int,
+    grupos: List<GrupoConOpciones>,
+    permiteNota: Boolean,
+    productosTokens: List<Pair<List<String>, Producto>>,
+    colaMod: Set<String> = emptySet(),
+): ColaModificadores {
+    var i = start
+    val elegidos = mutableListOf<ModificadorElegido>()
+    val usados = mutableSetOf<Long>()
+    val noEntendido = mutableListOf<String>()
+    while (i < tokens.size) {
+        if (hayProductoOCantidadDesde(tokens, i, productosTokens, colaMod)) break
+        if (tokens[i] in palabrasRelleno) { i++; continue }
+        val cands = candidatosOpcion(grupos, usados)
+        if (cands.isEmpty()) break
+        val match = buscarExactoGen(tokens, i, cands) ?: buscarDifusoGen(tokens, i, cands)
+        if (match == null) break
+        val (gc, op) = match.second
+        elegidos.add(
+            ModificadorElegido(
+                grupoId = gc.grupo.id,
+                grupoNombre = gc.grupo.nombre,
+                opcionId = op.id,
+                opcionNombre = op.nombre,
+                deltaPrecio = op.deltaPrecio,
+            ),
+        )
+        if (!gc.grupo.multiple) usados.add(gc.grupo.id)
+        i += match.first
+    }
+    val notaTokens = mutableListOf<String>()
+    while (i < tokens.size && !hayProductoOCantidadDesde(tokens, i, productosTokens, colaMod)) {
+        val t = tokens[i]
+        if (t in palabrasRelleno) { i++; continue }
+        if (permiteNota) notaTokens.add(t) else noEntendido.add(t)
+        i++
+    }
+    val nota = notaTokens.joinToString(" ").trim().takeIf { it.isNotEmpty() }
+    return ColaModificadores(i, elegidos, nota, noEntendido)
+}
+
 /**
  * Convierte un comando de quitar hablado en líneas a eliminar.
  * Empareja contra los nombres de productos ya existentes en la comanda.
  * Ej.: "quita un café con leche" -> [("Café con leche", 1)]
  */
 fun parsearQuitar(texto: String, lineas: List<LineaPedido>): ResultadoQuitar {
-    val tokens = normalizar(texto).split(" ")
+    val tokens = normalizar(texto).split(" ").filter { it.isNotEmpty() }
     if (tokens.all { it.isEmpty() }) return ResultadoQuitar(emptyList(), emptyList())
 
-    val lineaTokens = lineas.map { l -> normalizar(l.nombreProducto).split(" ") to l.nombreProducto }
+    val lineaTokens = lineas.map { l -> normalizar(l.nombreProducto).split(" ") to l }
 
     val quitadas = mutableListOf<LineaQuitar>()
     val noEntendido = mutableListOf<String>()
@@ -246,15 +409,33 @@ fun parsearQuitar(texto: String, lineas: List<LineaPedido>): ResultadoQuitar {
         if (numero != null) { qty = numero; i++; continue }
 
         val matchExacto = buscarExactoGen(tokens, i, lineaTokens)
-        if (matchExacto != null) {
-            quitadas.add(LineaQuitar(matchExacto.second, qty))
-            qty = 1; i += matchExacto.first; continue
-        }
-
-        val matchDifuso = buscarDifusoGen(tokens, i, lineaTokens)
+        val matchDifuso = matchExacto ?: buscarDifusoGen(tokens, i, lineaTokens)
         if (matchDifuso != null) {
-            quitadas.add(LineaQuitar(matchDifuso.second, qty))
-            qty = 1; i += matchDifuso.first; continue
+            val linea = matchDifuso.second
+            i += matchDifuso.first
+            val gruposLinea = linea.modificadores().map { e ->
+                GrupoConOpciones(
+                    GrupoModificador(id = e.grupoId, nombre = e.grupoNombre, multiple = true),
+                    listOf(
+                        OpcionModificador(
+                            id = e.opcionId,
+                            grupoId = e.grupoId,
+                            nombre = e.opcionNombre,
+                            deltaPrecio = e.deltaPrecio,
+                        ),
+                    ),
+                )
+            }
+            val cola = consumirColaModificadores(tokens, i, gruposLinea, false, emptyList())
+            i = cola.indice
+            val json = if (cola.elegidos.isEmpty()) {
+                linea.modificadoresJson
+            } else {
+                CartaModificadores.canonicalJson(cola.elegidos)
+            }
+            quitadas.add(LineaQuitar(linea.nombreProducto, qty, json))
+            qty = 1
+            continue
         }
 
         if (tok in palabrasRelleno) { i++; continue }
@@ -273,9 +454,12 @@ fun coincidenciaBusqueda(query: String, producto: Producto): Int? {
     if (q.isEmpty()) return 0
     val nombre = normalizar(producto.nombre)
     val categoria = normalizar(producto.categoria)
+    val subfamilia = normalizar(producto.subfamilia.orEmpty())
 
-    if (nombre.startsWith(q) || categoria.startsWith(q)) return 0
-    if (nombre.contains(q) || categoria.contains(q) || q.contains(nombre)) return 1
+    if (nombre.startsWith(q) || categoria.startsWith(q) || (subfamilia.isNotEmpty() && subfamilia.startsWith(q))) return 0
+    if (nombre.contains(q) || categoria.contains(q) || q.contains(nombre) ||
+        (subfamilia.isNotEmpty() && (subfamilia.contains(q) || q.contains(subfamilia)))
+    ) return 1
 
     val qTokens = q.split(" ")
     val pTokens = nombre.split(" ")
@@ -315,7 +499,8 @@ internal fun <T> buscarExactoGen(
  */
 internal fun <T> buscarDifusoGen(
     tokens: List<String>, i: Int,
-    items: List<Pair<List<String>, T>>
+    items: List<Pair<List<String>, T>>,
+    colaExtra: Set<String> = emptySet(),
 ): Pair<Int, T>? {
     var mejor: Pair<Int, T>? = null
     var mejorDist = Int.MAX_VALUE
@@ -329,8 +514,14 @@ internal fun <T> buscarDifusoGen(
         while (len > 1 && headOk) {
             val last = tokens[i + len - 1]
             val prev = tokens[i + len - 2]
-            val colaSala = last in palabrasRelleno || (esCantidad(last) && prev == "para")
-            if (!colaSala) break
+            val colaSala = last in palabrasRelleno || last in colaExtra ||
+                (esCantidad(last) && prev == "para")
+            val lastProd = tokensItem.getOrNull(len - 1)
+            val lastSing = if (last.length > 1 && last.endsWith("s")) last.dropLast(1) else last
+            val lastNoEsProducto = lastProd != null &&
+                levenshtein(last, lastProd) > 1 &&
+                levenshtein(lastSing, lastProd) > 1
+            if (!colaSala && !lastNoEsProducto) break
             len--
         }
 
@@ -338,7 +529,7 @@ internal fun <T> buscarDifusoGen(
         if (len < tokensItem.size && i + len < tokens.size) {
             val nextInput = tokens[i + len]
             val nextProduct = tokensItem[len]
-            val nextEsSala = nextInput in palabrasRelleno ||
+            val nextEsSala = nextInput in palabrasRelleno || nextInput in colaExtra ||
                 (nextInput == "para" && i + len + 1 < tokens.size && esCantidad(tokens[i + len + 1]))
             if (!nextEsSala && levenshtein(nextInput, nextProduct) > 2) {
                 continue // Match parcial espurio: el siguiente token no pertenece a este producto

@@ -4,6 +4,9 @@ import android.content.Context
 import androidx.room.withTransaction
 import com.jaminsmoke.personalcomander.data.AppDatabase
 import com.jaminsmoke.personalcomander.data.EscaneadorRed
+import com.jaminsmoke.personalcomander.data.GrupoModificador
+import com.jaminsmoke.personalcomander.data.OpcionModificador
+import com.jaminsmoke.personalcomander.data.ProductoGrupo
 import com.jaminsmoke.personalcomander.data.ServidorDescubierto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -440,15 +443,85 @@ class SesionRepository(
         } else {
             CartaSync.plan(existentes, carta.productos)
         }
-        if (plan.insertar.isEmpty() && plan.actualizar.isEmpty()) {
+        if (plan.insertar.isEmpty() && plan.actualizar.isEmpty() && carta.gruposModificador.isEmpty()) {
             if (reconstruir) store.cartaSchema = carta.schema
             return
         }
         db.withTransaction {
             if (plan.insertar.isNotEmpty()) db.productoDao().insertAll(plan.insertar)
             if (plan.actualizar.isNotEmpty()) db.productoDao().updateAll(plan.actualizar)
+            espejarGrupos(carta)
         }
         if (reconstruir) store.cartaSchema = carta.schema
+    }
+
+    /**
+     * Nodo viejo (sin `gruposModificador`) no toca los grupos locales.
+     * Si Bar manda grupos, upsert por `codigoBar` y re-liga solo productos espejados.
+     */
+    private suspend fun espejarGrupos(carta: CartaLan) {
+        if (carta.gruposModificador.isEmpty()) return
+        val locales = db.grupoModificadorDao().getAll()
+        val porCodigo = locales.mapNotNull { g -> g.codigoBar?.let { it to g } }.toMap()
+        val idLocalPorRed = mutableMapOf<String, Long>()
+        for (remoto in carta.gruposModificador) {
+            val existente = porCodigo[remoto.id]
+            val gid = if (existente == null) {
+                db.grupoModificadorDao().insert(
+                    GrupoModificador(
+                        nombre = remoto.nombre,
+                        multiple = remoto.multiple,
+                        obligatorio = remoto.obligatorio,
+                        codigoBar = remoto.id,
+                    ),
+                )
+            } else {
+                db.grupoModificadorDao().update(
+                    existente.copy(
+                        nombre = remoto.nombre,
+                        multiple = remoto.multiple,
+                        obligatorio = remoto.obligatorio,
+                    ),
+                )
+                existente.id
+            }
+            idLocalPorRed[remoto.id] = gid
+            val opsLocal = db.opcionModificadorDao().getByGrupo(gid)
+            val opPorCodigo = opsLocal.mapNotNull { o -> o.codigoBar?.let { it to o } }.toMap()
+            for (rop in remoto.opciones) {
+                val loc = opPorCodigo[rop.id]
+                if (loc == null) {
+                    db.opcionModificadorDao().insert(
+                        OpcionModificador(
+                            grupoId = gid,
+                            nombre = rop.nombre,
+                            deltaPrecio = rop.deltaPrecio,
+                            alias = rop.alias,
+                            codigoBar = rop.id,
+                        ),
+                    )
+                } else {
+                    db.opcionModificadorDao().update(
+                        loc.copy(
+                            nombre = rop.nombre,
+                            deltaPrecio = rop.deltaPrecio,
+                            alias = rop.alias,
+                        ),
+                    )
+                }
+            }
+        }
+        val porCodigoProd = db.productoDao().getAllIncluyendoOcultos()
+            .mapNotNull { p -> p.codigoBar?.let { it to p } }
+            .toMap()
+        for (remoto in carta.productos) {
+            val local = porCodigoProd[remoto.id] ?: continue
+            db.productoGrupoDao().deleteByProducto(local.id)
+            val links = remoto.grupos.mapNotNull { red ->
+                idLocalPorRed[red]?.let { ProductoGrupo(local.id, it) }
+            }
+            if (links.isNotEmpty()) db.productoGrupoDao().insertAll(links)
+        }
     }
 
     /**

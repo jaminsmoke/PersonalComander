@@ -2,8 +2,10 @@ package com.jaminsmoke.personalcomander.data.sesion
 
 import com.google.gson.Gson
 import com.google.gson.JsonParser
+import com.jaminsmoke.personalcomander.data.CartaModificadores
 import com.jaminsmoke.personalcomander.data.LineaEstado
 import com.jaminsmoke.personalcomander.data.LineaPedido
+import com.jaminsmoke.personalcomander.data.modificadores
 
 /** Ticket del body de `POST /v1/rondas` y de `GET /v1/estado`. */
 data class TicketLan(
@@ -70,7 +72,23 @@ object RecogerLogica {
         lineas.filter { it.estado == LineaEstado.PENDIENTE }
 
     fun lineaPendienteDelProducto(lineas: List<LineaPedido>, productoId: Long): LineaPedido? =
-        lineas.firstOrNull { it.productoId == productoId && it.estado == LineaEstado.PENDIENTE }
+        lineaPendienteCompatible(lineas, productoId, nota = null, modificadoresJson = "[]")
+
+    fun lineaPendienteCompatible(
+        lineas: List<LineaPedido>,
+        productoId: Long,
+        nota: String?,
+        modificadoresJson: String,
+    ): LineaPedido? {
+        val json = CartaModificadores.canonicalJson(CartaModificadores.parseJson(modificadoresJson))
+        val n = nota?.trim().orEmpty()
+        return lineas.firstOrNull {
+            it.productoId == productoId &&
+                it.estado == LineaEstado.PENDIENTE &&
+                (it.nota?.trim().orEmpty()) == n &&
+                CartaModificadores.canonicalJson(it.modificadores()) == json
+        }
+    }
 
     fun bloques(lineas: List<LineaPedido>): BloquesComanda = BloquesComanda(
         estaRonda = lineas.filter {

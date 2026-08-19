@@ -99,4 +99,39 @@ class RondaLanMapperTest {
         assertEquals("cana", ronda.lineas[0].productoId)
         assertEquals("3", ronda.lineas[1].productoId)
     }
+
+    @Test
+    fun linea_incluye_nota_y_modificadores() {
+        val conMods = listOf(
+            LineaPedido(
+                id = 1, pedidoId = 42, productoId = 10,
+                nombreProducto = "Hamburguesa", precioUnitario = 8.0, cantidad = 1,
+                nota = "sin cebolla",
+                modificadoresJson = com.jaminsmoke.personalcomander.data.CartaModificadores.canonicalJson(
+                    listOf(
+                        com.jaminsmoke.personalcomander.data.ModificadorElegido(
+                            1, "Punto", 11, "Al punto", 0.0,
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val ronda = RondaLanMapper.desdePedido(
+            pedidoId = 42,
+            mesa = mesaTerraza,
+            nombreSala = "Terraza",
+            lineas = conMods,
+            camarero = "Ana",
+            creadoEn = 1L,
+        )
+        val linea = ronda.lineas.single()
+        assertEquals("sin cebolla", linea.nota)
+        assertEquals(1, linea.modificadores.size)
+        assertEquals("Punto", linea.modificadores[0].grupo)
+        assertEquals("Al punto", linea.modificadores[0].opcion)
+        val o = JsonParser.parseString(RondaLanMapper.toJson(ronda)).asJsonObject
+        val primera = o.getAsJsonArray("lineas")[0].asJsonObject
+        assertEquals("sin cebolla", primera.get("nota").asString)
+        assertTrue(primera.has("modificadores"))
+    }
 }

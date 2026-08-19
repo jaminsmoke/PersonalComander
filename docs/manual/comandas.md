@@ -17,13 +17,15 @@ Abre una mesa desde el [board](mesas.md) para tomar el pedido. La comanda es a p
 3. Habla con naturalidad, por ejemplo *dos cafés con leche y una tarta*.
 4. Revisa las líneas y confirma.
 
-El reconocimiento va **en el dispositivo**: no hace falta internet. Entiende cantidades y nombres del catálogo, con algo de tolerancia a errores de transcripción. El detalle técnico está en [Voz](../voz.md).
+El reconocimiento va **en el dispositivo**: no hace falta internet. Entiende cantidades, nombres del catálogo y opciones («al punto», «coca cola zero»). Si falta un modificador obligatorio, añade la línea y abre la misma hoja táctil. El detalle técnico está en [Voz](../voz.md).
 
 ## Táctil
 
-1. Busca el producto por nombre o recorre las pestañas de categoría.
-2. Toca el producto para añadirlo.
-3. Ajusta la cantidad si hace falta.
+1. Busca el producto por nombre o recorre las pestañas de categoría. Dentro hay cabeceras de **subfamilia** (p. ej. Coca-Cola).
+2. Toca el producto para añadirlo. Si tiene modificadores (punto, extras) o admite nota, se abre una **hoja** para elegirlos.
+3. Toca una línea pendiente para reeditarla. `+` / `−` cambian la cantidad de esa combinación.
+
+Dos puntos distintos de la misma hamburguesa son **dos líneas**. El precio de línea incluye los extras.
 
 ## Ciclo
 

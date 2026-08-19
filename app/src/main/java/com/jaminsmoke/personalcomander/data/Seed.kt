@@ -86,6 +86,9 @@ object Seed {
         Producto(nombre = "Bacalao a la plancha", categoria = "Pescados", precio = 14.00),
         Producto(nombre = "Merluza rebozada", categoria = "Pescados", precio = 12.00),
         Producto(nombre = "Agua mineral", categoria = "Bebidas", precio = 2.00),
+        Producto(nombre = "Coca-Cola", categoria = "Bebidas", precio = 2.50, subfamilia = "Coca-Cola"),
+        Producto(nombre = "Coca-Cola Zero", categoria = "Bebidas", precio = 2.50, subfamilia = "Coca-Cola"),
+        Producto(nombre = "Coca-Cola Light", categoria = "Bebidas", precio = 2.50, subfamilia = "Coca-Cola"),
         Producto(nombre = "Refresco", categoria = "Bebidas", precio = 2.50),
         Producto(nombre = "Cerveza caña", categoria = "Bebidas", precio = 2.50),
         Producto(nombre = "Vino de la casa (copa)", categoria = "Bebidas", precio = 3.00),
@@ -95,5 +98,14 @@ object Seed {
         Producto(nombre = "Tarta de queso", categoria = "Postres", precio = 4.50),
         Producto(nombre = "Flan de huevo", categoria = "Postres", precio = 3.50),
         Producto(nombre = "Helado (2 bolas)", categoria = "Postres", precio = 3.00)
+    )
+
+    fun grupoPunto(): GrupoModificador =
+        GrupoModificador(nombre = "Punto", multiple = false, obligatorio = true)
+
+    fun opcionesPunto(): List<OpcionModificador> = listOf(
+        OpcionModificador(grupoId = 0, nombre = "Poco hecho", alias = "poco|poco hecha"),
+        OpcionModificador(grupoId = 0, nombre = "Al punto", alias = "punto|al punto"),
+        OpcionModificador(grupoId = 0, nombre = "Muy hecho", alias = "muy hecha|bien hecho|muy hechas"),
     )
 }

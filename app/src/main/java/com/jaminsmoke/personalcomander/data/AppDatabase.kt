@@ -6,8 +6,11 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [Sala::class, Mesa::class, Producto::class, Pedido::class, LineaPedido::class, Reserva::class],
-    version = 14,
+    entities = [
+        Sala::class, Mesa::class, Producto::class, Pedido::class, LineaPedido::class, Reserva::class,
+        GrupoModificador::class, OpcionModificador::class, ProductoGrupo::class,
+    ],
+    version = 15,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -17,6 +20,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun pedidoDao(): PedidoDao
     abstract fun lineaPedidoDao(): LineaPedidoDao
     abstract fun reservaDao(): ReservaDao
+    abstract fun grupoModificadorDao(): GrupoModificadorDao
+    abstract fun opcionModificadorDao(): OpcionModificadorDao
+    abstract fun productoGrupoDao(): ProductoGrupoDao
 
     companion object {
         val MIGRATION_4_5 = object : Migration(4, 5) {
@@ -201,6 +207,66 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `mesas` ADD COLUMN `codigoBar` TEXT")
                 db.execSQL(
                     "CREATE UNIQUE INDEX IF NOT EXISTS `index_mesas_codigoBar` ON `mesas` (`codigoBar`)"
+                )
+            }
+        }
+
+        /**
+         * v14→v15: subfamilias y modificadores de carta. Snapshot en la línea
+         * (nota + JSON) para no romper el historial si el catálogo cambia.
+         */
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `productos` ADD COLUMN `subfamilia` TEXT")
+                db.execSQL("ALTER TABLE `productos` ADD COLUMN `permiteNota` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `lineas_pedido` ADD COLUMN `nota` TEXT")
+                db.execSQL("ALTER TABLE `lineas_pedido` ADD COLUMN `modificadoresJson` TEXT NOT NULL DEFAULT '[]'")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `grupos_modificador` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `nombre` TEXT NOT NULL,
+                        `multiple` INTEGER NOT NULL,
+                        `obligatorio` INTEGER NOT NULL,
+                        `codigoBar` TEXT
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_grupos_modificador_codigoBar` ON `grupos_modificador` (`codigoBar`)"
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `opciones_modificador` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `grupoId` INTEGER NOT NULL,
+                        `nombre` TEXT NOT NULL,
+                        `deltaPrecio` REAL NOT NULL,
+                        `alias` TEXT NOT NULL,
+                        `codigoBar` TEXT,
+                        FOREIGN KEY(`grupoId`) REFERENCES `grupos_modificador`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_opciones_modificador_grupoId` ON `opciones_modificador` (`grupoId`)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_opciones_modificador_codigoBar` ON `opciones_modificador` (`codigoBar`)"
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `producto_grupos` (
+                        `productoId` INTEGER NOT NULL,
+                        `grupoId` INTEGER NOT NULL,
+                        PRIMARY KEY(`productoId`, `grupoId`),
+                        FOREIGN KEY(`productoId`) REFERENCES `productos`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`grupoId`) REFERENCES `grupos_modificador`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_producto_grupos_grupoId` ON `producto_grupos` (`grupoId`)"
                 )
             }
         }
