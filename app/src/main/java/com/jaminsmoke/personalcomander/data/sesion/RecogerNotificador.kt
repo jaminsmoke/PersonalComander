@@ -31,11 +31,17 @@ object RecogerNotificador {
 
     fun mostrar(context: Context, aviso: AvisoRecoger) {
         asegurarCanal(context)
+        // setClass/setPackage (no el ctor Kotlin) y flags con `|` Java: CodeQL
+        // no modela `Intent(context, Class)` ni el `or` infix como explícito/inmutable.
+        val abrirApp = Intent()
+            .setClass(context, MainActivity::class.java)
+            .setPackage(context.packageName)
+            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
         val pending = PendingIntent.getActivity(
             context,
             aviso.ticketId.hashCode(),
-            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            abrirApp,
+            RecogerPendingFlags.UPDATE_IMMUTABLE,
         )
         val notificacion = NotificationCompat.Builder(context, CANAL_ID)
             .setSmallIcon(R.drawable.ic_brand_shield)
