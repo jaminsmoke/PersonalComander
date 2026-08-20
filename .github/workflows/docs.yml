@@ -18,12 +18,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # legítimo: mkdocs gh-deploy publica la documentación en GitHub Pages
+  contents: read
 
 jobs:
   deploy:
     name: Deploy docs
     runs-on: ubuntu-latest
+    # Escrito solo en el job que publica (mkdocs gh-deploy escribe en Pages).
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
 
