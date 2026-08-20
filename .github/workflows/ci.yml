@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.5
         with:
           persist-credentials: false
 
@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.5
         with:
           persist-credentials: false
 
@@ -66,7 +66,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Checkout Bar contract fixtures
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.5
         with:
           repository: jaminsmoke/PersonalBar
           ref: ${{ inputs.bar_ref || 'main' }}
@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.5
         with:
           persist-credentials: false
 
@@ -123,7 +123,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.5
         with:
           persist-credentials: false
 
@@ -165,7 +165,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.5
         with:
           persist-credentials: false
 
@@ -185,7 +185,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.5
         with:
           persist-credentials: false
 
@@ -199,7 +199,7 @@ jobs:
       ACTIONLINT_IMAGE: rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
       ZIZMOR_IMAGE: ghcr.io/zizmorcore/zizmor:1.29.0@sha256:863026d54f91271b10b60b67ad8054cb37120167e162482597db102b3026a284
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.5
         with:
           persist-credentials: false
 
@@ -219,12 +219,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.5
         with:
           persist-credentials: false
 
       - name: Checkout Identity OpenAPI specs
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.5
         with:
           repository: jaminsmoke/PersonalHostel-Server
           ref: ${{ inputs.identity_ref || 'main' }}
@@ -236,7 +236,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Checkout Bar LAN module and contract
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.2.5
         with:
           repository: jaminsmoke/PersonalBar
           ref: ${{ inputs.bar_ref || 'main' }}
