@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.cyclonedx.bom)
 }
 
 val keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -59,6 +60,18 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    testOptions {
+        // Dispositivo gestionado para CI (KVM en runners de GitHub): las suites
+        // instrumentadas (Room, UI y voz-parser) corren con ./gradlew pixel2api35DebugAndroidTest.
+        managedDevices {
+            localDevices {
+                create("pixel2api35") {
+                    device = "Pixel 2"
+                    apiLevel = 35
+                }
+            }
+        }
     }
 }
 
