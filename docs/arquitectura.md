@@ -51,7 +51,7 @@ UI (Compose) → ViewModel (StateFlow) → Repository → Room (SQLite)
                     ↑                        ↓
                  VozParser (NLP)        Sync TPV (Gson/LAN)
                   Backup JSON (import/export)
-                  Identity / Personal Bar (v1.6)
+                  Identity / Personal Bar (v1.7)
 ```
 
 - Los ViewModels exponen `StateFlow` que la UI consume con `collectAsState()`.

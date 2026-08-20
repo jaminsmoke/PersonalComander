@@ -24,6 +24,9 @@ STALE = (
     "apk público actual es v1.5",
     "en desarrollo para v1.6",
     "v1.6 en desarrollo",
+    "release descargable actual es **v1.6",
+    "release pública actual es **v1.6",
+    "la release **v1.6** incluye",
 )
 ANTI_COPY_IN_ARQUITECTURA = (
     "RMS_UMBRAL_CERCANIA",

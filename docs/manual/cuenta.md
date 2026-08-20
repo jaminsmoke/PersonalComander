@@ -1,6 +1,6 @@
 # Cuenta y turno
 
-La release **v1.6** incluye cuenta de camarero (Identity en el VPS), ficha pública, visibilidad y turno LAN con Personal Bar.
+La release **v1.7** incluye radar LAN en Resumen, panel de oficio, invitaciones, modificadores de carta, y la cuenta de camarero (Identity en el VPS) con ficha pública y turno LAN.
 
 ## Oficios
 
@@ -58,10 +58,13 @@ El payload, los códigos HTTP y la idempotencia están en [Protocolo LAN](../sal
 
 ## Qué hay en cada versión
 
-| Flujo | v1.5 | v1.6 |
-|---|---:|---:|
-| Board, mesas y comandas locales | Sí | Sí |
-| Voz on-device | Sí | Sí |
-| TPV y backup JSON | Sí | Sí |
-| Cuenta, perfil, QR y visibilidad | No | Sí |
-| Establecimiento, salas y ronda a Bar | No | Sí |
+| Flujo | v1.5 | v1.6 | v1.7 |
+|---|---:|---:|---:|
+| Board, mesas y comandas locales | Sí | Sí | Sí |
+| Voz on-device | Sí | Sí | Sí |
+| TPV y backup JSON | Sí | Sí | Sí |
+| Cuenta, perfil, QR y visibilidad | No | Sí | Sí |
+| Establecimiento, salas y ronda a Bar | No | Sí | Sí |
+| Radar LAN en Resumen | No | No | Sí |
+| Panel de oficio (horas y rondas) | No | No | Sí |
+| Modificadores y subfamilias | No | No | Sí |

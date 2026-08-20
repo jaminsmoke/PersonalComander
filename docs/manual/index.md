@@ -1,6 +1,6 @@
 # Manual de usuario
 
-Guía de **Personal Comander** para el camarero en sala. La release descargable actual es **v1.6**.
+Guía de **Personal Comander** para el camarero en sala. La release descargable actual es **v1.7**.
 
 Commander es la app del teléfono: mesas, comanda (toque y voz) y cuenta profesional. No es el puesto del negocio (eso es Personal Bar) ni el registro de cuentas (eso es Identity, en el VPS).
 

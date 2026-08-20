@@ -8,7 +8,7 @@ It is **not** the venue back office. That job belongs to **Personal Bar** (sibli
 
 - Package: `com.jaminsmoke.personalcomander`
 - Min SDK: 24 · Target SDK: 36 · Compile SDK: 37
-- Version: 1.6 (versionCode 7)
+- Version: 1.7 (versionCode 8)
 - Repo: `jaminsmoke/PersonalComander`
 
 ## Stack
@@ -161,7 +161,7 @@ Detectado → Debate → Roadmap → Ejecutando → Verificando → Changelog
 
 **No skipping**: every item advances in order. Exception: `Cancelado` → Changelog.
 
-**Version always > latest release**: consult `gh release list`. Tras publicar **v1.6**, los ítems nuevos van a **v1.7**.
+**Version always > latest release**: consult `gh release list`. Tras publicar **v1.7**, los ítems nuevos van a **v1.8**.
 
 #### 1. Detectado — Describir el problema a fondo
 
@@ -350,7 +350,7 @@ Each item's body evolves through the lifecycle. The CLI generates a template at 
 | Prioridad | SingleSelect | Alta, Media, Baja |
 | Tipo | SingleSelect | Bug, Feature, Mejora, Tarea |
 | Área principal | SingleSelect | UI/UX, Datos, Voz, Sync, Android, Build/CI, Docs |
-| Versión | SingleSelect | v1.4, v1.5, v1.6, v1.7... |
+| Versión | SingleSelect | v1.4, v1.5, v1.6, v1.7, v1.8... |
 | Decision | SingleSelect | Pendiente, Aprobado, Diferido, Cancelado |
 | HighLighted | SingleSelect | Yes, No (for changelog highlights) |
 | Inicio exacto | Text | ISO-8601 UTC timestamp |

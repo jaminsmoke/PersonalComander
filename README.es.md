@@ -13,7 +13,7 @@ Español · [English](README.md)
 [![License](https://img.shields.io/github/license/jaminsmoke/PersonalComander?color=%23E9C349)](LICENSE)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 
-**v1.6** · Android 7.0+ (API 24) · [🌐 Sitio](https://jaminsmoke.github.io/PersonalComander/) · [📖 Manual](https://jaminsmoke.github.io/PersonalComander/manual/)
+**v1.7** · Android 7.0+ (API 24) · [🌐 Sitio](https://jaminsmoke.github.io/PersonalComander/) · [📖 Manual](https://jaminsmoke.github.io/PersonalComander/manual/)
 
 </div>
 
@@ -54,7 +54,7 @@ Regenera los assets públicos tras un cambio de marca o de UI para no desincroni
 
 ## Roadmap
 
-- **v1.7** — ciclo actual del kanban.
+- **v1.8** — ciclo actual del kanban.
 - Más adelante — funcionalidades premium (ver modelo de licencia).
 
 ## Contribuir

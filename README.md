@@ -13,7 +13,7 @@
 [![License](https://img.shields.io/github/license/jaminsmoke/PersonalComander?color=%23E9C349)](LICENSE)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 
-**v1.6** · Android 7.0+ (API 24) · [🌐 Site](https://jaminsmoke.github.io/PersonalComander/) · [📖 Manual](https://jaminsmoke.github.io/PersonalComander/manual/)
+**v1.7** · Android 7.0+ (API 24) · [🌐 Site](https://jaminsmoke.github.io/PersonalComander/) · [📖 Manual](https://jaminsmoke.github.io/PersonalComander/manual/)
 
 </div>
 
@@ -54,7 +54,7 @@ Regenerate public assets after a rebrand or UI redesign so the README and the si
 
 ## Roadmap
 
-- **v1.7** — current kanban cycle.
+- **v1.8** — current kanban cycle.
 - Later — premium features (see licensing model).
 
 ## Contributing

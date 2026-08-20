@@ -12,7 +12,7 @@ La app funciona en tablet, pero el oficio de Commander es el teléfono del camar
 
 ## Instalar el APK
 
-1. Descarga la última versión desde [Releases](https://github.com/jaminsmoke/PersonalComander/releases/latest) (fichero `.apk`). La release pública actual es **v1.6**.
+1. Descarga la última versión desde [Releases](https://github.com/jaminsmoke/PersonalComander/releases/latest) (fichero `.apk`). La release pública actual es **v1.7**.
 2. Copia el APK al dispositivo o descárgalo directamente.
 3. Toca el fichero y acepta la instalación de orígenes desconocidos si el sistema lo pide.
 4. Abre Personal Comander.
