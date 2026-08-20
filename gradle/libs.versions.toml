@@ -15,7 +15,7 @@ lifecycleViewmodelCompose = "2.11.0"
 gson = "2.14.0"
 sqliteJdbc = "3.53.2.1"
 vico = "3.2.3"
-zxing = "3.5.3"
+zxing = "3.5.4"
 cyclonedx = "3.4.1"
 
 [libraries]
