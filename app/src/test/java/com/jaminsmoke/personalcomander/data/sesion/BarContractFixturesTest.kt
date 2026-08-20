@@ -30,9 +30,13 @@ class BarContractFixturesTest {
     }
 
     private fun fixtureDir(): File {
+        // El test worker de Gradle corre con cwd = directorio del módulo (`app/`),
+        // no la raíz del repo: por eso los candidatos locales usan `../PersonalBar`
+        // y el checkout de CI (en la raíz) se busca como `../.family/bar`.
         val candidatos = listOf(
             File("../PersonalBar/docs/contrato/fixtures"),
             File("../../PersonalBar/docs/contrato/fixtures"),
+            File("../.family/bar/docs/contrato/fixtures"),
             File(".family/bar/docs/contrato/fixtures"),
             File("docs/contrato/fixtures"),
         )
