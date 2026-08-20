@@ -1,0 +1,17 @@
+# Configuración de zizmor (auditor de workflows, job workflow-security).
+#
+# Los secrets de firma del keystore se consumen EXCLUSIVAMENTE en
+# `.github/workflows/release.yml` dentro de bloques `env:` de paso (patrón
+# recomendado), para decodificar y firmar el APK/AAB de la release. zizmor
+# 1.29.0 los marca como `secrets-outside-env` pese a estar en `env:`; se
+# allowlistean aquí de forma explícita y documentada (mismo espíritu que el
+# `contents: write` justificado de release.yml). Cualquier uso fuera de
+# release.yml debe revisarse antes de añadir un nombre a esta lista.
+rules:
+  secrets-outside-env:
+    config:
+      allow:
+        - KEYSTORE_BASE64
+        - KEYSTORE_PASSWORD
+        - KEY_ALIAS
+        - KEY_PASSWORD

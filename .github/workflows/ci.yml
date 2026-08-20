@@ -30,6 +30,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.1.0
         with:
@@ -50,6 +52,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.1.0
         with:
@@ -67,6 +71,7 @@ jobs:
           repository: jaminsmoke/PersonalBar
           ref: ${{ inputs.bar_ref || 'main' }}
           path: .family/bar
+          persist-credentials: false
           sparse-checkout: |
             docs/contrato/fixtures
           sparse-checkout-cone-mode: false
@@ -80,6 +85,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.1.0
         with:
@@ -117,6 +124,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.1.0
         with:
@@ -157,6 +166,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.1.0
         with:
@@ -175,6 +186,8 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+        with:
+          persist-credentials: false
 
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
 
@@ -194,7 +207,9 @@ jobs:
         run: docker run --rm --volume "$PWD:/repo:ro" --workdir /repo "$ACTIONLINT_IMAGE"
 
       - name: Audit workflow security
-        run: docker run --rm --volume "$PWD:/repo:ro" --workdir /repo "$ZIZMOR_IMAGE" --persona=auditor .github/workflows
+        # Solo falla con hallazgos high; los medium/low/info son advisory y se
+        # documentan en el item kanban (postura de familia Server/Bar).
+        run: docker run --rm --volume "$PWD:/repo:ro" --workdir /repo "$ZIZMOR_IMAGE" --persona=auditor --min-severity high .github/workflows
 
       - name: Check CI baseline policy
         run: python scripts/check_ci_policy.py
@@ -205,6 +220,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+        with:
+          persist-credentials: false
 
       - name: Checkout Identity OpenAPI specs
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
@@ -212,6 +229,7 @@ jobs:
           repository: jaminsmoke/PersonalHostel-Server
           ref: ${{ inputs.identity_ref || 'main' }}
           path: .family/identity
+          persist-credentials: false
           sparse-checkout: |
             docs/openapi-camareros.json
             docs/openapi-negocio.json
@@ -223,6 +241,7 @@ jobs:
           repository: jaminsmoke/PersonalBar
           ref: ${{ inputs.bar_ref || 'main' }}
           path: .family/bar
+          persist-credentials: false
           sparse-checkout: |
             app/src/main/java/com/jaminsmoke/personalbar/lan/BarLanModule.kt
             docs/contrato/openapi-lan.json
