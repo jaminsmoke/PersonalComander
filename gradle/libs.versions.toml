@@ -16,6 +16,7 @@ gson = "2.14.0"
 sqliteJdbc = "3.53.2.1"
 vico = "3.2.3"
 zxing = "3.5.3"
+cyclonedx = "3.4.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -49,4 +50,5 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+cyclonedx-bom = { id = "org.cyclonedx.bom", version.ref = "cyclonedx" }
 

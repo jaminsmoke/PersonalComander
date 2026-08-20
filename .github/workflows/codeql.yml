@@ -1,0 +1,53 @@
+name: codeql
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "23 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: codeql-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (java-kotlin)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Escrito solo en el job de análisis (SARIF upload de los resultados de CodeQL).
+    permissions:
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["java-kotlin"]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.1.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@d6317709a54fd87078d323eeb0e48ec331c8e621 # v3.28.0
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@d6317709a54fd87078d323eeb0e48ec331c8e621 # v3.28.0
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@d6317709a54fd87078d323eeb0e48ec331c8e621 # v3.28.0
+        with:
+          category: "/language:${{ matrix.language }}"
