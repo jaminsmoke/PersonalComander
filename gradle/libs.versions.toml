@@ -17,6 +17,8 @@ sqliteJdbc = "3.53.2.1"
 vico = "3.3.0"
 zxing = "3.5.4"
 cyclonedx = "3.4.1"
+bouncycastleBcprov = "1.85.2"
+bouncycastlePkix = "1.85"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

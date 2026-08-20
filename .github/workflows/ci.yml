@@ -174,7 +174,12 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      # Solo el runtime del APK (:app). KGP/AGP, GMD/UTP y classpaths de test
+      # no son el puesto; no se silencian con dependabot ignore.
       - uses: gradle/actions/dependency-submission@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v4.6.0
+        with:
+          dependency-graph-include-projects: ':app'
+          dependency-graph-include-configurations: '^(debug|release)RuntimeClasspath$'
 
   dependency-review:
     name: Dependency review

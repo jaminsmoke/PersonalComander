@@ -464,6 +464,7 @@ Key enums: `MesaEstado` (LIBRE, OCUPADA, EN_COCINA), `MesaForma` (REDONDA, CUADR
 - `local.properties` for SDK path (gitignored)
 - `cleartextTraffic=true` for LAN POS sync — revisit if app goes beyond local network
 - GraphQL token for kanban CLI uses `GH_TOKEN` / `GITHUB_TOKEN` from `gh auth`
+- **Dependabot / grafo Gradle**: el job `dependency-submission` envía solo el runtime del APK (`:app`, `debugRuntimeClasspath` / `releaseRuntimeClasspath`). El toolchain (KGP, AGP, GMD/UTP, classpaths de test) no es el puesto: no se silencia con `ignore`. Si aparecen flavors, ampliar el regex del workflow. Constraints de BouncyCastle en `build.gradle.kts` cubren el grafo del proyecto si algo lo pide; el APK actual no lleva BC. No forzar Netty: rompe GMD.
 
 ## Community & contribution
 
