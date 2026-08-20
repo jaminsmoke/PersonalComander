@@ -31,6 +31,22 @@ KTOR_RUTA = re.compile(
     re.IGNORECASE,
 )
 
+HTTP_VERBOS = frozenset({"get", "post", "put", "delete", "patch", "options", "head", "trace"})
+
+# Método HTTP con el que Commander llama a cada ruta LAN (deriva de BarLanCliente).
+# `/v1/eventos` es SSE: en el contrato de Bar se documenta como GET text/event-stream.
+MÉTODOS_BAR = {
+    "/health": "get",
+    "/v1/rondas": "post",
+    "/v1/sesion": "post",
+    "/v1/sesion/iniciar": "post",
+    "/v1/sesion/cortar": "post",
+    "/v1/heartbeat": "post",
+    "/v1/estado": "get",
+    "/v1/eventos": "get",
+    "/v1/carta": "get",
+}
+
 
 def load_snapshot(path: Path) -> set[str]:
     rutas: set[str] = set()
@@ -47,6 +63,20 @@ def openapi_paths(path: Path) -> set[str]:
     if not isinstance(paths, dict):
         raise ValueError(f"{path} no tiene objeto paths")
     return set(paths)
+
+
+def openapi_ops(path: Path) -> dict[str, set[str]]:
+    """path -> verbos declarados (minúsculas) del spec OpenAPI."""
+    spec = json.loads(path.read_text(encoding="utf-8"))
+    paths = spec.get("paths")
+    if not isinstance(paths, dict):
+        raise ValueError(f"{path} no tiene objeto paths")
+    out: dict[str, set[str]] = {}
+    for raw, item in paths.items():
+        if not isinstance(item, dict):
+            continue
+        out[raw] = {k.lower() for k in item if k.lower() in HTTP_VERBOS}
+    return out
 
 
 def ktor_paths(fuente: str) -> set[str]:
@@ -83,6 +113,7 @@ def comprobar(
     identity_openapi: Path,
     negocio_openapi: Path,
     bar_module: Path,
+    bar_openapi: Path | None = None,
 ) -> Informe:
     identity_want = load_snapshot(IDENTITY_SNAPSHOT)
     identity_have = openapi_paths(identity_openapi)
@@ -116,6 +147,21 @@ def comprobar(
             "BarLanModule.kt no declara rutas que Commander llama: "
             + ", ".join(missing_bar),
         )
+
+    if bar_openapi is not None:
+        # Contrato estructural de Bar (openapi-lan.json): ruta + método.
+        bar_ops = openapi_ops(bar_openapi)
+        for ruta, metodo in sorted(MÉTODOS_BAR.items()):
+            verbos = bar_ops.get(ruta)
+            if verbos is None:
+                fallos.append(
+                    f"openapi-lan.json de Bar no documenta {ruta} que Commander llama"
+                )
+            elif metodo not in verbos:
+                fallos.append(
+                    f"openapi-lan.json de Bar no declara {metodo.upper()} {ruta} "
+                    f"(solo {', '.join(sorted(v.upper() for v in verbos))})"
+                )
 
     warnings = [
         f"Identity camareros pública no usada por Commander: {ruta}"
@@ -294,6 +340,47 @@ def selftest() -> int:
         if not any("rondas" in f for f in fallos):
             print("SELFTEST FAIL: debía detectar /v1/rondas ausente", file=sys.stderr)
             return 1
+
+        # Método+path contra openapi-lan.json.
+        modulo.write_text(bar_ok, encoding="utf-8")
+        bar_spec = {
+            "paths": {
+                "/health": {"get": {}},
+                "/v1/rondas": {"post": {}},
+                "/v1/sesion": {"post": {}},
+                "/v1/sesion/iniciar": {"post": {}},
+                "/v1/sesion/cortar": {"post": {}},
+                "/v1/heartbeat": {"post": {}},
+                "/v1/estado": {"get": {}},
+                "/v1/eventos": {"get": {}},
+                "/v1/carta": {"get": {}},
+            }
+        }
+        bar_spec_path = tmp_path / "openapi-lan.json"
+        bar_spec_path.write_text(json.dumps(bar_spec), encoding="utf-8")
+        fallos = comprobar(openapi, negocio, modulo, bar_openapi=bar_spec_path).fallos
+        if fallos:
+            print("SELFTEST FAIL: openapi-lan correcto debería pasar", file=sys.stderr)
+            print("\n".join(fallos), file=sys.stderr)
+            return 1
+
+        # Ruta que Commander llama y openapi-lan no documenta → ROJO.
+        bar_spec["paths"].pop("/v1/carta")
+        bar_spec_path.write_text(json.dumps(bar_spec), encoding="utf-8")
+        fallos = comprobar(openapi, negocio, modulo, bar_openapi=bar_spec_path).fallos
+        if not any("no documenta /v1/carta" in f for f in fallos):
+            print("SELFTEST FAIL: debía detectar /v1/carta ausente en openapi-lan", file=sys.stderr)
+            return 1
+
+        # Método incorrecto (GET /v1/rondas en vez de POST) → ROJO.
+        bar_spec["paths"]["/v1/rondas"] = {"get": {}}
+        bar_spec["paths"]["/v1/carta"] = {"get": {}}
+        bar_spec_path.write_text(json.dumps(bar_spec), encoding="utf-8")
+        fallos = comprobar(openapi, negocio, modulo, bar_openapi=bar_spec_path).fallos
+        if not any("no declara POST /v1/rondas" in f for f in fallos):
+            print("SELFTEST FAIL: debía detectar método incorrecto", file=sys.stderr)
+            print("\n".join(fallos), file=sys.stderr)
+            return 1
     print("Family contracts selftest OK")
     return 0
 
@@ -303,6 +390,7 @@ def main() -> int:
     parser.add_argument("--identity-openapi", type=Path)
     parser.add_argument("--negocio-openapi", type=Path)
     parser.add_argument("--bar-module", type=Path)
+    parser.add_argument("--bar-openapi", type=Path)
     parser.add_argument("--selftest", action="store_true")
     args = parser.parse_args()
     if args.selftest:
@@ -321,7 +409,12 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
-    informe = comprobar(args.identity_openapi, args.negocio_openapi, args.bar_module)
+    informe = comprobar(
+        args.identity_openapi,
+        args.negocio_openapi,
+        args.bar_module,
+        bar_openapi=args.bar_openapi,
+    )
     escribir_informe(informe)
     if informe.fallos:
         for f in informe.fallos:

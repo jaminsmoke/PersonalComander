@@ -6,6 +6,15 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      bar_ref:
+        description: "Ref de PersonalBar a validar (rama, tag o SHA)"
+        required: false
+        default: main
+      identity_ref:
+        description: "Ref de PersonalHostel-Server a validar (rama, tag o SHA)"
+        required: false
+        default: main
 
 concurrency:
   group: ci-${{ github.head_ref || github.run_id }}
@@ -49,6 +58,16 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
+      - name: Checkout Bar contract fixtures
+        uses: actions/checkout@v4
+        with:
+          repository: jaminsmoke/PersonalBar
+          ref: ${{ inputs.bar_ref || 'main' }}
+          path: .family/bar
+          sparse-checkout: |
+            docs/contrato/fixtures
+          sparse-checkout-cone-mode: false
+
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest --no-daemon
 
@@ -90,7 +109,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: jaminsmoke/PersonalHostel-Server
-          ref: main
+          ref: ${{ inputs.identity_ref || 'main' }}
           path: .family/identity
           sparse-checkout: |
             docs/openapi-camareros.json
@@ -101,10 +120,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: jaminsmoke/PersonalBar
-          ref: main
+          ref: ${{ inputs.bar_ref || 'main' }}
           path: .family/bar
           sparse-checkout: |
             app/src/main/java/com/jaminsmoke/personalbar/lan/BarLanModule.kt
+            docs/contrato/openapi-lan.json
+            docs/contrato/fixtures
           sparse-checkout-cone-mode: false
 
       - uses: actions/setup-python@v5
@@ -120,3 +141,4 @@ jobs:
           --identity-openapi .family/identity/docs/openapi-camareros.json
           --negocio-openapi .family/identity/docs/openapi-negocio.json
           --bar-module .family/bar/app/src/main/java/com/jaminsmoke/personalbar/lan/BarLanModule.kt
+          --bar-openapi .family/bar/docs/contrato/openapi-lan.json
