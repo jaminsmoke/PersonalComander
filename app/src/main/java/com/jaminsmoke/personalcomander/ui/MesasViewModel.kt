@@ -11,6 +11,7 @@ import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
 import com.jaminsmoke.personalcomander.data.Reserva
 import com.jaminsmoke.personalcomander.data.Sala
+import com.jaminsmoke.personalcomander.data.ZonaTerritorio
 import com.jaminsmoke.personalcomander.data.sesion.mapaEditable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -30,6 +31,7 @@ class MesasViewModel(application: Application) : AndroidViewModel(application) {
     private val ctx = getApplication<Application>()
     val mesas: Flow<List<Mesa>> = db.mesaDao().observeAll()
     val salas: Flow<List<Sala>> = db.salaDao().observeAll()
+    val zonas: Flow<List<ZonaTerritorio>> = db.zonaTerritorioDao().observeAll()
 
     val mapaEditable: StateFlow<Boolean> = app.sesion.modo
         .map { it.mapaEditable }

@@ -392,6 +392,7 @@
     <string name="sesion_mapa_solo_lectura">El mapa lo marca el Bar. No se puede editar en este dispositivo.</string>
     <string name="sesion_banner_solo_lectura">Carta del establecimiento (solo lectura). Los cambios se hacen en el Bar.</string>
     <string name="sesion_banner_mapa_solo_lectura">Mapa del establecimiento (solo lectura). Los cambios se hacen en el Bar.</string>
+    <string name="zona_overlay_desc">Zona %1$s</string>
     <string name="sesion_membresias_titulo">Registrado en</string>
     <string name="sesion_membresias_desc">Membresías en Identity. Registrado no es lo mismo que turno activo.</string>
     <string name="sesion_membresias_vacio">Ningún local en Identity todavía. La invitación la manda Bar.</string>

@@ -226,10 +226,10 @@ Con la decisión ya tomada y acordada en la fase anterior, detallar **mucho más
 
 #### 4. Ejecutando — Implementar el plan
 
-- Al entrar: convertir draft → issue, añadir labels (1 Tipo + 1 Área). **Aquí empieza el código.**
+- Al entrar: convertir draft → issue, añadir labels (1 Tipo + 1 Área).
+- **Primer gesto, antes de tocar código:** crear la rama de trabajo (`feature/...`, `infra/...`) desde `main` actualizado. Todo el código y los commits van en esa rama. El PR a `main` es en Verificando; el merge, en Changelog. Ver [Branch protection](#branch-protection-rulesets).
 - Implementar siguiendo el plan detallado de Roadmap.
 - Si algo difiere del plan original, **documentarlo** en el body (sección `Implementación`) explicando el porqué del cambio.
-- Hacer commits locales con mensajes descriptivos en una **rama de trabajo** (`feature/...`, `infra/...`). Ver [Branch protection](#branch-protection-rulesets).
 
 #### 5. Verificando — Tests, lint y comprobaciones exhaustivas
 
@@ -287,7 +287,12 @@ KANBAN="bun run devartifacts/jarvis-skills/packages/kanban-cli/cli.ts"
 $KANBAN create --title "..." --tipo Bug --area UI/UX --priority Alta --version "v1.7"
 
 # List
-$KANBAN list
+$KANBAN list --status Detectado   # filtra por estado (pagina TODO el board; no uses el default de 50)
+$KANBAN list --limit 100          # sin filtro: default 50 (los ítems más allá no salen)
+
+# Ejecutando: rama ANTES de código (desde main actualizado)
+git checkout main && git pull
+git checkout -b feature/<nombre>
 
 # Show item
 $KANBAN show <itemId>
@@ -310,12 +315,11 @@ gh issue edit <N> --add-label "tipo:bug,area:ui-ux"
 # 4. Crear tests nuevos si no existen para la lógica modificada
 # 5. Revisión visual en emulador si hay cambios UI
 # Añadir comprobaciones específicas según área (UI, Datos, Voz, Sync...)
-
-# Changelog: merge PR → SHA → cerrar → push de la rama
-# (main está protegido: los cambios entran SOLO por PR con checks verdes)
-git checkout -b feature/<nombre> && git add <files> && git commit -m "..."
-git push -u origin feature/<nombre>
+git push -u origin HEAD
 gh pr create --base main --head feature/<nombre> --title "..." --body "Cierra el item kanban #N..."
+
+# Changelog: merge PR → SHA → cerrar
+# (la rama se creó al entrar en Ejecutando; aquí solo se mergea el PR)
 # Esperar checks verdes (Lint, Unit tests, Assemble debug) y mergear
 gh pr merge <PR> --squash --delete-branch
 $KANBAN body <itemId> --append "Commit" --content "SHA: \`$(git rev-parse --short HEAD)\`"
@@ -438,8 +442,9 @@ gh api repos/jaminsmoke/PersonalComander/rulesets --jq '.[] | {name, target, enf
 
 ```
 Sala (room of the venue)  1──* Mesa (table)  1──* Pedido (order)  1──* LineaPedido (line items)
-                                    │
-                                    └── linked via comandaActivaId on Mesa
+ │                                  │
+ │                                  └── linked via comandaActivaId on Mesa
+ └── 1──* ZonaTerritorio (territory overlay; Bar `zonas` cache)
 
 Producto (product) ─── referenced by LineaPedido.productoId
  └── *──* GrupoModificador ──* OpcionModificador

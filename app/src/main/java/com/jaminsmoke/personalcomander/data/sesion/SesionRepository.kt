@@ -526,7 +526,7 @@ class SesionRepository(
 
     /**
      * Réplica de layout al ligar admitido. 404 o `/estado` sin salas no toca el mapa.
-     * No corre en el bucle SSE: solo aquí.
+     * Territorios (`zonas`) se reemplazan enteros. No corre en el bucle SSE: solo aquí.
      */
     private suspend fun espejarMapa(host: String, puerto: Int) {
         val estado = BarLanCliente.estado(host, puerto) ?: return
@@ -543,6 +543,9 @@ class SesionRepository(
             val planMesas = MapaSync.planMesas(db.mesaDao().getAll(), estado.mesas, salasPorCodigo)
             if (planMesas.insertar.isNotEmpty()) db.mesaDao().insertAll(planMesas.insertar)
             if (planMesas.actualizar.isNotEmpty()) db.mesaDao().updateAll(planMesas.actualizar)
+            db.zonaTerritorioDao().deleteAll()
+            val planZonas = MapaSync.planZonas(estado.zonas, salasPorCodigo)
+            if (planZonas.isNotEmpty()) db.zonaTerritorioDao().insertAll(planZonas)
         }
     }
 

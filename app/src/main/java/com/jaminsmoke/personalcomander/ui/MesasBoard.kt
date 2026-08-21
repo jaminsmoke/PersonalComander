@@ -3,6 +3,7 @@ package com.jaminsmoke.personalcomander.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -42,6 +43,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -51,6 +54,7 @@ import com.jaminsmoke.personalcomander.R
 import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaForma
 import com.jaminsmoke.personalcomander.data.MesaVisualStatus
+import com.jaminsmoke.personalcomander.data.ZonaTerritorio
 import com.jaminsmoke.personalcomander.data.idZona
 import com.jaminsmoke.personalcomander.data.mesaVisualStatus
 import com.jaminsmoke.personalcomander.data.nombreVisible
@@ -58,6 +62,8 @@ import com.jaminsmoke.personalcomander.ui.theme.PcComandaDot
 import com.jaminsmoke.personalcomander.ui.theme.mesaStatusAccent
 import com.jaminsmoke.personalcomander.ui.theme.mesaStatusFill
 import com.jaminsmoke.personalcomander.ui.theme.mesaStatusOnFill
+import com.jaminsmoke.personalcomander.ui.theme.zonaColorAccent
+import com.jaminsmoke.personalcomander.ui.theme.zonaColorFill
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -505,6 +511,51 @@ internal fun traerCerca(
         listOf(it.posX, it.posY, ow, oh)
     }
     return findNearestFreeCell(targetX, targetY, draggedW, draggedH, ocupadas)
+}
+
+/**
+ * Territorio de sala (solo lectura). Sin pointerInput: el tap de la mesa no se come.
+ */
+@Composable
+internal fun ZonaTerritorioCard(
+    zona: ZonaTerritorio,
+    modifier: Modifier = Modifier,
+) {
+    val fill = zonaColorFill(zona.color)
+    val accent = zonaColorAccent(zona.color)
+    val desc = stringResource(R.string.zona_overlay_desc, zona.nombre)
+    Box(
+        modifier
+            .semantics { contentDescription = desc }
+            .background(fill, RoundedCornerShape(10.dp))
+            .border(2.dp, accent, RoundedCornerShape(10.dp)),
+    ) {
+        Column(
+            Modifier
+                .align(Alignment.TopStart)
+                .padding(6.dp)
+                .background(Color.Black.copy(alpha = 0.35f), RoundedCornerShape(6.dp))
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+        ) {
+            Text(
+                text = zona.nombre,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            zona.camareroNombre?.let { nombre ->
+                Text(
+                    text = nombre,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.85f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
 }
 
 internal fun formaLabel(forma: MesaForma): String = when (forma) {
