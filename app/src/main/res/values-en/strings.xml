@@ -392,6 +392,7 @@
     <string name="sesion_mapa_solo_lectura">The Bar owns the floor plan. It cannot be edited on this device.</string>
     <string name="sesion_banner_solo_lectura">Venue menu (read-only). Changes are made on the Bar.</string>
     <string name="sesion_banner_mapa_solo_lectura">Venue floor plan (read-only). Changes are made on the Bar.</string>
+    <string name="zona_overlay_desc">Zone %1$s</string>
     <string name="sesion_membresias_titulo">Registered at</string>
     <string name="sesion_membresias_desc">Identity memberships. Registered is not the same as an active shift.</string>
     <string name="sesion_membresias_vacio">No venue in Identity yet. Bar sends the invitation.</string>

@@ -293,3 +293,18 @@ interface ProductoGrupoDao {
     @Query("DELETE FROM producto_grupos WHERE productoId = :productoId")
     suspend fun deleteByProducto(productoId: Long)
 }
+
+@Dao
+interface ZonaTerritorioDao {
+    @Query("SELECT * FROM zonas_territorio")
+    fun observeAll(): Flow<List<ZonaTerritorio>>
+
+    @Query("SELECT * FROM zonas_territorio")
+    suspend fun getAll(): List<ZonaTerritorio>
+
+    @Insert
+    suspend fun insertAll(zonas: List<ZonaTerritorio>)
+
+    @Query("DELETE FROM zonas_territorio")
+    suspend fun deleteAll()
+}

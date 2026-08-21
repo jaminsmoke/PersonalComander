@@ -13,6 +13,7 @@ Rutas Bar que Commander llama: [`bar-contract-paths.txt`](bar-contract-paths.txt
 |---|---|---|
 | **Establecimiento** | Negocio / local. Registro canónico en Identity. En turno, el camarero se **liga al nodo Bar** (`ModoSesion.Establecimiento`). | Una sala del mapa. |
 | **Sala** | Zona del mapa del establecimiento (barra, interior, terraza…). En Comander: entidad Room `Sala` + `Mesa.salaId` (antes «zona»). | El modo de sesión ni el host LAN. |
+| **Territorio** (`zonas` en LAN) | Rectángulo coloreado **dentro** de una sala, asignable a un camarero. Overlay de board. No cambia `idZona`. | La sala del mapa ni el ID de mesa (T3). |
 | **idZona** | Identidad de mesa **en red**: prefijo del **nombre de la sala** + `indiceZona` (`T3` = Terraza 3). | El `id` autoincrement de Room ni el alias visible. |
 | **Ronda** | Lo que Comander envía al Bar al «enviar a cocina» ligado. Bar la parte en tickets BARRA / COCINA. | El pedido Room completo como modelo de red. |
 | **Preparado** | Ticket listo en expo (Bar). Evento SSE `ticket.preparado`. En Comander: líneas `LISTA` («para recoger»). | Servido en mesa. |
@@ -32,7 +33,7 @@ Rutas Bar que Commander llama: [`bar-contract-paths.txt`](bar-contract-paths.txt
 | `POST /v1/rondas` | recibe una ronda → 201/200 + **lista de tickets**; 403 sin jornada | Sí (enviar; se guarda `ticketId` por línea) |
 | `POST /v1/tickets/{id}/preparado` | ticket preparado | No (UI de expo en Bar) |
 | `POST /v1/tickets/{id}/recogido` | ticket recogido en expo | No (UI de expo en Bar) |
-| `GET /v1/estado` | establecimiento, salas, colas, mesas | Sí (realinear tickets al conectar SSE; **réplica de layout** al ligar si `admitido`) |
+| `GET /v1/estado` | establecimiento, salas, colas, mesas, **zonas?** | Sí (realinear tickets al conectar SSE; **réplica de layout** al ligar si `admitido`) |
 | `GET /v1/carta` | catálogo `{schema?, productos:[{id,nombre,categoria,precio,disponible,subfamilia?,permiteNota?,grupos?}], gruposModificador?}`. `id` es slug (`cana`) en schema 0/omitido, UUID cuando Bar migra el catálogo. Campos extra (subfamilia, grupos) son forward-compat: un nodo viejo no los manda y Commander no borra grupos locales. `schema` distinto (o ids UUID contra `codigoBar` slug) reconstruye el espejo por nombre, sin borrar filas locales. | Sí (espejo al ligar) |
 | `SSE /v1/eventos` | `ticket.preparado` / `ticket.recogido` / `sesion.cortada` | Sí (aviso recoger y corte de jornada) |
 | UDP **8788** | Beacon de presencia `{ph, role, establecimiento, puerto, activo}` | Sí (radar en Resumen; no es HTTP) |
@@ -76,7 +77,28 @@ Al reconectar: `GET /v1/estado` y marcar `PREPARADO` (y `servidos`) como `LISTA`
 
 ## Réplica de mapa
 
-Bar es la fuente de verdad del layout. Si el camarero está **admitido**, al ligar Commander lee `salas` y `mesas` de `GET /v1/estado` y hace upsert por `codigoBar` (el `id` string de Bar). Conserva `id` Room, `estado`, `comandaActivaId` y `reservaActivaId` locales. **No borra** el seed ni salas/mesas sin código. Si no está admitido, 404 o el nodo no manda mapa, el layout local no se toca. `idZona` sigue siendo función (`zonaPrefijo(nombreSala)+indiceZona`), no un campo JSON.
+Bar es la fuente de verdad del layout. Si el camarero está **admitido**, al ligar Commander lee `salas`, `mesas` y `zonas` de `GET /v1/estado` y hace upsert por `codigoBar` (el `id` string de Bar). Conserva `id` Room, `estado`, `comandaActivaId` y `reservaActivaId` locales. **No borra** el seed ni salas/mesas sin código. Los territorios (`zonas`) sí se reemplazan enteros: no hay seed local, y un nodo viejo sin el campo deja la caché vacía. Si no está admitido, 404 o el nodo no manda mapa, el layout local no se toca. `idZona` sigue siendo función (`zonaPrefijo(nombreSala)+indiceZona`), no un campo JSON.
+
+`zonas` es forward-compat: Gson ignora el campo en Commander viejo; Commander nuevo trata la ausencia como lista vacía (no pinta overlay). Coordenadas y tamaño llegan **ya convertidos** al canvas 2000×2600 (misma escala que las mesas). Payload:
+
+```json
+"zonas": [
+  {
+    "id": "zona-norte",
+    "salaId": "sala-terraza",
+    "nombre": "Terraza norte",
+    "posX": 40,
+    "posY": 80,
+    "ancho": 400,
+    "alto": 240,
+    "color": "VERDE",
+    "camareroId": "uuid-opcional",
+    "camareroNombre": "Ana"
+  }
+]
+```
+
+`color` es el nombre de paleta (`AZUL` \| `VERDE` \| `AMARILLO` \| `NARANJA` \| `MORADO` \| `ROJO`). `camareroNombre` es opcional (Bar puede mandar solo `camareroId`). El overlay es **solo lectura**; no hay filtro «mi zona» en este corte.
 
 ## Flujo de usuario
 

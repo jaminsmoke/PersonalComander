@@ -284,3 +284,45 @@ data class LineaPedido(
     /** Snapshot JSON de [ModificadorElegido]: no se reconsulta el catálogo. */
     val modificadoresJson: String = "[]",
 )
+
+/**
+ * Paleta fija de territorios de sala (mismo contrato que Bar). Tokens de espacio
+ * físico: el color viaja por LAN como nombre (`AZUL`…) y se mapea en UI.
+ * No confundir con [Mesa.idZona] (identidad de mesa en red: T3).
+ */
+enum class ZonaColor { AZUL, VERDE, AMARILLO, NARANJA, MORADO, ROJO }
+
+/**
+ * Territorio dentro de una [Sala], espejo de `GET /v1/estado` → `zonas`.
+ * Solo caché: Commander no edita. Pertenencia mesa↔zona es visual (Bar la deriva
+ * por intersección); aquí no hay FK en [Mesa].
+ */
+@Entity(
+    tableName = "zonas_territorio",
+    foreignKeys = [
+        ForeignKey(
+            entity = Sala::class,
+            parentColumns = ["id"],
+            childColumns = ["salaId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [
+        Index(value = ["salaId"]),
+        Index(value = ["codigoBar"], unique = true),
+    ]
+)
+data class ZonaTerritorio(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val salaId: Long,
+    val nombre: String,
+    val posX: Float = 0f,
+    val posY: Float = 0f,
+    val ancho: Float = 0f,
+    val alto: Float = 0f,
+    val color: ZonaColor = ZonaColor.AZUL,
+    val camareroId: String? = null,
+    val camareroNombre: String? = null,
+    /** Id de red de la zona en Bar. Null no debería llegar del espejo. */
+    val codigoBar: String? = null,
+)

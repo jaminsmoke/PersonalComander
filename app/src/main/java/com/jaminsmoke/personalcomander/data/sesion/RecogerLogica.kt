@@ -42,6 +42,8 @@ data class EstadoLan(
     val servidos: List<TicketLan> = emptyList(),
     val salas: List<SalaLan> = emptyList(),
     val mesas: List<MesaLan> = emptyList(),
+    /** Territorios de sala. Vacío si el nodo no manda `zonas` (Bar viejo). */
+    val zonas: List<ZonaLan> = emptyList(),
 )
 
 data class BloquesComanda(
@@ -187,6 +189,7 @@ object RecogerLogica {
             servidos = e.servidos.orEmpty(),
             salas = e.salas.orEmpty().filter { it.id.isNotBlank() && it.nombre.isNotBlank() },
             mesas = e.mesas.orEmpty().filter { it.id.isNotBlank() },
+            zonas = e.zonas.orEmpty().filter { it.id.isNotBlank() && it.salaId.isNotBlank() },
         )
     } catch (_: Exception) {
         null
@@ -235,4 +238,5 @@ private class EstadoLanGson {
     var servidos: List<TicketLan>? = null
     var salas: List<SalaLan>? = null
     var mesas: List<MesaLan>? = null
+    var zonas: List<ZonaLan>? = null
 }

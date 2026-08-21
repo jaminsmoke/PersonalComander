@@ -4,6 +4,7 @@ import com.jaminsmoke.personalcomander.data.Mesa
 import com.jaminsmoke.personalcomander.data.MesaEstado
 import com.jaminsmoke.personalcomander.data.MesaForma
 import com.jaminsmoke.personalcomander.data.Sala
+import com.jaminsmoke.personalcomander.data.ZonaColor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -53,6 +54,7 @@ class MapaSyncTest {
         )!!
         assertTrue(estado.salas.isEmpty())
         assertTrue(estado.mesas.isEmpty())
+        assertTrue(estado.zonas.isEmpty())
     }
 
     @Test
@@ -166,5 +168,63 @@ class MapaSyncTest {
         assertEquals(100f, mesa.posX)
         assertTrue(mesa.girada)
         assertTrue(mesa.bloqueada)
+    }
+
+    @Test
+    fun parseEstado_sin_zonas_deja_lista_vacia() {
+        val estado = RecogerLogica.parseEstado(
+            """{"bebida":[],"comida":[],"servidos":[],"salas":[],"mesas":[]}""",
+        )!!
+        assertTrue(estado.zonas.isEmpty())
+    }
+
+    @Test
+    fun parseEstado_incluye_zonas() {
+        val estado = RecogerLogica.parseEstado(
+            """
+            {
+              "bebida":[],"comida":[],"servidos":[],
+              "salas":[{"id":"sala-terraza","nombre":"Terraza","orden":0}],
+              "mesas":[],
+              "zonas":[
+                {"id":"zona-norte","salaId":"sala-terraza","nombre":"Terraza norte","posX":40,"posY":80,"ancho":400,"alto":240,"color":"VERDE","camareroId":"c1","camareroNombre":"Ana"},
+                {"id":"","salaId":"sala-terraza","nombre":"Huérfana","ancho":10,"alto":10},
+                {"id":"zona-x","salaId":"","nombre":"Sin sala","ancho":10,"alto":10}
+              ]
+            }
+            """.trimIndent(),
+        )!!
+        assertEquals(1, estado.zonas.size)
+        val z = estado.zonas[0]
+        assertEquals("zona-norte", z.id)
+        assertEquals("sala-terraza", z.salaId)
+        assertEquals("VERDE", z.color)
+        assertEquals(400f, z.ancho, 0.01f)
+        assertEquals("Ana", z.camareroNombre)
+    }
+
+    @Test
+    fun colorDe_desconocido_es_azul() {
+        assertEquals(ZonaColor.VERDE, MapaSync.colorDe("verde"))
+        assertEquals(ZonaColor.AZUL, MapaSync.colorDe("lila"))
+        assertEquals(ZonaColor.AZUL, MapaSync.colorDe(""))
+    }
+
+    @Test
+    fun planZonas_mapea_sala_y_omite_invalidas() {
+        val remotas = listOf(
+            ZonaLan(id = "zona-norte", salaId = "sala-terraza", nombre = "Norte", posX = 10f, posY = 20f, ancho = 100f, alto = 80f, color = "ROJO", camareroNombre = "Ana"),
+            ZonaLan(id = "zona-huerfana", salaId = "sala-no", nombre = "No", ancho = 50f, alto = 50f),
+            ZonaLan(id = "zona-chica", salaId = "sala-terraza", nombre = "Chica", ancho = 0f, alto = 10f),
+            ZonaLan(id = "", salaId = "sala-terraza", nombre = "Vacía", ancho = 10f, alto = 10f),
+        )
+        val plan = MapaSync.planZonas(remotas, mapOf("sala-terraza" to 7L))
+        assertEquals(1, plan.size)
+        val zona = plan[0]
+        assertEquals(7L, zona.salaId)
+        assertEquals("Norte", zona.nombre)
+        assertEquals(ZonaColor.ROJO, zona.color)
+        assertEquals("zona-norte", zona.codigoBar)
+        assertEquals("Ana", zona.camareroNombre)
     }
 }

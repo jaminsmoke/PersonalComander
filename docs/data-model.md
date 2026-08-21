@@ -6,8 +6,9 @@ La base de datos Room (`personal_comander.db`) contiene la estructura central de
 
 ```
 Sala (room)  1──* Mesa (table)  1──* Pedido (order)  1──* LineaPedido (line items)
-                        │
-                        └── linked via comandaActivaId on Mesa
+  │                   │
+  │                   └── linked via comandaActivaId on Mesa
+  └── 1──* ZonaTerritorio (territory overlay; cache of Bar `zonas`)
 
 Producto (product) ─── referenced by LineaPedido.productoId
  │
@@ -18,6 +19,7 @@ Producto (product) ─── referenced by LineaPedido.productoId
 - **GrupoModificador / OpcionModificador / ProductoGrupo**: modificadores reutilizables (punto, extras). Snapshot JSON + `nota` en la **línea**, para no romper historial si el catálogo cambia.
 
 - **Sala**: recinto del mapa del establecimiento (barra, interior, terraza…). No es el modo de sesión.
+- **ZonaTerritorio**: rectángulo coloreado dentro de una sala (overlay). Caché de Bar; Commander no lo edita. No es `idZona` (T3).
 - **Establecimiento / local**: registro canónico en Identity. En turno, el camarero se liga al nodo Bar (`ModoSesion.Establecimiento`). Room no es esa fuente de verdad.
 - **Mesa**: la mesa física con posición en el board, `salaId`, forma y alias. El ID visible y de red (B1, T2) sale del **nombre** de la sala (`idZona`). No es el id Room.
 - **Pedido**: la comanda de una mesa (abierta, enviada a cocina o cerrada).
@@ -32,6 +34,7 @@ Producto (product) ─── referenced by LineaPedido.productoId
 | `MesaEstado` | `LIBRE`, `OCUPADA`, `EN_COCINA` | Ciclo de vida de la comanda |
 | `MesaForma` | `REDONDA`, `CUADRADA`, `RECTANGULAR`, `RECTANGULAR_XL` | Render del board |
 | `PedidoEstado` | `ABIERTA`, `ENVIADA`, `CERRADA` | Estados del pedido |
+| `ZonaColor` | `AZUL`, `VERDE`, `AMARILLO`, `NARANJA`, `MORADO`, `ROJO` | Paleta de territorios (LAN + overlay) |
 
 ## Hold de sala (reservas y bloqueos)
 

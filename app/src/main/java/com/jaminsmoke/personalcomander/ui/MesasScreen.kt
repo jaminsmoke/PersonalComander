@@ -129,6 +129,7 @@ fun MesasScreen(
 ) {
     val mesas by viewModel.mesas.collectAsState(initial = emptyList())
     val salas by viewModel.salas.collectAsState(initial = emptyList())
+    val zonas by viewModel.zonas.collectAsState(initial = emptyList())
     val cargando by viewModel.cargando.collectAsState()
     val salaSeleccionada by viewModel.salaId.collectAsState()
     val mapaEditable by viewModel.mapaEditable.collectAsState()
@@ -196,6 +197,10 @@ fun MesasScreen(
     val mesasFiltradas = remember(mesas, salaSeleccionada) {
         if (salaSeleccionada == null) mesas
         else mesas.filter { it.salaId == salaSeleccionada }
+    }
+    val zonasSala = remember(zonas, salaSeleccionada, mapaEditable) {
+        if (mapaEditable || salaSeleccionada == null) emptyList()
+        else zonas.filter { it.salaId == salaSeleccionada }
     }
 
     Scaffold(
@@ -512,6 +517,18 @@ fun MesasScreen(
                                 MesaShimmerBox(
                                     modifier = Modifier
                                         .offset(x = (CELL_F + (i % 4) * 160).dp, y = (CELL_F + (i / 4) * 160).dp)
+                                )
+                            }
+                        }
+
+                        zonasSala.forEach { zona ->
+                            key("zona-${zona.id}") {
+                                ZonaTerritorioCard(
+                                    zona = zona,
+                                    modifier = Modifier
+                                        .offset(x = zona.posX.dp, y = zona.posY.dp)
+                                        .width(zona.ancho.dp)
+                                        .height(zona.alto.dp),
                                 )
                             }
                         }

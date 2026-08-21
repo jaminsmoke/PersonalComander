@@ -2,6 +2,7 @@ package com.jaminsmoke.personalcomander.ui.theme
 
 import androidx.compose.ui.graphics.Color
 import com.jaminsmoke.personalcomander.data.MesaVisualStatus
+import com.jaminsmoke.personalcomander.data.ZonaColor
 
 // ─── Colores de estado visual de mesa (intuitivos, independientes del theme) ─
 
@@ -45,3 +46,31 @@ fun mesaStatusAccent(status: MesaVisualStatus): Color = when (status) {
 }
 
 fun mesaStatusOnFill(): Color = PcMesaOnFill
+
+// ─── Territorios de sala (paleta fija, tokens de espacio físico; mismo contrato que Bar) ─
+// Fill semi-transparente + borde más opaco. Se mapean por nombre de `ZonaColor`.
+
+val PcZonaAzul = Color(0xFF3B82F6)
+val PcZonaVerde = Color(0xFF22C55E)
+val PcZonaAmarillo = Color(0xFFEAB308)
+val PcZonaNaranja = Color(0xFFF97316)
+val PcZonaMorado = Color(0xFF8B5CF6)
+val PcZonaRojo = Color(0xFFEF4444)
+
+fun zonaColorFill(color: ZonaColor): Color = when (color) {
+    ZonaColor.AZUL -> PcZonaAzul.copy(alpha = 0.22f)
+    ZonaColor.VERDE -> PcZonaVerde.copy(alpha = 0.20f)
+    ZonaColor.AMARILLO -> PcZonaAmarillo.copy(alpha = 0.24f)
+    ZonaColor.NARANJA -> PcZonaNaranja.copy(alpha = 0.22f)
+    ZonaColor.MORADO -> PcZonaMorado.copy(alpha = 0.22f)
+    ZonaColor.ROJO -> PcZonaRojo.copy(alpha = 0.20f)
+}
+
+fun zonaColorAccent(color: ZonaColor): Color = when (color) {
+    ZonaColor.AZUL -> PcZonaAzul.copy(alpha = 0.85f)
+    ZonaColor.VERDE -> PcZonaVerde.copy(alpha = 0.85f)
+    ZonaColor.AMARILLO -> PcZonaAmarillo.copy(alpha = 0.9f)
+    ZonaColor.NARANJA -> PcZonaNaranja.copy(alpha = 0.85f)
+    ZonaColor.MORADO -> PcZonaMorado.copy(alpha = 0.85f)
+    ZonaColor.ROJO -> PcZonaRojo.copy(alpha = 0.85f)
+}

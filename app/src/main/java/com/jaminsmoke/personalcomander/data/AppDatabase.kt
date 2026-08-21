@@ -8,9 +8,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @Database(
     entities = [
         Sala::class, Mesa::class, Producto::class, Pedido::class, LineaPedido::class, Reserva::class,
-        GrupoModificador::class, OpcionModificador::class, ProductoGrupo::class,
+        GrupoModificador::class, OpcionModificador::class, ProductoGrupo::class, ZonaTerritorio::class,
     ],
-    version = 15,
+    version = 16,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -23,6 +23,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun grupoModificadorDao(): GrupoModificadorDao
     abstract fun opcionModificadorDao(): OpcionModificadorDao
     abstract fun productoGrupoDao(): ProductoGrupoDao
+    abstract fun zonaTerritorioDao(): ZonaTerritorioDao
 
     companion object {
         val MIGRATION_4_5 = object : Migration(4, 5) {
@@ -267,6 +268,39 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                 db.execSQL(
                     "CREATE INDEX IF NOT EXISTS `index_producto_grupos_grupoId` ON `producto_grupos` (`grupoId`)"
+                )
+            }
+        }
+
+        /**
+         * v15→v16: territorios de sala (overlay del board). Caché de `GET /v1/estado`
+         * → `zonas`; no toca `idZona` de mesa. Tabla nueva, aditiva.
+         */
+        val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `zonas_territorio` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `salaId` INTEGER NOT NULL,
+                        `nombre` TEXT NOT NULL,
+                        `posX` REAL NOT NULL,
+                        `posY` REAL NOT NULL,
+                        `ancho` REAL NOT NULL,
+                        `alto` REAL NOT NULL,
+                        `color` TEXT NOT NULL,
+                        `camareroId` TEXT,
+                        `camareroNombre` TEXT,
+                        `codigoBar` TEXT,
+                        FOREIGN KEY(`salaId`) REFERENCES `salas`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_zonas_territorio_salaId` ON `zonas_territorio` (`salaId`)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_zonas_territorio_codigoBar` ON `zonas_territorio` (`codigoBar`)"
                 )
             }
         }
