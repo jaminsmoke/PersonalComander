@@ -34,8 +34,8 @@ En la familia PersonalHostel, Commander es el teléfono de sala. **Personal Bar*
 
 <div class="pc-aviso" markdown>
 
-!!! info "v1.6"
-    Cuenta de camarero, ficha pública y turno LAN con Personal Bar. El detalle está en el [manual](manual/index.md).
+!!! info "v1.7"
+    Radar LAN en Resumen, panel de oficio, invitaciones y modificadores de carta. El detalle está en el [manual](manual/index.md).
 
 </div>
 

@@ -16,7 +16,7 @@ En el **header**: botón **Entrar**. No está en Ajustes. Con sesión, el chip (
 
 ## ¿La cuenta y el turno con Bar ya están en la release?
 
-Sí. La release pública actual es **v1.6**: cuenta, perfil, QR, visibilidad y ronda LAN a Personal Bar.
+Sí. La release pública actual es **v1.7**: radar LAN en Resumen, oficio, invitaciones y modificadores, además de cuenta, perfil y ronda a Personal Bar.
 
 ## ¿Qué pasa si cierro la mesa por error?
 
