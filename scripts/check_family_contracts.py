@@ -242,6 +242,7 @@ def _fixtures_ok() -> tuple[dict, dict, str]:
     identity_ok = {
         "paths": {
             "/v1/auth/login": {},
+            "/v1/auth/refresh": {},
             "/v1/camareros/me": {},
             "/v1/camareros/me/establecimientos": {},
             "/v1/camareros/me/foto": {},

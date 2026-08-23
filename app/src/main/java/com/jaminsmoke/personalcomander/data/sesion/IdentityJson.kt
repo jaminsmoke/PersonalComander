@@ -25,6 +25,19 @@ object IdentityJson {
         val perfil: PerfilCamarero,
         val qr: String,
         val fichaUrl: String? = null,
+        /** Refresh opaco rotado de la sesión revocable. Null en JWT legacy. */
+        val refreshToken: String? = null,
+        /** UUID de sesión (`POST /v1/auth/login`). Null en JWT legacy. */
+        val sesionId: String? = null,
+        /** Vida del access en segundos. Null en JWT legacy. */
+        val expiresInSegundos: Long? = null,
+    )
+
+    data class SesionRenovada(
+        val token: String,
+        val refreshToken: String,
+        val sesionId: String? = null,
+        val expiresInSegundos: Long? = null,
     )
 
     data class IdentityError(
@@ -132,7 +145,48 @@ object IdentityJson {
             perfil = parsePerfil(o.get("camarero")),
             qr = o.get("qr").asString,
             fichaUrl = textoOpcional(o, "ficha_url"),
+            refreshToken = textoOpcional(o, "refresh_token"),
+            sesionId = textoOpcional(o, "sesion_id"),
+            expiresInSegundos = longOpcional(o, "expires_in"),
         )
+    }
+
+    /** `POST /v1/auth/refresh`. `null` si el cuerpo no trae el par rotado completo. */
+    fun parseRefreshOrNull(body: String): SesionRenovada? = try {
+        val o = JsonParser.parseString(body).asJsonObject
+        val token = o.get("token")?.takeUnless { it.isJsonNull }?.asString ?: return null
+        val refresh = o.get("refresh_token")?.takeUnless { it.isJsonNull }?.asString ?: return null
+        SesionRenovada(
+            token = token,
+            refreshToken = refresh,
+            sesionId = textoOpcional(o, "sesion_id"),
+            expiresInSegundos = longOpcional(o, "expires_in"),
+        )
+    } catch (_: Exception) {
+        null
+    }
+
+    fun longOpcional(o: JsonObject, clave: String): Long? {
+        val el = o.get(clave) ?: return null
+        if (el.isJsonNull || !el.isJsonPrimitive) return null
+        return try {
+            el.asLong
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /** Momento de caducidad del access (`expires_in` segundos desde [ahora]). */
+    fun expiraEnDe(expiresInSegundos: Long?, ahora: Long = System.currentTimeMillis()): Long? {
+        val segundos = expiresInSegundos ?: return null
+        if (segundos <= 0) return null
+        return ahora + segundos * 1000L
+    }
+
+    /** Falta `margenMs` (60 s por defecto) o ya caducó. Sin expiración conocida → no renovar. */
+    fun debeRenovar(expiraEn: Long?, ahora: Long = System.currentTimeMillis(), margenMs: Long = 60_000L): Boolean {
+        val exp = expiraEn ?: return false
+        return ahora + margenMs >= exp
     }
 
     fun parseLoginOrNull(body: String): SesionIdentity? = try {

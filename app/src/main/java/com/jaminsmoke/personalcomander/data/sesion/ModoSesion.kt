@@ -16,6 +16,12 @@ sealed class ModoSesion {
         val token: String,
         /** URL pública de ficha que manda Identity. No se inventa en Commander. */
         val fichaUrl: String? = null,
+        /** Refresh opaco rotado de la sesión revocable. Null en JWT legacy. */
+        val refreshToken: String? = null,
+        /** UUID de sesión en Identity. Null en JWT legacy. */
+        val sesionId: String? = null,
+        /** Caducidad del access (epoch millis). Null en JWT legacy. */
+        val expiraEn: Long? = null,
     ) : ModoSesion()
 
     data class Establecimiento(
@@ -35,6 +41,12 @@ sealed class ModoSesion {
         val fichaUrl: String? = null,
         /** Token de sesión LAN emitido por Bar v0.2. Null en Bar 0.1 o sin jornada. */
         val tokenLan: String? = null,
+        /** Refresh opaco rotado de la sesión Identity. Null en JWT legacy. */
+        val refreshToken: String? = null,
+        /** UUID de sesión en Identity. Null en JWT legacy. */
+        val sesionId: String? = null,
+        /** Caducidad del access (epoch millis). Null en JWT legacy. */
+        val expiraEn: Long? = null,
     ) : ModoSesion()
 }
 
@@ -193,6 +205,27 @@ val ModoSesion.fichaUrl: String?
     get() = when (val m = this) {
         is ModoSesion.Identidad -> normalizarFichaUrl(m.fichaUrl)
         is ModoSesion.Establecimiento -> normalizarFichaUrl(m.fichaUrl)
+        ModoSesion.Local -> null
+    }
+
+val ModoSesion.refreshToken: String?
+    get() = when (val m = this) {
+        is ModoSesion.Identidad -> m.refreshToken
+        is ModoSesion.Establecimiento -> m.refreshToken
+        ModoSesion.Local -> null
+    }
+
+val ModoSesion.sesionId: String?
+    get() = when (val m = this) {
+        is ModoSesion.Identidad -> m.sesionId
+        is ModoSesion.Establecimiento -> m.sesionId
+        ModoSesion.Local -> null
+    }
+
+val ModoSesion.expiraEn: Long?
+    get() = when (val m = this) {
+        is ModoSesion.Identidad -> m.expiraEn
+        is ModoSesion.Establecimiento -> m.expiraEn
         ModoSesion.Local -> null
     }
 

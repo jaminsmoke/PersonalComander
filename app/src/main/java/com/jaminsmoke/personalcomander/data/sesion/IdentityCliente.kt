@@ -29,6 +29,7 @@ class IdentityCliente(
     object Rutas {
         const val REGISTRO = "/v1/camareros/registro"
         const val LOGIN = "/v1/auth/login"
+        const val REFRESH = "/v1/auth/refresh"
         const val ME = "/v1/camareros/me"
         const val ME_QR = "/v1/camareros/me/qr"
         const val ME_RENOVAR = "/v1/camareros/me/renovar"
@@ -49,6 +50,7 @@ class IdentityCliente(
         fun todas(): List<String> = listOf(
             REGISTRO,
             LOGIN,
+            REFRESH,
             ME,
             ME_QR,
             ME_RENOVAR,
@@ -121,6 +123,19 @@ class IdentityCliente(
         val sesion = IdentityJson.parseLoginOrNull(http.cuerpo)
             ?: return IdentityRespuesta(false, error = "Respuesta inválida de Identity", codigo = http.codigo)
         return IdentityRespuesta(true, sesion, codigo = http.codigo)
+    }
+
+    /**
+     * Renueva el access con el refresh opaco rotado. Sin Bearer: el refresh viaja en el body.
+     * 4xx (rotado/rechazado/revocado) o red caída se devuelven como error sin tocar la sesión.
+     */
+    fun refrescar(refreshToken: String): IdentityRespuesta<IdentityJson.SesionRenovada> {
+        val payload = JsonObject().apply { addProperty("refresh_token", refreshToken) }
+        val http = post(Rutas.REFRESH, payload.toString())
+        if (http.codigo !in 200..299) return errorDe(http)
+        val renovada = IdentityJson.parseRefreshOrNull(http.cuerpo)
+            ?: return IdentityRespuesta(false, error = "Respuesta inválida de Identity", codigo = http.codigo)
+        return IdentityRespuesta(true, renovada, codigo = http.codigo)
     }
 
     fun actualizarPerfil(

@@ -112,6 +112,9 @@ class SesionStore(context: Context) {
         } catch (_: Exception) {
             return ModoSesion.Local
         }
+        val refreshToken = prefs.getString(KEY_REFRESH_TOKEN, null)?.trim()?.takeIf { it.isNotEmpty() }
+        val sesionId = prefs.getString(KEY_SESION_ID, null)?.trim()?.takeIf { it.isNotEmpty() }
+        val expiraEn = prefs.getLong(KEY_TOKEN_EXPIRA_EN, 0L).takeIf { it > 0 }
         val barHost = prefs.getString(KEY_BAR_HOST, null)
         if (!barHost.isNullOrBlank()) {
             return ModoSesion.Establecimiento(
@@ -126,17 +129,39 @@ class SesionStore(context: Context) {
                 sesionTrabajo = prefs.getBoolean(KEY_BAR_SESION_TRABAJO, false),
                 fichaUrl = fichaUrl,
                 tokenLan = tokenLan,
+                refreshToken = refreshToken,
+                sesionId = sesionId,
+                expiraEn = expiraEn,
             )
         }
-        return ModoSesion.Identidad(perfil, qr, token, fichaUrl)
+        return ModoSesion.Identidad(
+            perfil,
+            qr,
+            token,
+            fichaUrl,
+            refreshToken = refreshToken,
+            sesionId = sesionId,
+            expiraEn = expiraEn,
+        )
     }
 
-    fun guardarIdentidad(perfil: PerfilCamarero, qr: String?, token: String, fichaUrl: String? = null) {
+    fun guardarIdentidad(
+        perfil: PerfilCamarero,
+        qr: String?,
+        token: String,
+        fichaUrl: String? = null,
+        refreshToken: String? = null,
+        sesionId: String? = null,
+        expiraEn: Long? = null,
+    ) {
         prefs.edit()
             .putString(KEY_TOKEN, token)
             .putString(KEY_PERFIL, gson.toJson(perfil))
             .putString(KEY_QR, qr.orEmpty())
             .putString(KEY_FICHA_URL, normalizarFichaUrl(fichaUrl).orEmpty())
+            .putString(KEY_REFRESH_TOKEN, refreshToken.orEmpty())
+            .putString(KEY_SESION_ID, sesionId.orEmpty())
+            .putLong(KEY_TOKEN_EXPIRA_EN, expiraEn ?: 0L)
             .remove(KEY_BAR_HOST)
             .remove(KEY_BAR_ADMITIDO)
             .remove(KEY_BAR_NOMBRE)
@@ -152,6 +177,9 @@ class SesionStore(context: Context) {
             .putString(KEY_PERFIL, gson.toJson(modo.perfil))
             .putString(KEY_QR, modo.qr.orEmpty())
             .putString(KEY_FICHA_URL, normalizarFichaUrl(modo.fichaUrl).orEmpty())
+            .putString(KEY_REFRESH_TOKEN, modo.refreshToken.orEmpty())
+            .putString(KEY_SESION_ID, modo.sesionId.orEmpty())
+            .putLong(KEY_TOKEN_EXPIRA_EN, modo.expiraEn ?: 0L)
             .putString(KEY_BAR_HOST, modo.barHost)
             .putInt(KEY_BAR_PUERTO, modo.barPuerto)
             .putBoolean(KEY_BAR_ADMITIDO, modo.admitido)
@@ -248,6 +276,9 @@ class SesionStore(context: Context) {
         private const val KEY_BAR_ESTABLECIMIENTO_ID = "bar_establecimiento_id"
         private const val KEY_BAR_SESION_TRABAJO = "bar_sesion_trabajo"
         private const val KEY_BAR_TOKEN_LAN = "bar_token_lan"
+        private const val KEY_REFRESH_TOKEN = "refresh_token"
+        private const val KEY_SESION_ID = "sesion_id"
+        private const val KEY_TOKEN_EXPIRA_EN = "token_expira_en"
         private const val KEY_MEMBRESIAS = "membresias_identity"
         private const val KEY_VISIBILIDAD = "visibilidad"
         private const val KEY_CARTA_SCHEMA = "carta_schema"

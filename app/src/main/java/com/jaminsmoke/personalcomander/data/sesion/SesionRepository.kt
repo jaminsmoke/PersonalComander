@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.time.Instant
 
@@ -52,6 +54,100 @@ class SesionRepository(
 
     private fun cliente() = IdentityCliente(store.identityBaseUrl)
 
+    /** Single-flight del refresh: el refresh se rota por uso, nunca se reutiliza. */
+    private val refreshMutex = Mutex()
+    @Volatile
+    private var renovando = false
+
+    /**
+     * Renueva el access con el refresh rotado (single-flight).
+     * Retorna true si queda un access vigente (renovado aquí o por otro hilo);
+     * false si no hay refresh, red caída / 5xx, o el refresh fue rechazado (cierra sesión).
+     */
+    private suspend fun renovarTokenSilencioso(): Boolean {
+        val refresh = _modo.value.refreshToken ?: return false
+        if (renovando) {
+            refreshMutex.withLock { }
+            return true
+        }
+        refreshMutex.withLock {
+            if (renovando) return true
+            renovando = true
+            try {
+                val r = cliente().refrescar(refresh)
+                if (r.ok && r.valor != null) {
+                    persistirParIdentity(r.valor)
+                    return true
+                }
+                if (r.codigo in 400..499) {
+                    // Refresh rechazado/rotado/revocado: sesión Identity inválida.
+                    withContext(Dispatchers.Main.immediate) { cerrarSesion() }
+                }
+                // Red caída o 5xx: no tocar nada (modo Local/LAN intactos).
+                return false
+            } finally {
+                renovando = false
+            }
+        }
+    }
+
+    /**
+     * Ejecuta [ejecutar] contra Identity con el access vigente, renovándolo si toca:
+     * proactivo si caduca en ≤60 s o reactivo tras un 401 (reintenta una vez).
+     */
+    private suspend fun <T> conTokenRenovado(
+        ejecutar: suspend (token: String) -> IdentityRespuesta<T>,
+    ): IdentityRespuesta<T> {
+        val nodo = _modo.value
+        val token = nodo.token ?: return IdentityRespuesta(false, error = "Sin sesión")
+        var vigente = token
+        if (IdentityJson.debeRenovar(nodo.expiraEn)) {
+            if (renovarTokenSilencioso()) vigente = _modo.value.token ?: token
+        }
+        val r1 = ejecutar(vigente)
+        if (r1.codigo != 401) return r1
+        if (_modo.value.refreshToken == null) return r1
+        if (!renovarTokenSilencioso()) return r1
+        val tokenNuevo = _modo.value.token ?: return r1
+        return ejecutar(tokenNuevo)
+    }
+
+    /** Persiste el par rotado en la rama vigente (Identidad o Establecimiento). */
+    private fun persistirParIdentity(r: IdentityJson.SesionRenovada) {
+        val expiraEn = IdentityJson.expiraEnDe(r.expiresInSegundos)
+        when (val actual = _modo.value) {
+            is ModoSesion.Establecimiento -> {
+                val nuevo = actual.copy(
+                    token = r.token,
+                    refreshToken = r.refreshToken,
+                    sesionId = r.sesionId ?: actual.sesionId,
+                    expiraEn = expiraEn,
+                )
+                store.guardarEstablecimiento(nuevo)
+                _modo.value = nuevo
+            }
+            is ModoSesion.Identidad -> {
+                val nuevo = actual.copy(
+                    token = r.token,
+                    refreshToken = r.refreshToken,
+                    sesionId = r.sesionId ?: actual.sesionId,
+                    expiraEn = expiraEn,
+                )
+                store.guardarIdentidad(
+                    nuevo.perfil,
+                    nuevo.qr,
+                    nuevo.token,
+                    nuevo.fichaUrl,
+                    nuevo.refreshToken,
+                    nuevo.sesionId,
+                    nuevo.expiraEn,
+                )
+                _modo.value = nuevo
+            }
+            ModoSesion.Local -> Unit
+        }
+    }
+
     suspend fun registrar(
         nombre: String,
         apellidos: String,
@@ -74,15 +170,16 @@ class SesionRepository(
         }
 
     suspend fun hidratar() {
-        val token = _modo.value.token ?: return
+        val inicial = _modo.value.token ?: return
         withContext(Dispatchers.IO) {
-            val me = cliente().me(token)
+            val me = conTokenRenovado { t -> cliente().me(t) }
             if (me.codigo == 401) {
                 withContext(Dispatchers.Main.immediate) { cerrarSesion() }
                 return@withContext
             }
             val perfil = me.valor ?: return@withContext
-            val qrResp = cliente().meQr(token)
+            val token = _modo.value.token ?: inicial
+            val qrResp = conTokenRenovado { t -> cliente().meQr(t) }
             val qr: String?
             val fichaUrl: String?
             when {
@@ -120,9 +217,9 @@ class SesionRepository(
         val dir = direccion?.trim()?.ifEmpty { null }
         val ciu = ciudad?.trim()?.ifEmpty { null }
         return withContext(Dispatchers.IO) {
-            val r = cliente().actualizarPerfil(token, nickLimpio, dir, ciu)
+            val r = conTokenRenovado { t -> cliente().actualizarPerfil(t, nickLimpio, dir, ciu) }
             if (r.ok && r.valor != null) {
-                persistir(r.valor, _modo.value.qr, token)
+                persistir(r.valor, _modo.value.qr, _modo.value.token ?: token)
             }
             r
         }
@@ -141,7 +238,7 @@ class SesionRepository(
     suspend fun renovar(): IdentityRespuesta<String> {
         val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
         return withContext(Dispatchers.IO) {
-            val r = cliente().renovar(token)
+            val r = conTokenRenovado { t -> cliente().renovar(t) }
             if (r.ok && r.valor != null) {
                 desconectarBar()
                 val perfil = _modo.value.perfil ?: return@withContext IdentityRespuesta(
@@ -149,7 +246,7 @@ class SesionRepository(
                     r.valor.qr,
                     codigo = r.codigo,
                 )
-                persistir(perfil, r.valor.qr, token, r.valor.fichaUrl)
+                persistir(perfil, r.valor.qr, _modo.value.token ?: token, r.valor.fichaUrl)
             }
             IdentityRespuesta(r.ok, r.valor?.qr, error = r.error, codigo = r.codigo, code = r.code)
         }
@@ -158,11 +255,11 @@ class SesionRepository(
     suspend fun revocar(): IdentityRespuesta<Unit> {
         val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
         return withContext(Dispatchers.IO) {
-            val r = cliente().revocar(token)
+            val r = conTokenRenovado { t -> cliente().revocar(t) }
             if (r.ok) {
                 desconectarBar()
                 val perfil = _modo.value.perfil ?: return@withContext r
-                persistir(perfil, qr = null, token = token, fichaUrl = null)
+                persistir(perfil, qr = null, token = _modo.value.token ?: token, fichaUrl = null)
             }
             r
         }
@@ -171,12 +268,13 @@ class SesionRepository(
     suspend fun subirFoto(bytes: ByteArray, mime: String): IdentityRespuesta<String?> {
         val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
         return withContext(Dispatchers.IO) {
-            val r = cliente().subirFoto(token, bytes, mime)
+            val r = conTokenRenovado { t -> cliente().subirFoto(t, bytes, mime) }
             if (r.ok) {
+                val vigente = _modo.value.token ?: token
                 val perfil = _modo.value.perfil?.copy(fotoUrl = r.valor ?: "/v1/camareros/me/foto")
                     ?: return@withContext r
-                persistir(perfil, _modo.value.qr, token)
-                cargarFoto(token, perfil.fotoUrl)
+                persistir(perfil, _modo.value.qr, vigente)
+                cargarFoto(vigente, perfil.fotoUrl)
             }
             r
         }
@@ -185,10 +283,9 @@ class SesionRepository(
     suspend fun borrarFoto(): IdentityRespuesta<Unit> {
         val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
         return withContext(Dispatchers.IO) {
-            val r = cliente().borrarFoto(token)
+            val r = conTokenRenovado { t -> cliente().borrarFoto(t) }
             if (r.ok) {
-                val perfil = _modo.value.perfil?.copy(fotoUrl = null) ?: return@withContext r
-                persistir(perfil, _modo.value.qr, token)
+                persistir(_modo.value.perfil?.copy(fotoUrl = null) ?: return@withContext r, _modo.value.qr, _modo.value.token ?: token)
                 _foto.value = null
             }
             r
@@ -246,6 +343,9 @@ class SesionRepository(
                 establecimientoId = establecimientoId,
                 sesionTrabajo = false,
                 fichaUrl = actual.fichaUrl,
+                refreshToken = actual.refreshToken,
+                sesionId = actual.sesionId,
+                expiraEn = actual.expiraEn,
             )
             store.guardarEstablecimiento(establecimiento)
             _modo.value = establecimiento
@@ -278,8 +378,19 @@ class SesionRepository(
             actual.qr,
             actual.token,
             normalizarFichaUrl(actual.fichaUrl),
+            actual.refreshToken,
+            actual.sesionId,
+            actual.expiraEn,
         )
-        store.guardarIdentidad(identidad.perfil, identidad.qr, identidad.token, identidad.fichaUrl)
+        store.guardarIdentidad(
+            identidad.perfil,
+            identidad.qr,
+            identidad.token,
+            identidad.fichaUrl,
+            identidad.refreshToken,
+            identidad.sesionId,
+            identidad.expiraEn,
+        )
         _modo.value = identidad
     }
 
@@ -341,14 +452,14 @@ class SesionRepository(
         withContext(Dispatchers.IO) {
             val token = _modo.value.token
                 ?: return@withContext IdentityRespuesta(false, error = "Sin sesión")
-            cliente().meResumen(token, desde, hasta)
+            conTokenRenovado { t -> cliente().meResumen(t, desde, hasta) }
         }
 
     suspend fun jornadasOficio(desde: Instant, hasta: Instant): IdentityRespuesta<List<JornadaOficio>> =
         withContext(Dispatchers.IO) {
             val token = _modo.value.token
                 ?: return@withContext IdentityRespuesta(false, error = "Sin sesión")
-            cliente().meJornadas(token, desde, hasta)
+            conTokenRenovado { t -> cliente().meJornadas(t, desde, hasta) }
         }
 
     /** Dual-write al libro canónico. 409 (ya abierta) cuenta como éxito. Sin UUID no se inventa. */
@@ -655,16 +766,43 @@ class SesionRepository(
         qr: String?,
         token: String,
         fichaUrl: String? = _modo.value.fichaUrl,
+        refreshToken: String? = _modo.value.refreshToken,
+        sesionId: String? = _modo.value.sesionId,
+        expiraEn: Long? = _modo.value.expiraEn,
     ) {
         val canonica = normalizarFichaUrl(fichaUrl)
         val actual = _modo.value
         if (actual is ModoSesion.Establecimiento) {
-            val establecimiento = actual.copy(perfil = perfil, qr = qr, token = token, fichaUrl = canonica)
+            val establecimiento = actual.copy(
+                perfil = perfil,
+                qr = qr,
+                token = token,
+                fichaUrl = canonica,
+                refreshToken = refreshToken,
+                sesionId = sesionId,
+                expiraEn = expiraEn,
+            )
             store.guardarEstablecimiento(establecimiento)
             _modo.value = establecimiento
         } else {
-            store.guardarIdentidad(perfil, qr, token, canonica)
-            _modo.value = ModoSesion.Identidad(perfil, qr, token, canonica)
+            store.guardarIdentidad(
+                perfil,
+                qr,
+                token,
+                canonica,
+                refreshToken,
+                sesionId,
+                expiraEn,
+            )
+            _modo.value = ModoSesion.Identidad(
+                perfil,
+                qr,
+                token,
+                canonica,
+                refreshToken,
+                sesionId,
+                expiraEn,
+            )
         }
     }
 
@@ -672,7 +810,15 @@ class SesionRepository(
         val sesion = r.valor ?: return
         val token = sesion.token ?: return
         if (!r.ok) return
-        persistir(sesion.perfil, sesion.qr, token, sesion.fichaUrl)
+        persistir(
+            sesion.perfil,
+            sesion.qr,
+            token,
+            sesion.fichaUrl,
+            refreshToken = sesion.refreshToken,
+            sesionId = sesion.sesionId,
+            expiraEn = IdentityJson.expiraEnDe(sesion.expiresInSegundos),
+        )
         cargarFoto(token, sesion.perfil.fotoUrl)
         refrescarMembresias(token)
         refrescarVisibilidad(token)
@@ -686,7 +832,7 @@ class SesionRepository(
         return withContext(Dispatchers.IO) {
             val anterior = _visibilidad.value
             _visibilidad.value = anterior.con(campo, valor)
-            val r = cliente().actualizarVisibilidad(token, campo, valor)
+            val r = conTokenRenovado { t -> cliente().actualizarVisibilidad(t, campo, valor) }
             if (r.ok && r.valor != null) {
                 store.guardarVisibilidad(r.valor)
                 _visibilidad.value = r.valor
@@ -710,11 +856,12 @@ class SesionRepository(
         val ficha = modo.fichaUrl
         return withContext(Dispatchers.IO) {
             persistir(perfilActual.copy(visibleOtrosEstablecimientos = visible), qr, token, ficha)
-            val r = cliente().actualizarVisibilidadEstablecimientos(token, visible)
+            val r = conTokenRenovado { t -> cliente().actualizarVisibilidadEstablecimientos(t, visible) }
+            val vigente = _modo.value.token ?: token
             if (r.ok && r.valor != null) {
-                persistir(r.valor, qr, token, ficha)
+                persistir(r.valor, qr, vigente, ficha)
             } else {
-                persistir(perfilActual, qr, token, ficha)
+                persistir(perfilActual, qr, vigente, ficha)
             }
             r
         }
@@ -735,7 +882,7 @@ class SesionRepository(
     suspend fun cargarInvitaciones(): IdentityRespuesta<List<InvitacionCamarero>> {
         val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
         return withContext(Dispatchers.IO) {
-            val r = cliente().meInvitaciones(token)
+            val r = conTokenRenovado { t -> cliente().meInvitaciones(t) }
             if (r.ok && r.valor != null) {
                 _invitaciones.value = r.valor
             }
@@ -746,10 +893,11 @@ class SesionRepository(
     suspend fun aceptarInvitacion(id: String): IdentityRespuesta<Unit> {
         val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
         return withContext(Dispatchers.IO) {
-            val r = cliente().aceptarInvitacion(token, id)
+            val r = conTokenRenovado { t -> cliente().aceptarInvitacion(t, id) }
             if (r.ok) {
-                refrescarMembresias(token)
-                val lista = cliente().meInvitaciones(token)
+                val vigente = _modo.value.token ?: token
+                refrescarMembresias(vigente)
+                val lista = conTokenRenovado { t -> cliente().meInvitaciones(t) }
                 if (lista.ok && lista.valor != null) {
                     _invitaciones.value = lista.valor
                 }
@@ -761,9 +909,9 @@ class SesionRepository(
     suspend fun rechazarInvitacion(id: String): IdentityRespuesta<Unit> {
         val token = _modo.value.token ?: return IdentityRespuesta(false, error = "Sin sesión")
         return withContext(Dispatchers.IO) {
-            val r = cliente().rechazarInvitacion(token, id)
+            val r = conTokenRenovado { t -> cliente().rechazarInvitacion(t, id) }
             if (r.ok) {
-                val lista = cliente().meInvitaciones(token)
+                val lista = conTokenRenovado { t -> cliente().meInvitaciones(t) }
                 if (lista.ok && lista.valor != null) {
                     _invitaciones.value = lista.valor
                 }
