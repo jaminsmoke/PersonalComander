@@ -3,6 +3,7 @@
 # Una ruta por línea. El test IdentityContratoTest falla si el cliente se desvía.
 /v1/camareros/registro
 /v1/auth/login
+/v1/auth/refresh
 /v1/camareros/me
 /v1/camareros/me/qr
 /v1/camareros/me/renovar
