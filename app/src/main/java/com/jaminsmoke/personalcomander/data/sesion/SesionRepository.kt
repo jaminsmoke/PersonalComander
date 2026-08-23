@@ -267,8 +267,9 @@ class SesionRepository(
         val puerto = actual.barPuerto
         val token = actual.token
         val cortarLan = actual.sesionTrabajo && qr != null
+        val tokenLan = actual.tokenLan
         scope.launch(Dispatchers.IO) {
-            if (cortarLan) BarLanCliente.postCortar(host, puerto, qr)
+            if (cortarLan) BarLanCliente.postCortar(host, puerto, qr, tokenLan)
             cortarJornadaServer(token)
         }
         store.limpiarBar()
@@ -307,6 +308,11 @@ class SesionRepository(
             val r = BarLanCliente.postIniciar(actual.barHost, actual.barPuerto, qr)
             if (r.ok && r.sesionActiva) {
                 persistirJornada(true)
+                if (r.token != null) {
+                    val conToken = actual.copy(tokenLan = r.token)
+                    store.guardarEstablecimiento(conToken)
+                    _modo.value = conToken
+                }
                 registrarJornadaServer(actual.token, actual.nombreEstablecimiento, actual.establecimientoId)
             }
             r
@@ -318,9 +324,10 @@ class SesionRepository(
             ?: return BarLanCliente.JornadaLanResult(ok = false, codigo = 0)
         val qr = actual.qr
         val token = actual.token
+        val tokenLan = actual.tokenLan
         return withContext(Dispatchers.IO) {
             val r = if (qr != null) {
-                BarLanCliente.postCortar(actual.barHost, actual.barPuerto, qr)
+                BarLanCliente.postCortar(actual.barHost, actual.barPuerto, qr, tokenLan)
             } else {
                 BarLanCliente.JornadaLanResult(ok = true, codigo = 0)
             }
@@ -374,9 +381,33 @@ class SesionRepository(
     private fun persistirJornada(activa: Boolean) {
         val vigente = _modo.value as? ModoSesion.Establecimiento ?: return
         if (vigente.sesionTrabajo == activa) return
-        val nuevo = vigente.copy(sesionTrabajo = activa)
+        val nuevo = vigente.copy(sesionTrabajo = activa, tokenLan = if (activa) vigente.tokenLan else null)
         store.guardarEstablecimiento(nuevo)
         _modo.value = nuevo
+    }
+
+    /**
+     * Re-liga automáticamente la jornada LAN tras un 401 (token expirado).
+     * Usa el QR guardado para re-iniciar sesión sin intervención del camarero.
+     * Retorna el nuevo token LAN si éxito, null si falla.
+     */
+    suspend fun reLigarSilencioso(): String? {
+        val actual = _modo.value as? ModoSesion.Establecimiento ?: return null
+        val qr = actual.qr ?: return null
+        return withContext(Dispatchers.IO) {
+            val r = BarLanCliente.postIniciar(actual.barHost, actual.barPuerto, qr)
+            if (r.ok && r.sesionActiva && r.token != null) {
+                val nuevo = actual.copy(
+                    sesionTrabajo = true,
+                    tokenLan = r.token,
+                )
+                store.guardarEstablecimiento(nuevo)
+                _modo.value = nuevo
+                r.token
+            } else {
+                null
+            }
+        }
     }
 
     /**
@@ -386,11 +417,12 @@ class SesionRepository(
     suspend fun revalidarTurno() {
         val actual = _modo.value as? ModoSesion.Establecimiento ?: return
         val qr = actual.qr ?: return
+        val tokenLan = actual.tokenLan
         withContext(Dispatchers.IO) {
             val sesion = BarLanCliente.postSesion(actual.barHost, actual.barPuerto, qr)
             if (sesion != null && !sesion.admitido) {
                 if (actual.sesionTrabajo) {
-                    BarLanCliente.postCortar(actual.barHost, actual.barPuerto, qr)
+                    BarLanCliente.postCortar(actual.barHost, actual.barPuerto, qr, tokenLan)
                 }
                 withContext(Dispatchers.Main.immediate) { desconectarBar() }
                 return@withContext
@@ -410,7 +442,7 @@ class SesionRepository(
                 return@withContext
             }
             if (!jornada && actual.sesionTrabajo) {
-                BarLanCliente.postCortar(actual.barHost, actual.barPuerto, qr)
+                BarLanCliente.postCortar(actual.barHost, actual.barPuerto, qr, tokenLan)
             }
             val nuevo = actual.copy(
                 admitido = admitido,
@@ -430,7 +462,8 @@ class SesionRepository(
      * re-apuntando `codigoBar` por nombre — sin borrar, para no romper líneas históricas.
      */
     private suspend fun espejarCarta(host: String, puerto: Int) {
-        val carta = BarLanCliente.carta(host, puerto) ?: return
+        val tokenLan = (_modo.value as? ModoSesion.Establecimiento)?.tokenLan
+        val carta = BarLanCliente.carta(host, puerto, tokenLan) ?: return
         val existentes = db.productoDao().getAllIncluyendoOcultos()
         val reconstruir = CartaSync.debeReconstruir(
             schemaRemoto = carta.schema,
@@ -529,7 +562,8 @@ class SesionRepository(
      * Territorios (`zonas`) se reemplazan enteros. No corre en el bucle SSE: solo aquí.
      */
     private suspend fun espejarMapa(host: String, puerto: Int) {
-        val estado = BarLanCliente.estado(host, puerto) ?: return
+        val tokenLan = (_modo.value as? ModoSesion.Establecimiento)?.tokenLan
+        val estado = BarLanCliente.estado(host, puerto, tokenLan) ?: return
         if (estado.salas.isEmpty() && estado.mesas.isEmpty()) return
         db.withTransaction {
             val planSalas = MapaSync.planSalas(db.salaDao().getAll(), estado.salas)
