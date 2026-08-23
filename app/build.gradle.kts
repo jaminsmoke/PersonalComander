@@ -102,6 +102,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.gson)
+    implementation(libs.androidx.security.crypto)
     implementation(libs.zxing.core)
     implementation(libs.vico.compose)
     implementation(libs.vico.compose.m3)
