@@ -76,6 +76,17 @@ jobs:
             docs/contrato/fixtures
           sparse-checkout-cone-mode: false
 
+      - name: Checkout Identity contract pack
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: jaminsmoke/PersonalHostel-Server
+          ref: ${{ inputs.identity_ref || 'main' }}
+          path: .family/identity
+          persist-credentials: false
+          sparse-checkout: |
+            docs/contracts/camareros.ops.json
+          sparse-checkout-cone-mode: false
+
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest --no-daemon
 
