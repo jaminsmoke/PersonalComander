@@ -2,6 +2,12 @@
 """Comprueba que Commander no pide rutas que Identity o Bar ya no exponen
 y deja un informe de aprovechamiento (summary de Actions / stdout).
 
+Además de método+path, verifica la autenticación (Authorization) de cada
+ruta que Commander consume contra el contrato del proveedor:
+- rutas que Commander llama SIN token deben ser públicas en el OpenAPI;
+- rutas con Bearer/sesión deben declarar security en el proveedor
+  (si el proveedor las declara públicas pero Commander manda token → warning).
+
 Uso:
     python scripts/check_family_contracts.py \\
         --identity-openapi path/openapi-camareros.json \\
@@ -23,8 +29,24 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-IDENTITY_SNAPSHOT = ROOT / "docs" / "identity-contract-paths.txt"
 BAR_SNAPSHOT = ROOT / "docs" / "bar-contract-paths.txt"
+
+# Fuente de verdad de las rutas Identity que Commander consume: el propio
+# cliente Kotlin (IdentityCliente.Rutas.*). No hay snapshot separado.
+IDENTITY_KOTLIN = (
+    ROOT
+    / "app"
+    / "src"
+    / "main"
+    / "java"
+    / "com"
+    / "jaminsmoke"
+    / "personalcomander"
+    / "data"
+    / "sesion"
+    / "IdentityCliente.kt"
+)
+RUTAS_IDENTITY_RE = re.compile(r'"((?:/v1)/[^"]+)"')
 
 KTOR_RUTA = re.compile(
     r"""(?:get|post|put|delete|patch|sse)\(\s*["']([^"']+)["']""",
@@ -35,7 +57,7 @@ HTTP_VERBOS = frozenset({"get", "post", "put", "delete", "patch", "options", "he
 
 # Método HTTP con el que Commander llama a cada ruta LAN (deriva de BarLanCliente).
 # `/v1/eventos` es SSE: en el contrato de Bar se documenta como GET text/event-stream.
-MÉTODOS_BAR = {
+METODOS_BAR = {
     "/health": "get",
     "/v1/rondas": "post",
     "/v1/sesion": "post",
@@ -47,6 +69,17 @@ MÉTODOS_BAR = {
     "/v1/carta": "get",
 }
 
+# Rutas que Commander llama SIN token de sesión (Bearer LAN/Identity).
+SIN_TOKEN_IDENTITY = frozenset({
+    "/v1/camareros/registro",
+    "/v1/auth/login",
+    "/v1/auth/refresh",
+})
+SIN_TOKEN_BAR = frozenset({
+    "/health",
+    "/v1/sesion",
+})
+
 
 def load_snapshot(path: Path) -> set[str]:
     rutas: set[str] = set()
@@ -55,6 +88,13 @@ def load_snapshot(path: Path) -> set[str]:
         if line and not line.startswith("#"):
             rutas.add(line)
     return rutas
+
+
+def rutas_identity_fuente() -> set[str]:
+    """Rutas del contrato Identity que Commander consume, derivadas del cliente."""
+    if not IDENTITY_KOTLIN.is_file():
+        raise FileNotFoundError(f"No se encuentra IdentityCliente.kt: {IDENTITY_KOTLIN}")
+    return set(RUTAS_IDENTITY_RE.findall(IDENTITY_KOTLIN.read_text(encoding="utf-8")))
 
 
 def openapi_paths(path: Path) -> set[str]:
@@ -77,6 +117,25 @@ def openapi_ops(path: Path) -> dict[str, set[str]]:
             continue
         out[raw] = {k.lower() for k in item if k.lower() in HTTP_VERBOS}
     return out
+
+
+def security_de_operacion(spec: dict, ruta: str, metodo: str | None = None) -> list | None:
+    """security efectiva de una operación (la operación manda sobre la global)."""
+    item = spec.get("paths", {}).get(ruta)
+    if not isinstance(item, dict):
+        return None
+    verbos = [k for k in item if k.lower() in HTTP_VERBOS]
+    op = None
+    if verbos:
+        if metodo and metodo in [v.lower() for v in verbos]:
+            op = item[next(v for v in verbos if v.lower() == metodo)]
+        else:
+            op = item[verbos[0]]
+    if op is None:
+        return None
+    if "security" in op:
+        return op["security"] or []
+    return spec.get("security") or []
 
 
 def ktor_paths(fuente: str) -> set[str]:
@@ -102,6 +161,12 @@ def bullets(rutas: list[str], vacio: str = "_Ninguna._") -> str:
     return "\n".join(f"- `{r}`" for r in rutas)
 
 
+def bullets_auth(items: list[str]) -> str:
+    if not items:
+        return "_Ninguno._"
+    return "\n".join(f"- {it}" for it in items)
+
+
 @dataclass
 class Informe:
     markdown: str
@@ -115,7 +180,7 @@ def comprobar(
     bar_module: Path,
     bar_openapi: Path | None = None,
 ) -> Informe:
-    identity_want = load_snapshot(IDENTITY_SNAPSHOT)
+    identity_want = rutas_identity_fuente()
     identity_have = openapi_paths(identity_openapi)
     missing_id = sorted(identity_want - identity_have)
     used_id = sorted(identity_want & identity_have)
@@ -151,7 +216,7 @@ def comprobar(
     if bar_openapi is not None:
         # Contrato estructural de Bar (openapi-lan.json): ruta + método.
         bar_ops = openapi_ops(bar_openapi)
-        for ruta, metodo in sorted(MÉTODOS_BAR.items()):
+        for ruta, metodo in sorted(METODOS_BAR.items()):
             verbos = bar_ops.get(ruta)
             if verbos is None:
                 fallos.append(
@@ -163,13 +228,55 @@ def comprobar(
                     f"(solo {', '.join(sorted(v.upper() for v in verbos))})"
                 )
 
-    warnings = [
+    auth_id: list[str] = []
+    try:
+        identity_spec = json.loads(identity_openapi.read_text(encoding="utf-8"))
+    except Exception:
+        identity_spec = {}
+    for ruta in sorted(identity_want & identity_have):
+        security = security_de_operacion(identity_spec, ruta)
+        if ruta in SIN_TOKEN_IDENTITY:
+            if security:
+                fallos.append(
+                    f"Commander llama a {ruta} sin token pero Identity la declara "
+                    f"protegida (security: {security})"
+                )
+        elif security == []:
+            auth_id.append(
+                f"Identity declara {ruta} pública pero Commander le envía Bearer"
+            )
+
+    auth_bar: list[str] = []
+    if bar_openapi is not None:
+        try:
+            bar_spec = json.loads(bar_openapi.read_text(encoding="utf-8"))
+        except Exception:
+            bar_spec = {}
+        for ruta, metodo in METODOS_BAR.items():
+            if ruta not in (bar_spec.get("paths") or {}):
+                continue
+            security = security_de_operacion(bar_spec, ruta, metodo)
+            if ruta in SIN_TOKEN_BAR:
+                if security:
+                    fallos.append(
+                        f"Commander llama a {ruta} sin token LAN pero Bar la declara "
+                        f"protegida (security: {security})"
+                    )
+            elif not security:
+                auth_bar.append(
+                    f"Bar declara {ruta} sin token pero Commander le envía Bearer LAN"
+                )
+
+    warnings_list = [
         f"Identity camareros pública no usada por Commander: {ruta}"
         for ruta in unused_public
     ]
+    warnings_list += auth_id + auth_bar
 
     error_id = bullets(missing_id, "_Ninguno._")
     error_bar = bullets(missing_bar, "_Ninguno._")
+    auth_id_md = bullets_auth(auth_id)
+    auth_bar_md = bullets_auth(auth_bar)
     otras_md = ""
     if otras_bar:
         otras_md = (
@@ -180,8 +287,8 @@ def comprobar(
 
     markdown = f"""# Family contracts — informe
 
-Rojo solo si Commander pide una ruta que Identity o Bar ya no exponen.
-Lo no usado no falla el job: es señal para decidir ítem o deuda.
+Rojo solo si Commander pide una ruta que Identity o Bar ya no exponen,
+o si una ruta que Commander usa sin token pasa a estar protegida.
 
 ## Identity camareros (`:8080`)
 
@@ -196,6 +303,10 @@ Lo no usado no falla el job: es señal para decidir ítem o deuda.
 ### Internas (no son deuda de Commander)
 
 {bullets(internas)}
+
+### Autenticación (Bearer)
+
+{auth_id_md}
 
 ### Error
 
@@ -213,6 +324,10 @@ Commander no llama a este servicio (oficio). No es deuda.
 
 {bullets(used_bar)}
 
+### Autorización (Bearer LAN)
+
+{auth_bar_md}
+
 ### Solo expo Bar
 
 {bullets(expo_bar)}
@@ -221,7 +336,7 @@ Commander no llama a este servicio (oficio). No es deuda.
 
 {error_bar}
 """
-    return Informe(markdown=markdown.strip() + "\n", fallos=fallos, warnings=warnings)
+    return Informe(markdown=markdown.strip() + "\n", fallos=fallos, warnings=warnings_list)
 
 
 def escribir_informe(informe: Informe) -> None:
@@ -241,29 +356,29 @@ def escribir_informe(informe: Informe) -> None:
 def _fixtures_ok() -> tuple[dict, dict, str]:
     identity_ok = {
         "paths": {
-            "/v1/auth/login": {},
-            "/v1/auth/refresh": {},
-            "/v1/camareros/me": {},
-            "/v1/camareros/me/establecimientos": {},
-            "/v1/camareros/me/foto": {},
-            "/v1/camareros/me/qr": {},
-            "/v1/camareros/me/renovar": {},
-            "/v1/camareros/me/revocar": {},
-            "/v1/camareros/me/visibilidad": {},
-            "/v1/camareros/me/visibilidad-establecimientos": {},
-            "/v1/camareros/me/password": {},
-            "/v1/camareros/me/jornadas": {},
-            "/v1/camareros/me/jornadas/iniciar": {},
-            "/v1/camareros/me/jornadas/cortar": {},
-            "/v1/camareros/me/resumen": {},
-            "/v1/camareros/me/invitaciones": {},
-            "/v1/camareros/me/invitaciones/{invitacion_id}/aceptar": {},
-            "/v1/camareros/me/invitaciones/{invitacion_id}/rechazar": {},
-            "/v1/camareros/registro": {},
-            "/health": {},
-            "/v1/keys/qr": {},
-            "/v1/meta": {},
-            "/internal/camareros/buscar": {},
+            "/v1/auth/login": {"post": {}},
+            "/v1/auth/refresh": {"post": {}},
+            "/v1/camareros/me": {"get": {}},
+            "/v1/camareros/me/establecimientos": {"get": {}},
+            "/v1/camareros/me/foto": {"get": {}},
+            "/v1/camareros/me/qr": {"get": {}},
+            "/v1/camareros/me/renovar": {"post": {}},
+            "/v1/camareros/me/revocar": {"post": {}},
+            "/v1/camareros/me/visibilidad": {"get": {}},
+            "/v1/camareros/me/visibilidad-establecimientos": {"put": {}},
+            "/v1/camareros/me/password": {"post": {}},
+            "/v1/camareros/me/jornadas": {"get": {}},
+            "/v1/camareros/me/jornadas/iniciar": {"post": {}},
+            "/v1/camareros/me/jornadas/cortar": {"post": {}},
+            "/v1/camareros/me/resumen": {"get": {}},
+            "/v1/camareros/me/invitaciones": {"get": {}},
+            "/v1/camareros/me/invitaciones/{invitacion_id}/aceptar": {"post": {}},
+            "/v1/camareros/me/invitaciones/{invitacion_id}/rechazar": {"post": {}},
+            "/v1/camareros/registro": {"post": {}},
+            "/health": {"get": {}},
+            "/v1/keys/qr": {"get": {}},
+            "/v1/meta": {"get": {}},
+            "/internal/camareros/buscar": {"post": {}},
         }
     }
     negocio_ok = {
@@ -326,6 +441,36 @@ def selftest() -> int:
             print("SELFTEST FAIL: no debe avisar de negocio", file=sys.stderr)
             return 1
 
+        # Identity con security global: login/refresh/registro públicas, resto Bearer.
+        con_sec = json.loads(json.dumps(identity_ok))
+        con_sec["security"] = [{"HTTPBearer": []}]
+        for p in ("/v1/auth/login", "/v1/auth/refresh", "/v1/camareros/registro"):
+            op = list(con_sec["paths"][p].keys())[0]
+            con_sec["paths"][p] = {op: {"security": []}}
+        openapi.write_text(json.dumps(con_sec), encoding="utf-8")
+        informe = comprobar(openapi, negocio, modulo)
+        if informe.fallos:
+            print("SELFTEST FAIL: auth de Identity correcta debería pasar", file=sys.stderr)
+            return 1
+
+        # Login como protegida (Commander no le envía token) → rojo.
+        broken_auth = json.loads(json.dumps(con_sec))
+        broken_auth["paths"]["/v1/auth/login"] = {"post": {"security": [{"HTTPBearer": []}]}}
+        openapi.write_text(json.dumps(broken_auth), encoding="utf-8")
+        fallos = comprobar(openapi, negocio, modulo).fallos
+        if not any("login" in f and "sin token" in f for f in fallos):
+            print("SELFTEST FAIL: debía detectar login de Identity protegido sin token", file=sys.stderr)
+            return 1
+
+        # /v1/camareros/me pública (sin security) → warning, no rojo.
+        pub_auth = json.loads(json.dumps(con_sec))
+        pub_auth["paths"]["/v1/camareros/me"] = {"get": {"security": []}}
+        openapi.write_text(json.dumps(pub_auth), encoding="utf-8")
+        r = comprobar(openapi, negocio, modulo)
+        if r.fallos or not any("camareros/me" in w and "Bearer" in w for w in r.warnings):
+            print("SELFTEST FAIL: debía avisar de /v1/camareros/me pública con Bearer", file=sys.stderr)
+            return 1
+
         broken = dict(identity_ok)
         broken["paths"] = dict(identity_ok["paths"])
         del broken["paths"]["/v1/auth/login"]
@@ -365,18 +510,39 @@ def selftest() -> int:
             print("\n".join(fallos), file=sys.stderr)
             return 1
 
+        # Bar con security global: /health y /v1/sesion públicas → sin fallos.
+        bar_sec = json.loads(json.dumps(bar_spec))
+        bar_sec["security"] = [{"sesionLan": []}]
+        bar_sec["paths"]["/v1/sesion"] = {"post": {"security": []}}
+        bar_sec["paths"]["/health"] = {"get": {"security": []}}
+        bar_spec_path.write_text(json.dumps(bar_sec), encoding="utf-8")
+        fallos = comprobar(openapi, negocio, modulo, bar_openapi=bar_spec_path).fallos
+        if fallos:
+            print("SELFTEST FAIL: auth de Bar correcta debería pasar", file=sys.stderr)
+            return 1
+
+        # /health como protegida (Commander no le manda token) → rojo.
+        bar_priv = json.loads(json.dumps(bar_sec))
+        bar_priv["paths"]["/health"] = {"get": {"security": [{"sesionLan": []}]}}
+        bar_spec_path.write_text(json.dumps(bar_priv), encoding="utf-8")
+        fallos = comprobar(openapi, negocio, modulo, bar_openapi=bar_spec_path).fallos
+        if not any("health" in f and "sin token" in f for f in fallos):
+            print("SELFTEST FAIL: debía detectar /health de Bar protegido sin token", file=sys.stderr)
+            return 1
+
         # Ruta que Commander llama y openapi-lan no documenta → ROJO.
-        bar_spec["paths"].pop("/v1/carta")
-        bar_spec_path.write_text(json.dumps(bar_spec), encoding="utf-8")
+        bar_missing = json.loads(json.dumps(bar_sec))
+        bar_missing["paths"].pop("/v1/carta")
+        bar_spec_path.write_text(json.dumps(bar_missing), encoding="utf-8")
         fallos = comprobar(openapi, negocio, modulo, bar_openapi=bar_spec_path).fallos
         if not any("no documenta /v1/carta" in f for f in fallos):
             print("SELFTEST FAIL: debía detectar /v1/carta ausente en openapi-lan", file=sys.stderr)
             return 1
 
         # Método incorrecto (GET /v1/rondas en vez de POST) → ROJO.
-        bar_spec["paths"]["/v1/rondas"] = {"get": {}}
-        bar_spec["paths"]["/v1/carta"] = {"get": {}}
-        bar_spec_path.write_text(json.dumps(bar_spec), encoding="utf-8")
+        bar_bad = json.loads(json.dumps(bar_sec))
+        bar_bad["paths"]["/v1/rondas"] = {"get": {}}
+        bar_spec_path.write_text(json.dumps(bar_bad), encoding="utf-8")
         fallos = comprobar(openapi, negocio, modulo, bar_openapi=bar_spec_path).fallos
         if not any("no declara POST /v1/rondas" in f for f in fallos):
             print("SELFTEST FAIL: debía detectar método incorrecto", file=sys.stderr)
@@ -404,11 +570,8 @@ def main() -> int:
         parser.error(
             "hace falta --identity-openapi, --negocio-openapi y --bar-module (o --selftest)",
         )
-    if not IDENTITY_SNAPSHOT.is_file() or not BAR_SNAPSHOT.is_file():
-        print(
-            "Faltan docs/identity-contract-paths.txt o docs/bar-contract-paths.txt",
-            file=sys.stderr,
-        )
+    if not BAR_SNAPSHOT.is_file():
+        print("Falta docs/bar-contract-paths.txt", file=sys.stderr)
         return 1
     informe = comprobar(
         args.identity_openapi,
@@ -422,8 +585,8 @@ def main() -> int:
             print(f, file=sys.stderr)
         return 1
     print(
-        f"Family contracts OK: {len(load_snapshot(IDENTITY_SNAPSHOT))} Identity, "
-        f"{len(load_snapshot(BAR_SNAPSHOT))} Bar",
+        f"Family contracts OK: {len(rutas_identity_fuente())} Identity "
+        f"(del código), {len(load_snapshot(BAR_SNAPSHOT))} Bar",
         file=sys.stderr,
     )
     return 0

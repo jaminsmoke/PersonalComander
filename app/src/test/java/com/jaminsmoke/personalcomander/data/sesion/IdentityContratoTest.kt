@@ -1,22 +1,39 @@
 package com.jaminsmoke.personalcomander.data.sesion
 
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
+/**
+ * Contrato de identidad del cliente de Identity: las rutas que Commander
+ * consume se derivan de [IdentityCliente.Rutas] (ya no hay snapshot).
+ * Este test fija las reglas de oficio: solo `/v1` públicas del servicio
+ * camareros; nunca internas, nunca el servicio negocio (`:8082`).
+ */
 class IdentityContratoTest {
 
     @Test
-    fun rutas_cliente_coinciden_con_snapshot() {
-        assertEquals(leerSnapshot(), IdentityCliente.Rutas.todas().toSet())
+    fun todas_las_rutas_son_v1_y_no_internas() {
+        val rutas = IdentityCliente.Rutas.todas()
+        assertTrue("IdentityCliente debe declarar rutas", rutas.isNotEmpty())
+        for (r in rutas) {
+            assertTrue("Ruta fuera de /v1: $r", r.startsWith("/v1/"))
+            assertFalse("No debe llamar rutas internas: $r", r.startsWith("/internal"))
+            assertFalse("No debe llamar rutas externas del server: $r", r.startsWith("http"))
+        }
     }
 
     @Test
-    fun fuente_identity_cliente_no_introduce_rutas_fuera_del_snapshot() {
-        val extra = rutasEnFuente() - leerSnapshot()
-        assertTrue("Rutas no listadas en docs/identity-contract-paths.txt: $extra", extra.isEmpty())
+    fun fuentes_no_presentan_rutas_fuera_de_rutas() {
+        // Cualquier literal "/v1/..." en la fuente debe estar declarado en Rutas.
+        val declaradas = IdentityCliente.Rutas.todas().toSet()
+        val literales = rutasRutasEnFuente()
+        val extra = literales - declaradas
+        assertTrue(
+            "Rutas en IdentityCliente.kt no declaradas en Rutas.*: $extra",
+            extra.isEmpty(),
+        )
     }
 
     @Test
@@ -28,38 +45,21 @@ class IdentityContratoTest {
         assertFalse(src.contains("/v1/establecimientos/"))
     }
 
-    private fun leerSnapshot(): Set<String> {
-        val lineas = snapshotFile().readLines()
-            .map { it.trim() }
-            .filter { it.startsWith("/") }
-        return lineas.toSet()
-    }
-
-    private fun rutasEnFuente(): Set<String> {
+    private fun rutasRutasEnFuente(): Set<String> {
         return Regex("\"(/v1/[^\"]+)\"")
             .findAll(leerFuenteIdentityCliente())
             .map { it.groupValues[1] }
             .toSet()
     }
 
-    private fun leerFuenteIdentityCliente(): String = fuenteIdentityCliente().readText()
-
-    private fun snapshotFile(): File {
-        val candidatos = listOf(
-            File("docs/identity-contract-paths.txt"),
-            File("../docs/identity-contract-paths.txt"),
-        )
-        return candidatos.firstOrNull { it.isFile }
-            ?: error("No se encuentra docs/identity-contract-paths.txt (cwd=${File(".").canonicalPath})")
-    }
-
-    private fun fuenteIdentityCliente(): File {
+    private fun leerFuenteIdentityCliente(): String {
         val rel = "java/com/jaminsmoke/personalcomander/data/sesion/IdentityCliente.kt"
         val candidatos = listOf(
             File("src/main/$rel"),
             File("app/src/main/$rel"),
         )
         return candidatos.firstOrNull { it.isFile }
+            ?.readText()
             ?: error("No se encuentra IdentityCliente.kt (cwd=${File(".").canonicalPath})")
     }
-}
+}
