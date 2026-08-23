@@ -612,11 +612,20 @@ class ComandaViewModel(
                     creadoEn = System.currentTimeMillis(),
                     codigoBarPorProductoId = codigoBar,
                 )
-                val resultado = withContext(Dispatchers.IO) {
-                    BarLanCliente.postRonda(modo.barHost, modo.barPuerto, ronda)
+                var tokenLan = modo.tokenLan
+                var resultado = withContext(Dispatchers.IO) {
+                    BarLanCliente.postRonda(modo.barHost, modo.barPuerto, ronda, tokenLan)
+                }
+                if (resultado.codigo == 401) {
+                    tokenLan = sesion.reLigarSilencioso()
+                    if (tokenLan != null) {
+                        resultado = withContext(Dispatchers.IO) {
+                            BarLanCliente.postRonda(modo.barHost, modo.barPuerto, ronda, tokenLan)
+                        }
+                    }
                 }
                 if (!resultado.ok) {
-                    if (resultado.codigo == 403) {
+                    if (resultado.codigo == 403 || resultado.codigo == 401) {
                         sesion.marcarJornadaCortada()
                         _error.value = ctx.getString(R.string.sesion_ronda_sin_jornada)
                     } else {

@@ -49,9 +49,10 @@ class RecogerServicio(
             if (modo.sesionTrabajo) {
                 launch { latido(modo) }
             }
+            val tokenLan = modo.tokenLan
             while (isActive) {
-                alinearConEstado(modo.barHost, modo.barPuerto)
-                escucharSse(modo.barHost, modo.barPuerto)
+                alinearConEstado(modo.barHost, modo.barPuerto, tokenLan)
+                escucharSse(modo.barHost, modo.barPuerto, tokenLan)
                 delay(2_000)
             }
         }
@@ -59,10 +60,25 @@ class RecogerServicio(
 
     private suspend fun latido(modo: ModoSesion.Establecimiento) {
         while (currentCoroutineContext().isActive) {
+            var tokenLan = modo.tokenLan
             val r = withContext(Dispatchers.IO) {
-                BarLanCliente.postHeartbeat(modo.barHost, modo.barPuerto, modo.perfil.id)
+                BarLanCliente.postHeartbeat(modo.barHost, modo.barPuerto, modo.perfil.id, tokenLan)
             }
-            if (r.codigo == 403) {
+            if (r.codigo == 401) {
+                tokenLan = sesion.reLigarSilencioso()
+                if (tokenLan != null) {
+                    val r2 = withContext(Dispatchers.IO) {
+                        BarLanCliente.postHeartbeat(modo.barHost, modo.barPuerto, modo.perfil.id, tokenLan)
+                    }
+                    if (r2.codigo == 401 || r2.codigo == 403) {
+                        avisarJornadaCortada()
+                        return
+                    }
+                } else {
+                    avisarJornadaCortada()
+                    return
+                }
+            } else if (r.codigo == 403) {
                 avisarJornadaCortada()
                 return
             }
@@ -70,8 +86,8 @@ class RecogerServicio(
         }
     }
 
-    private suspend fun alinearConEstado(host: String, puerto: Int) {
-        val estado = withContext(Dispatchers.IO) { BarLanCliente.estado(host, puerto) } ?: return
+    private suspend fun alinearConEstado(host: String, puerto: Int, tokenLan: String? = null) {
+        val estado = withContext(Dispatchers.IO) { BarLanCliente.estado(host, puerto, tokenLan) } ?: return
         val dao = db.lineaPedidoDao()
         for (ticket in RecogerLogica.ticketsDeColas(estado)) {
             if (ticket.estado.equals("PREPARADO", ignoreCase = true)) {
@@ -83,11 +99,11 @@ class RecogerServicio(
         }
     }
 
-    private suspend fun escucharSse(host: String, puerto: Int) {
+    private suspend fun escucharSse(host: String, puerto: Int, tokenLan: String? = null) {
         var conexion: HttpURLConnection? = null
         try {
             withContext(Dispatchers.IO) {
-                val conn = BarLanCliente.abrirSse(host, puerto)
+                val conn = BarLanCliente.abrirSse(host, puerto, tokenLan)
                 conexion = conn
                 coroutineContext.job.invokeOnCompletion {
                     try {

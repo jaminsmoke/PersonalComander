@@ -33,6 +33,8 @@ sealed class ModoSesion {
         val sesionTrabajo: Boolean = false,
         /** URL pública de ficha que manda Identity. No se inventa en Commander. */
         val fichaUrl: String? = null,
+        /** Token de sesión LAN emitido por Bar v0.2. Null en Bar 0.1 o sin jornada. */
+        val tokenLan: String? = null,
     ) : ModoSesion()
 }
 

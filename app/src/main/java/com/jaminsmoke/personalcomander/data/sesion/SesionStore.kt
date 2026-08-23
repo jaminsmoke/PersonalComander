@@ -29,6 +29,13 @@ class SesionStore(context: Context) {
             prefs.edit().putInt(KEY_CARTA_SCHEMA, value).apply()
         }
 
+    /** Token de sesión LAN emitido por Bar v0.2. Null en Bar 0.1 o sin jornada. */
+    var tokenLan: String?
+        get() = prefs.getString(KEY_BAR_TOKEN_LAN, null)?.trim()?.takeIf { it.isNotEmpty() }
+        set(value) {
+            prefs.edit().putString(KEY_BAR_TOKEN_LAN, value).apply()
+        }
+
     fun cargar(): ModoSesion {
         val token = prefs.getString(KEY_TOKEN, null) ?: return ModoSesion.Local
         val perfilJson = prefs.getString(KEY_PERFIL, null) ?: return ModoSesion.Local
@@ -57,6 +64,7 @@ class SesionStore(context: Context) {
                 establecimientoId = prefs.getString(KEY_BAR_ESTABLECIMIENTO_ID, null)?.takeIf { it.isNotBlank() },
                 sesionTrabajo = prefs.getBoolean(KEY_BAR_SESION_TRABAJO, false),
                 fichaUrl = fichaUrl,
+                tokenLan = tokenLan,
             )
         }
         return ModoSesion.Identidad(perfil, qr, token, fichaUrl)
@@ -73,6 +81,7 @@ class SesionStore(context: Context) {
             .remove(KEY_BAR_NOMBRE)
             .remove(KEY_BAR_ESTABLECIMIENTO_ID)
             .remove(KEY_BAR_SESION_TRABAJO)
+            .remove(KEY_BAR_TOKEN_LAN)
             .apply()
     }
 
@@ -88,6 +97,7 @@ class SesionStore(context: Context) {
             .putString(KEY_BAR_NOMBRE, modo.nombreEstablecimiento.orEmpty())
             .putString(KEY_BAR_ESTABLECIMIENTO_ID, modo.establecimientoId.orEmpty())
             .putBoolean(KEY_BAR_SESION_TRABAJO, modo.sesionTrabajo)
+            .putString(KEY_BAR_TOKEN_LAN, modo.tokenLan.orEmpty())
             .apply()
     }
 
@@ -134,6 +144,7 @@ class SesionStore(context: Context) {
             .remove(KEY_BAR_NOMBRE)
             .remove(KEY_BAR_ESTABLECIMIENTO_ID)
             .remove(KEY_BAR_SESION_TRABAJO)
+            .remove(KEY_BAR_TOKEN_LAN)
             .apply()
     }
 
@@ -175,6 +186,7 @@ class SesionStore(context: Context) {
         private const val KEY_BAR_NOMBRE = "bar_nombre"
         private const val KEY_BAR_ESTABLECIMIENTO_ID = "bar_establecimiento_id"
         private const val KEY_BAR_SESION_TRABAJO = "bar_sesion_trabajo"
+        private const val KEY_BAR_TOKEN_LAN = "bar_token_lan"
         private const val KEY_MEMBRESIAS = "membresias_identity"
         private const val KEY_VISIBILIDAD = "visibilidad"
         private const val KEY_CARTA_SCHEMA = "carta_schema"

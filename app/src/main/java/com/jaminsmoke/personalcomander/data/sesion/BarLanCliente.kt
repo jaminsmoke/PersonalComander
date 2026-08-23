@@ -118,21 +118,31 @@ object BarLanCliente {
         val codigo: Int,
         val sesionActiva: Boolean = false,
         val nodoViejo: Boolean = false,
+        /** Token de sesión LAN emitido por Bar v0.2+. Null en Bar 0.1 o si el nodo no emite. */
+        val token: String? = null,
     )
 
     fun postIniciar(host: String, puerto: Int, qr: String): JornadaLanResult {
         val (codigo, cuerpo) = postJson(host, puerto, Rutas.SESION_INICIAR, cuerpoQr(qr))
-        return interpretarIniciar(codigo, cuerpo)
+        return interpretarIniciar(codigo, cuerpo, token = parseToken(cuerpo))
     }
 
-    fun postCortar(host: String, puerto: Int, qr: String): JornadaLanResult {
-        val (codigo, _) = postJson(host, puerto, Rutas.SESION_CORTAR, cuerpoQr(qr))
+    /**
+     * Bar v0.2 acepta QR o Bearer. Si hay token LAN se envía como auth;
+     * el QR en el body sigue siendo necesario como identificador.
+     */
+    fun postCortar(host: String, puerto: Int, qr: String, tokenLan: String? = null): JornadaLanResult {
+        val (codigo, _) = postJson(host, puerto, Rutas.SESION_CORTAR, cuerpoQr(qr), tokenLan)
         return JornadaLanResult(ok = codigo in 200..299 || codigo == 404, codigo = codigo)
     }
 
-    fun postHeartbeat(host: String, puerto: Int, camareroId: String): JornadaLanResult {
+    /**
+     * Bar v0.2 valida coherencia del token con el [camareroId] del body.
+     * El body se mantiene durante la transición para compatibilidad con Bar 0.1.
+     */
+    fun postHeartbeat(host: String, puerto: Int, camareroId: String, tokenLan: String? = null): JornadaLanResult {
         val cuerpo = JsonObject().apply { addProperty("camareroId", camareroId) }.toString()
-        val (codigo, _) = postJson(host, puerto, Rutas.HEARTBEAT, cuerpo)
+        val (codigo, _) = postJson(host, puerto, Rutas.HEARTBEAT, cuerpo, tokenLan)
         return JornadaLanResult(ok = codigo in 200..299, codigo = codigo)
     }
 
@@ -148,12 +158,20 @@ object BarLanCliente {
         null
     }
 
+    /** Extrae el token de sesión LAN del JSON de respuesta de Bar v0.2. Null si ausente. */
+    fun parseToken(json: String): String? = try {
+        val o = JsonParser.parseString(json).asJsonObject
+        o.get("token")?.takeUnless { it.isJsonNull }?.asString?.trim()?.takeIf { it.isNotEmpty() }
+    } catch (_: Exception) {
+        null
+    }
+
     /** 404 = Bar 0.1 sin jornada: se trata como activa para no romper el envío. */
-    fun interpretarIniciar(codigo: Int, cuerpo: String): JornadaLanResult = when {
+    fun interpretarIniciar(codigo: Int, cuerpo: String, token: String? = null): JornadaLanResult = when {
         codigo == 404 -> JornadaLanResult(ok = true, codigo = 404, sesionActiva = true, nodoViejo = true)
         codigo in 200..299 -> {
             val activa = parseSesionActiva(cuerpo) ?: true
-            JornadaLanResult(ok = true, codigo = codigo, sesionActiva = activa)
+            JornadaLanResult(ok = true, codigo = codigo, sesionActiva = activa, token = token)
         }
         else -> JornadaLanResult(ok = false, codigo = codigo)
     }
@@ -164,14 +182,15 @@ object BarLanCliente {
         val tickets: List<TicketLan> = emptyList(),
     )
 
-    /** `POST /v1/rondas`. 200 (idempotente) y 201 cuentan como ok. Sin auth en Bar 0.1. */
-    fun postRonda(host: String, puerto: Int, ronda: RondaLan): PostRondaResult {
+    /** `POST /v1/rondas`. 200 (idempotente) y 201 cuentan como ok. Bar v0.2 exige Bearer. */
+    fun postRonda(host: String, puerto: Int, ronda: RondaLan, tokenLan: String? = null): PostRondaResult {
         val conexion = URL("http://$host:$puerto${Rutas.RONDAS}").openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 2500
             conexion.readTimeout = 4000
             conexion.requestMethod = "POST"
             conexion.doOutput = true
+            aplicarAuth(conexion, tokenLan)
             conexion.setRequestProperty("Content-Type", "application/json; charset=utf-8")
             val cuerpo = RondaLanMapper.toJson(ronda).toByteArray(Charsets.UTF_8)
             conexion.outputStream.use { it.write(cuerpo) }
@@ -193,12 +212,13 @@ object BarLanCliente {
     }
 
     /** Snapshot de colas. Bar no persiste SSE: al reconectar hay que realinear con esto. */
-    fun estado(host: String, puerto: Int = PUERTO): EstadoLan? {
+    fun estado(host: String, puerto: Int = PUERTO, tokenLan: String? = null): EstadoLan? {
         val conexion = URL("http://$host:$puerto${Rutas.ESTADO}").openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 2500
             conexion.readTimeout = 4000
             conexion.requestMethod = "GET"
+            aplicarAuth(conexion, tokenLan)
             if (conexion.responseCode !in 200..299) return null
             val texto = conexion.inputStream.bufferedReader().use { it.readText() }
             RecogerLogica.parseEstado(texto)
@@ -210,12 +230,13 @@ object BarLanCliente {
     }
 
     /** Catálogo canónico del nodo. 404 o red caída → null (el ligue no debe fallar). */
-    fun carta(host: String, puerto: Int = PUERTO): CartaLan? {
+    fun carta(host: String, puerto: Int = PUERTO, tokenLan: String? = null): CartaLan? {
         val conexion = URL("http://$host:$puerto${Rutas.CARTA}").openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 2500
             conexion.readTimeout = 4000
             conexion.requestMethod = "GET"
+            aplicarAuth(conexion, tokenLan)
             if (conexion.responseCode !in 200..299) return null
             val texto = conexion.inputStream.bufferedReader().use { it.readText() }
             CartaSync.parse(texto)
@@ -226,8 +247,13 @@ object BarLanCliente {
         }
     }
 
-    fun abrirSse(host: String, puerto: Int): HttpURLConnection {
-        val conexion = URL("http://$host:$puerto${Rutas.EVENTOS}").openConnection() as HttpURLConnection
+    /**
+     * SSE no puede mandar headers → el token va por query string `?token=...`.
+     * Sin token (Bar 0.1) la URL no se modifica.
+     */
+    fun abrirSse(host: String, puerto: Int, tokenLan: String? = null): HttpURLConnection {
+        val tokenParam = if (tokenLan != null) "?token=${java.net.URLEncoder.encode(tokenLan, "UTF-8")}" else ""
+        val conexion = URL("http://$host:$puerto${Rutas.EVENTOS}$tokenParam").openConnection() as HttpURLConnection
         conexion.connectTimeout = 4000
         conexion.readTimeout = 0
         conexion.requestMethod = "GET"
@@ -257,13 +283,20 @@ object BarLanCliente {
         }
     }
 
-    private fun postJson(host: String, puerto: Int, path: String, json: String): Pair<Int, String> {
+    private fun aplicarAuth(conexion: HttpURLConnection, tokenLan: String?) {
+        if (tokenLan != null) {
+            conexion.setRequestProperty("Authorization", "Bearer $tokenLan")
+        }
+    }
+
+    private fun postJson(host: String, puerto: Int, path: String, json: String, tokenLan: String? = null): Pair<Int, String> {
         val conexion = URL("http://$host:$puerto$path").openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 2500
             conexion.readTimeout = 4000
             conexion.requestMethod = "POST"
             conexion.doOutput = true
+            aplicarAuth(conexion, tokenLan)
             conexion.setRequestProperty("Content-Type", "application/json; charset=utf-8")
             conexion.outputStream.use { it.write(json.toByteArray(Charsets.UTF_8)) }
             val codigo = conexion.responseCode
