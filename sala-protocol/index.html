@@ -1,0 +1,1560 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Gestión de mesas y comandas para restaurantes — rápida, visual y por voz.">
+      
+      
+      
+        <link rel="canonical" href="https://jaminsmoke.github.io/PersonalComander/sala-protocol/">
+      
+      
+        <link rel="prev" href="../sync-tpv/">
+      
+      
+        <link rel="next" href="../backup/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Protocolo LAN - Personal Comander</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+  
+  <meta property="og:image" content="https://jaminsmoke.github.io/PersonalComander/assets/og-image.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://jaminsmoke.github.io/PersonalComander/assets/og-image.png">
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#protocolo-lan-de-sala-bar-01" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Personal Comander" class="md-header__button md-logo" aria-label="Personal Comander" data-md-component="logo">
+      
+  <img src="../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Personal Comander
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Protocolo LAN
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Cambiar a modo oscuro"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Cambiar a modo oscuro" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Cambiar a modo claro"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Cambiar a modo claro" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jaminsmoke/PersonalComander" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jaminsmoke/PersonalComander
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Inicio
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../manual/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../arquitectura/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Técnica
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Personal Comander" class="md-nav__button md-logo" aria-label="Personal Comander" data-md-component="logo">
+      
+  <img src="../assets/logo.png" alt="logo">
+
+    </a>
+    Personal Comander
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jaminsmoke/PersonalComander" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jaminsmoke/PersonalComander
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inicio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../manual/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manual
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Manual
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manual/instalacion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Instalación
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manual/resumen/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Resumen
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manual/mesas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Board de mesas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manual/comandas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comandas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manual/carta/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Carta
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manual/locales/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Locales
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manual/invitaciones/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Invitaciones
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manual/ajustes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ajustes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manual/cuenta/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cuenta y turno
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manual/faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Técnica
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Técnica
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../arquitectura/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Arquitectura
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modelo de datos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../voz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Voz
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sync-tpv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sync TPV
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Protocolo LAN
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Protocolo LAN
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#glosario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Glosario
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#endpoints-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoints (Bar)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSE
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#replica-de-mapa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Réplica de mapa
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flujo-de-usuario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flujo de usuario
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#presencia-lan-udp-8788" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Presencia LAN (UDP 8788)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#payload-de-ronda" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payload de ronda
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comportamiento-en-comander" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comportamiento en Comander
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#glosario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Glosario
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#endpoints-bar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoints (Bar)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSE
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#replica-de-mapa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Réplica de mapa
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flujo-de-usuario" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flujo de usuario
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#presencia-lan-udp-8788" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Presencia LAN (UDP 8788)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#payload-de-ronda" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Payload de ronda
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comportamiento-en-comander" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comportamiento en Comander
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="protocolo-lan-de-sala-bar-01">Protocolo LAN de sala (Bar 0.1)</h1>
+<p>Contrato entre <strong>Personal Comander</strong> (cliente) y <strong>Personal Bar</strong> (nodo). Puerto fijo <strong>8787</strong>. HTTP en claro solo en LAN de confianza.</p>
+<p>No confundir con Identity: el <strong>servicio camareros</strong> (VPS <code>https://camareros.siberia.solutions</code>, Docker en el servidor; HTTPS) es el DNI del camarero y la fuente de verdad de cuentas y membresías. El <strong>servicio negocio</strong> (<code>:8082</code>) es de Bar / Identity Web. El nodo de sala sigue siendo Bar LAN. Commander no apunta Identity a Docker del host (<code>10.0.2.2:8080</code>).</p>
+<p>Rutas Identity que Commander llama: derivadas de <code>IdentityCliente.kt</code> (<code>Rutas.*</code>; sin snapshot). Rutas Bar que Commander llama: <a href="../bar-contract-paths.txt"><code>bar-contract-paths.txt</code></a>. El job CI <code>Family contracts</code> las contrasta con Identity <code>main</code> (OpenAPI camareros y negocio) y Bar <code>main</code> (<code>BarLanModule.kt</code> + <code>openapi-lan.json</code>), verificando también <code>Authorization</code> (Bearer); el informe queda en el summary del job. Aún no es check requerido del ruleset.</p>
+<h2 id="glosario">Glosario</h2>
+<table>
+<thead>
+<tr>
+<th>Término</th>
+<th>Qué es</th>
+<th>Qué no es</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Establecimiento</strong></td>
+<td>Negocio / local. Registro canónico en Identity. En turno, el camarero se <strong>liga al nodo Bar</strong> (<code>ModoSesion.Establecimiento</code>).</td>
+<td>Una sala del mapa.</td>
+</tr>
+<tr>
+<td><strong>Sala</strong></td>
+<td>Zona del mapa del establecimiento (barra, interior, terraza…). En Comander: entidad Room <code>Sala</code> + <code>Mesa.salaId</code> (antes «zona»).</td>
+<td>El modo de sesión ni el host LAN.</td>
+</tr>
+<tr>
+<td><strong>Territorio</strong> (<code>zonas</code> en LAN)</td>
+<td>Rectángulo coloreado <strong>dentro</strong> de una sala, asignable a un camarero. Overlay de board. No cambia <code>idZona</code>.</td>
+<td>La sala del mapa ni el ID de mesa (T3).</td>
+</tr>
+<tr>
+<td><strong>idZona</strong></td>
+<td>Identidad de mesa <strong>en red</strong>: prefijo del <strong>nombre de la sala</strong> + <code>indiceZona</code> (<code>T3</code> = Terraza 3).</td>
+<td>El <code>id</code> autoincrement de Room ni el alias visible.</td>
+</tr>
+<tr>
+<td><strong>Ronda</strong></td>
+<td>Lo que Comander envía al Bar al «enviar a cocina» ligado. Bar la parte en tickets BARRA / COCINA.</td>
+<td>El pedido Room completo como modelo de red.</td>
+</tr>
+<tr>
+<td><strong>Preparado</strong></td>
+<td>Ticket listo en expo (Bar). Evento SSE <code>ticket.preparado</code>. En Comander: líneas <code>LISTA</code> («para recoger»).</td>
+<td>Servido en mesa.</td>
+</tr>
+<tr>
+<td><strong>Recogido</strong></td>
+<td>El camarero de barra sacó el ticket de la cola (<code>POST /recogido</code>). Evento <code>ticket.recogido</code>.</td>
+<td>Servido en mesa (eso es Comander, <code>LineaEstado.SERVIDA</code>).</td>
+</tr>
+</tbody>
+</table>
+<p><code>GET /health</code> trae <code>establecimiento</code> (nombre del negocio), <code>establecimiento_id</code> (UUID Identity; se omite si el nodo no está vinculado) y <code>sala</code> como <strong>alias deprecado</strong> del nombre. <code>sala</code> en health <strong>no</strong> es una sala del mapa. Commander empareja el libro de oficio por UUID; el nombre es fallback si el id no viene.</p>
+<h2 id="endpoints-bar">Endpoints (Bar)</h2>
+<table>
+<thead>
+<tr>
+<th>Método</th>
+<th>Ruta</th>
+<th>Uso en Comander</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /health</code></td>
+<td>liveness <code>{ok, role:"bar", establecimiento, establecimiento_id?, sala, version}</code></td>
+<td>Sí (ligar; UUID para el libro de oficio)</td>
+</tr>
+<tr>
+<td><code>POST /v1/sesion</code></td>
+<td><code>{ "qr": "phid1:…" }</code> → <code>{ admitido, camareroId, nombre }</code></td>
+<td>Sí (candado carta/mapa/TPV al ligar; <strong>no</strong> inicia jornada)</td>
+</tr>
+<tr>
+<td><code>POST /v1/sesion/iniciar</code></td>
+<td><code>{ "qr": "phid1:…" }</code> → estado de jornada</td>
+<td>Sí (gesto Empiezo; 404 = nodo viejo)</td>
+</tr>
+<tr>
+<td><code>POST /v1/sesion/cortar</code></td>
+<td><code>{ "qr": "phid1:…" }</code></td>
+<td>Sí (terminar jornada o salir del nodo)</td>
+</tr>
+<tr>
+<td><code>POST /v1/heartbeat</code></td>
+<td><code>{ "camareroId" }</code></td>
+<td>Sí (~10 s mientras hay jornada)</td>
+</tr>
+<tr>
+<td><code>POST /v1/rondas</code></td>
+<td>recibe una ronda → 201/200 + <strong>lista de tickets</strong>; 403 sin jornada</td>
+<td>Sí (enviar; se guarda <code>ticketId</code> por línea)</td>
+</tr>
+<tr>
+<td><code>POST /v1/tickets/{id}/preparado</code></td>
+<td>ticket preparado</td>
+<td>No (UI de expo en Bar)</td>
+</tr>
+<tr>
+<td><code>POST /v1/tickets/{id}/recogido</code></td>
+<td>ticket recogido en expo</td>
+<td>No (UI de expo en Bar)</td>
+</tr>
+<tr>
+<td><code>GET /v1/estado</code></td>
+<td>establecimiento, salas, colas, mesas, <strong>zonas?</strong></td>
+<td>Sí (realinear tickets al conectar SSE; <strong>réplica de layout</strong> al ligar si <code>admitido</code>)</td>
+</tr>
+<tr>
+<td><code>GET /v1/carta</code></td>
+<td>catálogo <code>{schema?, productos:[{id,nombre,categoria,precio,disponible,subfamilia?,permiteNota?,grupos?}], gruposModificador?}</code>. <code>id</code> es slug (<code>cana</code>) en schema 0/omitido, UUID cuando Bar migra el catálogo. Campos extra (subfamilia, grupos) son forward-compat: un nodo viejo no los manda y Commander no borra grupos locales. <code>schema</code> distinto (o ids UUID contra <code>codigoBar</code> slug) reconstruye el espejo por nombre, sin borrar filas locales.</td>
+<td>Sí (espejo al ligar)</td>
+</tr>
+<tr>
+<td><code>SSE /v1/eventos</code></td>
+<td><code>ticket.preparado</code> / <code>ticket.recogido</code> / <code>sesion.cortada</code></td>
+<td>Sí (aviso recoger y corte de jornada)</td>
+</tr>
+<tr>
+<td>UDP <strong>8788</strong></td>
+<td>Beacon de presencia <code>{ph, role, establecimiento, puerto, activo}</code></td>
+<td>Sí (radar en Resumen; no es HTTP)</td>
+</tr>
+</tbody>
+</table>
+<p>Handshake al ligar: <code>POST /v1/sesion</code> con el QR. Si el camarero está ACTIVA en la lista blanca, <code>admitido=true</code> y candan carta, mapa y TPV. 404 (nodo viejo) o no admitido: el ligue sigue; <code>admitido=false</code>.</p>
+<p><strong>Contratado ≠ jornada.</strong> Ligar al nodo no autoriza comandas. El camarero pide <code>POST /v1/sesion/iniciar</code> (gesto Empiezo). Bar concede <code>sesionActiva</code>. Commander manda <code>POST /v1/heartbeat</code> ~10 s. Corte: <code>POST /v1/sesion/cortar</code>, SSE <code>sesion.cortada</code>, 403 de ronda/heartbeat, o pérdida de lista blanca. 404 en iniciar = Bar 0.1: se trata como jornada implícita.</p>
+<h2 id="sse">SSE</h2>
+<p><code>event</code> = tipo. <code>data</code> = JSON <code>SalaEvent</code> v1 (Bar <a href="https://github.com/jaminsmoke/PersonalBar/issues/37">#37</a> / PR <a href="https://github.com/jaminsmoke/PersonalBar/pull/38">#38</a>).</p>
+<p><code>mesaId</code> va en la raíz. <code>destino</code>, <code>numeroCola</code> y <code>rondaId</code> van <strong>dentro de <code>ticket</code></strong>. Commander los hidrata a la raíz al parsear. Si faltan, <strong>no inventa la mesa</strong>.</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"tipo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ticket.preparado"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"ticketId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"p42-t1730000000000-barra"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"preparadoPor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Anita"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"mesaId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"T3"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"camarero"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Lucía García"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"resumen"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2× Caña"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"ticket"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"p42-t1730000000000-barra"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"rondaId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"p42-t1730000000000"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"destino"</span><span class="p">:</span><span class="w"> </span><span class="s2">"BARRA"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"estado"</span><span class="p">:</span><span class="w"> </span><span class="s2">"PREPARADO"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"preparadoPor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Anita"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"numeroCola"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"lineas"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nt">"productoId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"12"</span><span class="p">,</span><span class="w"> </span><span class="nt">"nombreProducto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Caña"</span><span class="p">,</span><span class="w"> </span><span class="nt">"cantidad"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Aviso en sala: <code>T3 · Cola 1 Bebida lista</code> (<code>destino</code> <code>BARRA</code> → Bebida, <code>COCINA</code> → Comida).</p>
+<p>Al reconectar: <code>GET /v1/estado</code> y marcar <code>PREPARADO</code> (y <code>servidos</code>) como <code>LISTA</code> en líneas con ese <code>ticketId</code>. El bucle SSE <strong>no</strong> reescribe el mapa.</p>
+<h2 id="replica-de-mapa">Réplica de mapa</h2>
+<p>Bar es la fuente de verdad del layout. Si el camarero está <strong>admitido</strong>, al ligar Commander lee <code>salas</code>, <code>mesas</code> y <code>zonas</code> de <code>GET /v1/estado</code> y hace upsert por <code>codigoBar</code> (el <code>id</code> string de Bar). Conserva <code>id</code> Room, <code>estado</code>, <code>comandaActivaId</code> y <code>reservaActivaId</code> locales. <strong>No borra</strong> el seed ni salas/mesas sin código. Los territorios (<code>zonas</code>) sí se reemplazan enteros: no hay seed local, y un nodo viejo sin el campo deja la caché vacía. Si no está admitido, 404 o el nodo no manda mapa, el layout local no se toca. <code>idZona</code> sigue siendo función (<code>zonaPrefijo(nombreSala)+indiceZona</code>), no un campo JSON.</p>
+<p><code>zonas</code> es forward-compat: Gson ignora el campo en Commander viejo; Commander nuevo trata la ausencia como lista vacía (no pinta overlay). Coordenadas y tamaño llegan <strong>ya convertidos</strong> al canvas 2000×2600 (misma escala que las mesas). Payload:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">"zonas"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"zona-norte"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"salaId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sala-terraza"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"nombre"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Terraza norte"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"posX"</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"posY"</span><span class="p">:</span><span class="w"> </span><span class="mi">80</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"ancho"</span><span class="p">:</span><span class="w"> </span><span class="mi">400</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"alto"</span><span class="p">:</span><span class="w"> </span><span class="mi">240</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"color"</span><span class="p">:</span><span class="w"> </span><span class="s2">"VERDE"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"camareroId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"uuid-opcional"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"camareroNombre"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Ana"</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">]</span>
+</code></pre></div>
+<p><code>color</code> es el nombre de paleta (<code>AZUL</code> | <code>VERDE</code> | <code>AMARILLO</code> | <code>NARANJA</code> | <code>MORADO</code> | <code>ROJO</code>). <code>camareroNombre</code> es opcional (Bar puede mandar solo <code>camareroId</code>). El overlay es <strong>solo lectura</strong>; no hay filtro «mi zona» en este corte.</p>
+<h2 id="flujo-de-usuario">Flujo de usuario</h2>
+<ol>
+<li>El camarero inicia sesión contra Identity (servicio camareros) desde <strong>Entrar</strong>. La cuenta puede estar <strong>registrada</strong> en varios establecimientos; eso no activa un turno.</li>
+<li><strong>Standalone</strong> (Local o Identidad): carta y mapa locales. Home no pinta la etiqueta; el radar de Resumen y Gestión → Locales lo indican. Ligarse a un nodo no es jornada.</li>
+<li>En <strong>Resumen</strong>, el radar sondea la Wi‑Fi (<code>GET /health</code> + <code>POST /v1/sesion</code>) y escucha el <strong>beacon UDP 8788</strong> de Bar (activar / latido / adiós). Si Bar no admite, el local se pinta apagado y <strong>no se persiste</strong> Establecimiento. Si Identity lista locales y el <code>health</code> no coincide, se avisa al pedir jornada pero <strong>no se bloquea</strong>. En emulador el probe <code>10.0.2.2</code> cubre el <code>adb forward</code> (el UDP no cruza los AVD).</li>
+<li>Si está en la lista blanca, carta, mapa y TPV pasan a solo lectura y se replica el layout. El header dice <strong>En nodo</strong> hasta <strong>Empezar jornada</strong> (<code>POST /v1/sesion/iniciar</code>); entonces dice <strong>Activo</strong>. Al volver a Home se <strong>revalida</strong> <code>admitido</code>. Si se pierde la lista blanca, se suelta el nodo.</li>
+<li>Sin jornada no se llama a <code>POST /v1/rondas</code>. Si Bar corta (SSE <code>sesion.cortada</code>, 403 o latido), el nodo puede seguir ligado.</li>
+<li>Al enviar con jornada, Comander manda <strong>solo líneas <code>PENDIENTE</code></strong>, las marca <code>ENVIADA</code> y guarda los <code>ticketId</code> del body.</li>
+<li>Bar marca preparado → SSE → líneas <code>LISTA</code> + snackbar/notificación.</li>
+<li>El camarero marca <strong>servido en mesa</strong> (<code>SERVIDA</code>). Recogido de bandeja sigue en Bar.</li>
+</ol>
+<p>Pendiente de lista blanca <strong>no</strong> es una invitación de cuenta. Las invitaciones (Bar invita, camarero acepta o rechaza) se gestionan en Identity; en Commander la bandeja está en <strong>Gestión → Invitaciones</strong>.</p>
+<p>Si Bar falla el POST, la comanda local permanece enviada y el tablet muestra un aviso.</p>
+<p>Este flujo está en el APK <strong>v1.7</strong> (radar en Resumen). La v1.6 ligaba el turno desde Ajustes; la v1.5 pública funcionaba en modo Local y no incluía la integración completa de establecimiento.</p>
+<h2 id="presencia-lan-udp-8788">Presencia LAN (UDP 8788)</h2>
+<p>No es HTTP ni SSE. Bar, mientras <strong>Local activo</strong>, envía un datagrama de broadcast cada ~2 s y un adiós al parar:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"ph"</span><span class="p">:</span><span class="s2">"phbar1"</span><span class="p">,</span><span class="nt">"role"</span><span class="p">:</span><span class="s2">"bar"</span><span class="p">,</span><span class="nt">"establecimiento"</span><span class="p">:</span><span class="s2">"Casa Pepe"</span><span class="p">,</span><span class="nt">"puerto"</span><span class="p">:</span><span class="mi">8787</span><span class="p">,</span><span class="nt">"activo"</span><span class="p">:</span><span class="kc">true</span><span class="p">}</span>
+</code></pre></div>
+<p><code>activo:false</code> es el corte. Commander en Resumen oye el puerto <strong>8788</strong>, toma el host del origen (nunca lo pinta) y confirma con <code>GET /health</code>. Sin beacon durante 6 s el local desaparece. Un puerto 8787 abierto que no sea Bar no se lista. El scan TCP <code>/24</code> queda de respaldo al entrar (y se reutilizan solo los nodos ya confirmados mientras Resumen sigue visible). Dos emuladores no comparten UDP: Commander sigue probando <code>10.0.2.2</code> mientras Resumen está visible.</p>
+<h2 id="payload-de-ronda">Payload de ronda</h2>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"p42-t1730000000000"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"mesaId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"T3"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"numero"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"camarero"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Lucía García"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"creadoEn"</span><span class="p">:</span><span class="w"> </span><span class="mi">1730000000000</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"lineas"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"productoId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"12"</span><span class="p">,</span><span class="w"> </span><span class="nt">"nombreProducto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Caña"</span><span class="p">,</span><span class="w"> </span><span class="nt">"cantidad"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="nt">"modificadores"</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"productoId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"3"</span><span class="p">,</span><span class="w"> </span><span class="nt">"nombreProducto"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Hamburguesa"</span><span class="p">,</span><span class="w"> </span><span class="nt">"cantidad"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"nota"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sin cebolla"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"modificadores"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nt">"grupo"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Punto"</span><span class="p">,</span><span class="w"> </span><span class="nt">"opcion"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Al punto"</span><span class="p">,</span><span class="w"> </span><span class="nt">"delta"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}]</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<ul>
+<li><code>id</code>: único por envío. Si se repite, Bar responde 200 y no duplica.</li>
+<li><code>mesaId</code>: <strong>idZona</strong>, p. ej. <code>T3</code>. Nunca el id Room.</li>
+<li><code>productoId</code>: id de red de Bar (slug <code>cana</code> o UUID del catálogo) si Commander espejó <code>GET /v1/carta</code> (<code>codigoBar</code>); si no, el Long de Room en string. Sin match, Bar manda la línea a BARRA.</li>
+<li><code>nota</code> y <code>modificadores</code> (grupo/opción/delta en claro): snapshot de la línea. Un Bar que aún no los lee los ignora (Gson); la expo sigue ciega hasta el ítem de Bar.</li>
+<li>Respuesta: array de tickets (<code>id</code> = <code>{rondaId}-barra</code> / <code>-cocina</code>).</li>
+</ul>
+<h2 id="comportamiento-en-comander">Comportamiento en Comander</h2>
+<table>
+<thead>
+<tr>
+<th>Modo</th>
+<th>Al enviar a cocina</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Local / Identidad</td>
+<td>Solo Room: pedido <code>ENVIADA</code>, mesa <code>EN_COCINA</code>, líneas <code>LISTA</code> (para recoger sin expo).</td>
+</tr>
+<tr>
+<td>Establecimiento <strong>con jornada</strong></td>
+<td>Delta <code>PENDIENTE</code> + <code>POST /v1/rondas</code> → <code>ENVIADA</code> + <code>ticketId</code>. SSE + <code>/estado</code>. Servido solo desde <code>LISTA</code>.</td>
+</tr>
+<tr>
+<td>Establecimiento <strong>sin jornada</strong></td>
+<td>No se llama a <code>/v1/rondas</code>. El camarero ve el aviso y empieza la jornada en Ajustes.</td>
+</tr>
+</tbody>
+</table>
+<p>No se recorta el un-tablet. <code>esActivo</code> en código sigue significando «ligado al nodo»; el permiso de comandar es <code>sesionTrabajo</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 jaminsmoke — MIT License
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.sections", "navigation.indexes", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
