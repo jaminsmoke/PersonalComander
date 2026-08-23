@@ -1,13 +1,74 @@
 package com.jaminsmoke.personalcomander.data.sesion
 
 import android.content.Context
+import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 
 class SesionStore(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    private val ctx = context.applicationContext
     private val gson = Gson()
+
+    /**
+     * EncryptedSharedPreferences con clave AES-256 en Android Keystore.
+     * Si la clave del Keystore se pierde (cambio de bloqueo de pantalla, restauración
+     * en otro dispositivo), se descarta la sesión anterior y se fuerza re-autenticación.
+     */
+    private val prefs: SharedPreferences by lazy { crearOReiniciar() }
+
+    private fun crearOReiniciar(): SharedPreferences {
+        // Primero migrar datos legacy si existen en texto plano
+        val legacy = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val tieneDatosLegacy = legacy.contains(KEY_TOKEN)
+        val datosLegacy = if (tieneDatosLegacy) legacy.all.toMap() else emptyMap()
+
+        return try {
+            val masterKey = MasterKey.Builder(ctx)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            @Suppress("DEPRECATION")
+            val encrypted = EncryptedSharedPreferences.create(
+                ctx,
+                PREFS,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+            )
+            // Migrar datos legacy al almacén cifrado
+            if (tieneDatosLegacy && !encrypted.contains(KEY_TOKEN)) {
+                val editor = encrypted.edit()
+                datosLegacy.forEach { (k, v) ->
+                    when (v) {
+                        is String -> editor.putString(k, v)
+                        is Int -> editor.putInt(k, v as Int)
+                        is Boolean -> editor.putBoolean(k, v as Boolean)
+                        is Long -> editor.putLong(k, v as Long)
+                        is Float -> editor.putFloat(k, v as Float)
+                    }
+                }
+                editor.apply()
+                // Limpiar el almacén legacy
+                legacy.edit().clear().apply()
+            }
+            encrypted
+        } catch (e: Exception) {
+            // Keystore corrupto o inaccesible: descartar sesión, forzar re-auth
+            try { legacy.edit().clear().apply() } catch (_: Exception) {}
+            val masterKey = MasterKey.Builder(ctx)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            EncryptedSharedPreferences.create(
+                ctx,
+                PREFS,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+            )
+        }
+    }
 
     var identityBaseUrl: String
         get() {
