@@ -1,6 +1,7 @@
 package com.jaminsmoke.personalcomander.data
 
 import android.database.sqlite.SQLiteDatabase
+import com.jaminsmoke.personalcomander.data.sesion.RedLocal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -85,6 +86,7 @@ data class ServidorDescubierto(
 object TpvCliente {
 
     fun descargarArchivo(url: String, destino: File): Boolean {
+        if (url.startsWith("http://")) RedLocal.requerirHostLocal(URL(url).host)
         val conexion = URL(url).openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 5000
@@ -101,6 +103,7 @@ object TpvCliente {
     }
 
     fun descargarProductosJson(url: String): List<Producto>? {
+        if (url.startsWith("http://")) RedLocal.requerirHostLocal(URL(url).host)
         val conexion = URL(url).openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 5000

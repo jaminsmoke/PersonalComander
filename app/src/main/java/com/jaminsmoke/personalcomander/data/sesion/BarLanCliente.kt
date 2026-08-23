@@ -35,6 +35,7 @@ object BarLanCliente {
     )
 
     fun health(host: String, puerto: Int = PUERTO): Health? {
+        RedLocal.requerirHostLocal(host)
         val conexion = URL("http://$host:$puerto${Rutas.HEALTH}").openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 2500
@@ -80,6 +81,7 @@ object BarLanCliente {
      * 400 / no-2xx → null. No es un alta.
      */
     fun postSesion(host: String, puerto: Int, qr: String): SesionLan? {
+        RedLocal.requerirHostLocal(host)
         val conexion = URL("http://$host:$puerto${Rutas.SESION}").openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 2500
@@ -184,6 +186,7 @@ object BarLanCliente {
 
     /** `POST /v1/rondas`. 200 (idempotente) y 201 cuentan como ok. Bar v0.2 exige Bearer. */
     fun postRonda(host: String, puerto: Int, ronda: RondaLan, tokenLan: String? = null): PostRondaResult {
+        RedLocal.requerirHostLocal(host)
         val conexion = URL("http://$host:$puerto${Rutas.RONDAS}").openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 2500
@@ -213,6 +216,7 @@ object BarLanCliente {
 
     /** Snapshot de colas. Bar no persiste SSE: al reconectar hay que realinear con esto. */
     fun estado(host: String, puerto: Int = PUERTO, tokenLan: String? = null): EstadoLan? {
+        RedLocal.requerirHostLocal(host)
         val conexion = URL("http://$host:$puerto${Rutas.ESTADO}").openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 2500
@@ -231,6 +235,7 @@ object BarLanCliente {
 
     /** Catálogo canónico del nodo. 404 o red caída → null (el ligue no debe fallar). */
     fun carta(host: String, puerto: Int = PUERTO, tokenLan: String? = null): CartaLan? {
+        RedLocal.requerirHostLocal(host)
         val conexion = URL("http://$host:$puerto${Rutas.CARTA}").openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 2500
@@ -252,6 +257,7 @@ object BarLanCliente {
      * Sin token (Bar 0.1) la URL no se modifica.
      */
     fun abrirSse(host: String, puerto: Int, tokenLan: String? = null): HttpURLConnection {
+        RedLocal.requerirHostLocal(host)
         val tokenParam = if (tokenLan != null) "?token=${java.net.URLEncoder.encode(tokenLan, "UTF-8")}" else ""
         val conexion = URL("http://$host:$puerto${Rutas.EVENTOS}$tokenParam").openConnection() as HttpURLConnection
         conexion.connectTimeout = 4000
@@ -290,6 +296,7 @@ object BarLanCliente {
     }
 
     private fun postJson(host: String, puerto: Int, path: String, json: String, tokenLan: String? = null): Pair<Int, String> {
+        RedLocal.requerirHostLocal(host)
         val conexion = URL("http://$host:$puerto$path").openConnection() as HttpURLConnection
         return try {
             conexion.connectTimeout = 2500

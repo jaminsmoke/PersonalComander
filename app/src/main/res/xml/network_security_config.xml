@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Allow cleartext only to LAN private IP ranges (bar/restaurant internal networks) -->
-    <base-config cleartextTrafficPermitted="false">
+    <!--
+        Cleartext HTTP está permitido a nivel de plataforma porque Android NSC
+        no acepta rangos CIDR en <domain> — solo nombres de host exactos.
+        La validación real de IP privada (RFC 1918) se hace en código:
+        RedLocal.requerirHostLocal() vía InetAddress.isSiteLocalAddress().
+        Identity va siempre por HTTPS; no afectado.
+    -->
+    <base-config cleartextTrafficPermitted="true">
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>
     </base-config>
+    <!-- Dominios explícitos como documentación y fallback -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">192.168.0.0</domain>
-        <domain includeSubdomains="true">10.0.0.0</domain>
-        <domain includeSubdomains="true">172.16.0.0</domain>
         <domain includeSubdomains="true">localhost</domain>
-        <!-- AVD loopback al host: Bar :8787 vía adb forward. Identity va al VPS, no a Docker local. -->
         <domain includeSubdomains="false">10.0.2.2</domain>
         <domain includeSubdomains="false">127.0.0.1</domain>
     </domain-config>
