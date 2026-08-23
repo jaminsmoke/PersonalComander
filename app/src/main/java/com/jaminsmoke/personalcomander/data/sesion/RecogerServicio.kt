@@ -49,8 +49,8 @@ class RecogerServicio(
             if (modo.sesionTrabajo) {
                 launch { latido(modo) }
             }
-            val tokenLan = modo.tokenLan
             while (isActive) {
+                val tokenLan = tokenVigente()
                 alinearConEstado(modo.barHost, modo.barPuerto, tokenLan)
                 escucharSse(modo.barHost, modo.barPuerto, tokenLan)
                 delay(2_000)
@@ -58,9 +58,13 @@ class RecogerServicio(
         }
     }
 
+    /** Token LAN más fresco del StateFlow (se actualiza tras re-ligar). */
+    private fun tokenVigente(): String? =
+        (sesion.modo.value as? ModoSesion.Establecimiento)?.tokenLan
+
     private suspend fun latido(modo: ModoSesion.Establecimiento) {
         while (currentCoroutineContext().isActive) {
-            var tokenLan = modo.tokenLan
+            var tokenLan = tokenVigente()
             val r = withContext(Dispatchers.IO) {
                 BarLanCliente.postHeartbeat(modo.barHost, modo.barPuerto, modo.perfil.id, tokenLan)
             }
